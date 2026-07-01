@@ -74,7 +74,7 @@ export default function RootLayout({
           {/* Navigation */}
           {!isLoginPage && (
             <nav className="bg-panel/80 backdrop-blur-md border-b border-border-subtle border-t-[3px] border-t-forensic-blue sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-4 shadow-sm">
-              <Link href="/" className="flex items-center space-x-2 font-display font-bold text-xl tracking-tight text-forensic-blue z-50">
+              <Link prefetch={false} href="/" className="flex items-center space-x-2 font-display font-bold text-xl tracking-tight text-forensic-blue z-50">
                 <ShieldAlert className="w-6 h-6 text-critical" />
                 <span>APEX-X</span>
               </Link>
@@ -82,7 +82,7 @@ export default function RootLayout({
               {/* Desktop Nav */}
               <div className="hidden md:flex space-x-6 text-sm font-medium">
                 {navLinks.map((link) => (
-                  <Link 
+                  <Link prefetch={false} 
                     key={link.href} 
                     href={link.href} 
                     className={`transition-colors hover:text-critical ${
@@ -111,7 +111,7 @@ export default function RootLayout({
                     </button>
                   </div>
                 ) : (
-                  <Link 
+                  <Link prefetch={false} 
                     href="/login" 
                     className="text-xs font-mono font-semibold bg-canvas border border-border-subtle px-4 py-2 hover:bg-border-subtle/30 transition-colors rounded-full"
                   >
@@ -133,7 +133,7 @@ export default function RootLayout({
                 <div className="fixed inset-0 bg-panel z-40 flex flex-col pt-20 px-6 overflow-y-auto animate-in slide-in-from-top-2 md:hidden">
                   <div className="flex flex-col gap-6 text-lg font-medium border-b border-border-subtle pb-6 mb-6">
                     {navLinks.map((link) => (
-                      <Link 
+                      <Link prefetch={false} 
                         key={link.href} 
                         href={link.href} 
                         className={`transition-colors hover:text-critical ${
@@ -162,7 +162,7 @@ export default function RootLayout({
                         </button>
                       </div>
                     ) : (
-                      <Link 
+                      <Link prefetch={false} 
                         href="/login" 
                         className="flex items-center justify-center text-sm font-mono font-semibold bg-canvas border border-border-subtle p-3 hover:bg-border-subtle/30 transition-colors rounded-full"
                       >

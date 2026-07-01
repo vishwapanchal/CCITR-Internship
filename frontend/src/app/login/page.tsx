@@ -44,7 +44,7 @@ export default function LoginPage() {
     <main className="flex-1 flex items-center justify-center p-4 md:p-8">
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-start">
-          <Link href="/" className="flex items-center text-xs font-mono text-forensic-blue/60 hover:text-forensic-blue transition-colors">
+          <Link prefetch={false} href="/" className="flex items-center text-xs font-mono text-forensic-blue/60 hover:text-forensic-blue transition-colors">
             <ArrowLeft className="w-4 h-4 mr-1" />
             BACK TO HOME
           </Link>
@@ -52,7 +52,7 @@ export default function LoginPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
+          <Link prefetch={false} href="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <ShieldAlert className="w-10 h-10 text-critical" />
             <h1 className="font-display text-3xl font-bold text-forensic-blue">APEX-X</h1>
           </Link>

@@ -32,7 +32,7 @@ export default function CaseCard({ caseData }: CaseCardProps) {
   const statusStyle = statusColors[caseData.status] || statusColors.pending;
 
   return (
-    <Link href={`/cases/${caseData.id}`}>
+    <Link prefetch={false} href={`/cases/${caseData.id}`}>
       <div className="bg-panel border border-border-subtle p-4 hover:border-forensic-blue/30 transition-colors cursor-pointer">
         {/* Header row */}
         <div className="flex items-center justify-between mb-2">

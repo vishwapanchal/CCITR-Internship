@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 export default function Compliance() {
   return (
     <main className="flex-1 flex flex-col p-6 md:p-12 lg:px-20 max-w-[1000px] mx-auto w-full pt-20">
-      <Link href="/" className="inline-flex items-center gap-2 text-forensic-blue/60 hover:text-forensic-blue mb-8 font-medium transition-colors w-fit">
+      <Link prefetch={false} href="/" className="inline-flex items-center gap-2 text-forensic-blue/60 hover:text-forensic-blue mb-8 font-medium transition-colors w-fit">
         <ArrowLeft className="w-4 h-4" />
         Back to Home
       </Link>

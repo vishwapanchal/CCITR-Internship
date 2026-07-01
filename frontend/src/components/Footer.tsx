@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="bg-panel border-t border-border-subtle py-12 px-6 md:px-12 mt-auto w-full">
       <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-12 md:gap-8">
         <div className="flex flex-col items-center md:items-start gap-4 text-center md:text-left">
-          <Link href="/" className="flex items-center space-x-2 font-display font-bold text-xl tracking-tight text-forensic-blue">
+          <Link prefetch={false} href="/" className="flex items-center space-x-2 font-display font-bold text-xl tracking-tight text-forensic-blue">
             <ShieldAlert className="w-6 h-6 text-critical" />
             <span>APEX-X</span>
           </Link>
@@ -18,16 +18,16 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row justify-center md:justify-end gap-10 md:gap-12 text-sm font-medium w-full md:w-auto text-center sm:text-left">
           <div className="flex flex-col gap-3 items-center sm:items-start">
             <h4 className="font-display font-semibold text-forensic-blue mb-2">Platform</h4>
-            <Link href="/upload" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Investigation</Link>
-            <Link href="/dashboard" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Dashboard</Link>
-            <Link href="/graph" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">C2 Graph Explorer</Link>
+            <Link prefetch={false} href="/upload" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Investigation</Link>
+            <Link prefetch={false} href="/dashboard" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Dashboard</Link>
+            <Link prefetch={false} href="/graph" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">C2 Graph Explorer</Link>
           </div>
           
           <div className="flex flex-col gap-3 items-center sm:items-start">
             <h4 className="font-display font-semibold text-forensic-blue mb-2">Legal</h4>
-            <Link href="/legal/privacy" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Privacy Policy</Link>
-            <Link href="/legal/terms" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Terms of Service</Link>
-            <Link href="/legal/compliance" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Section 65B Compliance</Link>
+            <Link prefetch={false} href="/legal/privacy" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Privacy Policy</Link>
+            <Link prefetch={false} href="/legal/terms" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Terms of Service</Link>
+            <Link prefetch={false} href="/legal/compliance" className="text-forensic-blue/60 hover:text-forensic-blue transition-colors">Section 65B Compliance</Link>
           </div>
         </div>
       </div>
