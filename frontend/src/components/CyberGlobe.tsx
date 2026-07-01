@@ -33,10 +33,11 @@ export default function CyberGlobe() {
     // Generate random arcs (reduced count for mobile performance)
     const N = 25;
     const arcs = [...Array(N).keys()].map(() => ({
-      startLat: (Math.random() - 0.5) * 180,
+      startLat: (Math.random() - 0.5) * 160,
       startLng: (Math.random() - 0.5) * 360,
-      endLat: (Math.random() - 0.5) * 180,
-      endLng: (Math.random() - 0.5) * 360,
+      // Target India with a slight random spread for different cities
+      endLat: 20.5937 + (Math.random() - 0.5) * 15,
+      endLng: 78.9629 + (Math.random() - 0.5) * 15,
       color: Math.random() > 0.3 ? ['#d32f2f', '#f57c00'] : ['#3b82f6', '#0a2540'] // Critical/Warning vs Blue
     }));
 
