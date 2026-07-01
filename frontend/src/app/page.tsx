@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Shield, Activity, Network } from "lucide-react";
+import { ArrowRight, Shield, Activity, Network, Search, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -61,8 +61,48 @@ export default function LandingPage() {
           animate="show"
           className="flex flex-col items-center justify-center w-full"
         >
-          <motion.div variants={itemVariants} className="w-full flex justify-center mb-10 relative z-20">
-            <CyberGlobe />
+          <motion.div variants={itemVariants} className="w-full flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 lg:gap-24 mb-10 relative z-20 px-4">
+            
+            {/* Left: Magnifying Glass Animation */}
+            <motion.div 
+              className="flex flex-col items-center text-forensic-blue/40 order-2 md:order-1"
+              animate={{ y: [0, -15, 0], rotate: [-5, 5, -5] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <div className="relative">
+                <Search className="w-16 h-16 md:w-28 md:h-28 text-critical" strokeWidth={1.5} />
+                <motion.div 
+                  className="absolute inset-0 border-2 border-critical/50 rounded-full"
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.8, 0, 0.8] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              </div>
+              <span className="mt-4 font-mono text-[10px] md:text-xs tracking-widest font-bold uppercase text-critical">Deep Scan</span>
+            </motion.div>
+
+            {/* Center: Globe */}
+            <div className="relative order-1 md:order-2">
+              <CyberGlobe />
+            </div>
+
+            {/* Right: Report Animation */}
+            <motion.div 
+              className="flex flex-col items-center text-forensic-blue/40 order-3 md:order-3"
+              animate={{ y: [0, 15, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            >
+              <div className="relative bg-canvas/80 backdrop-blur-sm border-2 border-border-subtle p-4 md:p-6 rounded-2xl shadow-xl overflow-hidden">
+                <FileText className="w-12 h-12 md:w-20 md:h-20 text-forensic-blue" strokeWidth={1.5} />
+                {/* Scan line */}
+                <motion.div 
+                  className="absolute left-0 right-0 h-1 bg-emerald-400 shadow-[0_0_12px_#34d399]"
+                  animate={{ top: ["10%", "90%", "10%"] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+              <span className="mt-4 font-mono text-[10px] md:text-xs tracking-widest font-bold text-emerald-600 uppercase">Sec 65B Gen</span>
+            </motion.div>
+
           </motion.div>
           
           <motion.h1 variants={itemVariants} className="font-display text-4xl md:text-6xl font-extrabold text-forensic-blue mb-6 tracking-tighter relative z-10">
