@@ -9,6 +9,7 @@ import { ShieldAlert, LogOut, User } from "lucide-react";
 import CoPilot from "@/components/CoPilot";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import BackendStatus from "@/components/BackendStatus";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -111,6 +112,8 @@ export default function RootLayout({
           
           {/* Floating CoPilot (only show if logged in and not on full copilot page) */}
           {isAuthenticated && pathname !== "/copilot" && !isLoginPage && <CoPilot />}
+          
+          <BackendStatus />
         </LenisProvider>
       </body>
     </html>

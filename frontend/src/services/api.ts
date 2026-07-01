@@ -1,7 +1,7 @@
 // API service wrapper for APEX-X backend
 // Falls back to mock data when backend is unavailable
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://10.61.191.252:8080/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://apex-x-backend.onrender.com/api/v1";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
