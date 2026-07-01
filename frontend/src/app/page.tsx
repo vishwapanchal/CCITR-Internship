@@ -36,8 +36,16 @@ export default function LandingPage() {
     <main className="flex-1 flex flex-col min-h-0 bg-canvas relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-400/10 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-forensic-blue/5 rounded-full blur-[120px]"></div>
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], opacity: [0.1, 0.15, 0.1] }} 
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }} 
+          className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-400/20 rounded-full blur-[120px]"
+        ></motion.div>
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.05, 0.1, 0.05] }} 
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }} 
+          className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-forensic-blue/10 rounded-full blur-[120px]"
+        ></motion.div>
       </div>
 
       {/* Hero Section */}
@@ -48,25 +56,17 @@ export default function LandingPage() {
           animate="show"
           className="flex flex-col items-center justify-center w-full"
         >
-          <motion.div variants={itemVariants} className="inline-flex items-center gap-2 mb-8 px-4 py-1.5 bg-canvas border border-border-subtle text-forensic-blue/80 text-xs font-mono font-bold tracking-widest uppercase rounded-full shadow-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
-            </span>
-            Agentic AI Engine v2.0
-          </motion.div>
-          
-          <motion.h1 variants={itemVariants} className="font-display text-5xl md:text-7xl lg:text-[8rem] font-extrabold text-forensic-blue mb-8 tracking-tighter leading-[1.1] flex flex-col items-center">
+          <motion.h1 variants={itemVariants} className="font-sans text-6xl md:text-8xl lg:text-[9rem] font-black text-forensic-blue mb-8 tracking-tighter leading-[1.05] flex flex-col items-center">
             <span>Deconstruct</span>
-            <span className="relative inline-block h-[1.1em] w-[300px] md:w-[500px] lg:w-[650px] overflow-hidden mt-1">
+            <span className="relative inline-block h-[1.1em] w-[300px] md:w-[600px] lg:w-[800px] overflow-visible mt-2">
               <AnimatePresence mode="popLayout">
                 <motion.span
                   key={wordIndex}
-                  initial={{ y: 80, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -80, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                  className="absolute inset-x-0 text-transparent bg-clip-text bg-gradient-to-r from-forensic-blue via-blue-600 to-blue-400"
+                  initial={{ y: 50, opacity: 0, filter: "blur(10px)", scale: 0.9 }}
+                  animate={{ y: 0, opacity: 1, filter: "blur(0px)", scale: 1 }}
+                  exit={{ y: -50, opacity: 0, filter: "blur(10px)", scale: 1.05 }}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-x-0 text-transparent bg-clip-text bg-gradient-to-r from-forensic-blue via-blue-600 to-blue-400 drop-shadow-sm"
                 >
                   {ACTION_WORDS[wordIndex]}
                 </motion.span>
