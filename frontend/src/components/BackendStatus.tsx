@@ -20,7 +20,7 @@ export default function BackendStatus() {
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 15000); // Check every 15s
+    const interval = setInterval(checkStatus, 60000); // Check every 60s
     return () => clearInterval(interval);
   }, []);
 
