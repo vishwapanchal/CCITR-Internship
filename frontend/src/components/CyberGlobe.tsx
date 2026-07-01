@@ -9,11 +9,17 @@ const Globe = dynamic(() => import("react-globe.gl"), { ssr: false });
 export default function CyberGlobe() {
   const globeEl = useRef<any>(null);
   const [arcsData, setArcsData] = useState<any[]>([]);
+  const [countries, setCountries] = useState<any[]>([]);
   const [dimensions, setDimensions] = useState({ width: 600, height: 600 });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    
+    // Fetch countries data
+    fetch('/ne_110m_admin_0_countries.geojson')
+      .then(res => res.json())
+      .then(data => setCountries(data.features));
     
     // Set initial dimensions based on screen size (reduced for performance)
     const updateDimensions = () => {
@@ -47,6 +53,8 @@ export default function CyberGlobe() {
       if (globeEl.current) {
         const controls = globeEl.current.controls();
         if (controls) {
+          // Set point of view to India
+          globeEl.current.pointOfView({ lat: 20.5937, lng: 78.9629, altitude: 2 }, 1000);
           controls.autoRotate = true;
           controls.autoRotateSpeed = 1.2;
           controls.enableZoom = false; // Disable zoom to prevent scroll trapping
@@ -66,19 +74,21 @@ export default function CyberGlobe() {
         ref={globeEl}
         width={dimensions.width}
         height={dimensions.height}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
-        bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundColor="rgba(0,0,0,0)"
+        showAtmosphere={true}
+        atmosphereColor="#3b82f6"
+        atmosphereAltitude={0.15}
         arcsData={arcsData}
         arcColor="color"
         arcDashLength={0.4}
         arcDashGap={0.2}
         arcDashAnimateTime={1500}
         arcsTransitionDuration={0}
-        atmosphereColor="#3b82f6"
-        atmosphereAltitude={0.15}
-        polygonCapColor={() => 'rgba(200, 0, 0, 0.7)'}
-        polygonSideColor={() => 'rgba(0, 0, 0, 0.1)'}
+        polygonsData={countries}
+        polygonCapColor={(d: any) => d.properties.ISO_A2 === 'IN' ? 'rgba(255, 215, 0, 0.9)' : 'rgba(10, 37, 64, 0.7)'}
+        polygonSideColor={(d: any) => d.properties.ISO_A2 === 'IN' ? 'rgba(255, 215, 0, 0.4)' : 'rgba(10, 37, 64, 0.1)'}
+        polygonStrokeColor={(d: any) => d.properties.ISO_A2 === 'IN' ? '#ffffff' : 'rgba(59, 130, 246, 0.3)'}
+        polygonAltitude={(d: any) => d.properties.ISO_A2 === 'IN' ? 0.06 : 0.01}
       />
     </div>
   );
