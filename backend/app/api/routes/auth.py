@@ -54,22 +54,4 @@ def login_for_access_token(db: Session = Depends(get_db), form_data: OAuth2Passw
     
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == user_in.username).first()
-    if user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered",
-        )
-    
-    hashed_password = get_password_hash(user_in.password)
-    db_user = User(
-        username=user_in.username,
-        role=user_in.role,
-        hashed_password=hashed_password
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+
