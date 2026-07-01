@@ -56,7 +56,7 @@ export default function LandingPage() {
           animate="show"
           className="flex flex-col items-center justify-center w-full"
         >
-          <motion.h1 variants={itemVariants} className="font-sans text-6xl md:text-8xl lg:text-[9rem] font-black text-forensic-blue mb-8 tracking-tighter leading-[1.05] flex flex-col items-center">
+          <motion.h1 variants={itemVariants} className="font-display text-6xl md:text-8xl lg:text-[9rem] font-extrabold text-forensic-blue mb-8 tracking-tighter leading-[1.05] flex flex-col items-center">
             <span>Deconstruct</span>
             <span className="relative inline-block h-[1.1em] w-[300px] md:w-[600px] lg:w-[800px] overflow-visible mt-2">
               <AnimatePresence mode="popLayout">
