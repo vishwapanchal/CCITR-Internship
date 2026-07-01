@@ -16,7 +16,7 @@ interface AuthState {
   loadFromStorage: () => void;
 }
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   token: null,
   username: null,
   role: null,

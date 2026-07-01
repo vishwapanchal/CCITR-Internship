@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -107,6 +108,20 @@ export default function LoginPage() {
                 autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
+            
+            {!isLogin && (
+              <div>
+                <label className="block text-xs font-mono text-forensic-blue/60 mb-1">CONFIRM PASSWORD</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                  className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors"
+                  autoComplete="new-password"
+                />
+              </div>
+            )}
 
             {/* Error display */}
             {(error || localError) && (
@@ -123,6 +138,19 @@ export default function LoginPage() {
               {isLoading ? "Authenticating..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
           </form>
+
+          {/* Toggle Mode */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setLocalError("");
+              }}
+              className="text-xs text-forensic-blue/70 hover:text-forensic-blue font-medium transition-colors"
+            >
+              {isLogin ? "Need an account? Sign Up" : "Already have an account? Sign In"}
+            </button>
+          </div>
 
           {/* Demo login */}
           <div className="mt-4 pt-4 border-t border-border-subtle">
@@ -142,3 +170,4 @@ export default function LoginPage() {
     </main>
   );
 }
+
