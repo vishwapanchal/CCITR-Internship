@@ -15,17 +15,17 @@ export default function CyberGlobe() {
   useEffect(() => {
     setMounted(true);
     
-    // Set initial dimensions based on screen size
+    // Set initial dimensions based on screen size (reduced for performance)
     const updateDimensions = () => {
-      const size = window.innerWidth < 768 ? 320 : window.innerWidth < 1024 ? 500 : 700;
+      const size = window.innerWidth < 768 ? 260 : window.innerWidth < 1024 ? 380 : 450;
       setDimensions({ width: size, height: size });
     };
     
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     
-    // Generate random arcs for cyber attacks
-    const N = 60;
+    // Generate random arcs (reduced count for mobile performance)
+    const N = 25;
     const arcs = [...Array(N).keys()].map(() => ({
       startLat: (Math.random() - 0.5) * 180,
       startLng: (Math.random() - 0.5) * 360,
@@ -66,7 +66,7 @@ export default function CyberGlobe() {
         ref={globeEl}
         width={dimensions.width}
         height={dimensions.height}
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
+        globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundColor="rgba(0,0,0,0)"
         arcsData={arcsData}

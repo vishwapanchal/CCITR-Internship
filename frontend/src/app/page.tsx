@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect } from "react";
 import CyberGlobe from "@/components/CyberGlobe";
+import KarnatakaScribbles from "@/components/KarnatakaScribbles";
 
 const ACTION_WORDS = ["Adversaries.", "Botnets.", "Ransomware.", "C2 Networks.", "Zero-Days."];
 
@@ -50,7 +51,10 @@ export default function LandingPage() {
       </div>
 
       {/* Hero Section */}
-      <section className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 lg:px-20 max-w-[1400px] mx-auto w-full relative z-10 min-h-[calc(100vh-80px)] text-center">
+      <section className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 lg:px-20 max-w-[1400px] mx-auto w-full relative z-10 min-h-[calc(100vh-80px)] text-center overflow-hidden">
+        
+        {/* Karnataka Theme Scribbles */}
+        <KarnatakaScribbles />
         <motion.div 
           variants={containerVariants}
           initial="hidden"
