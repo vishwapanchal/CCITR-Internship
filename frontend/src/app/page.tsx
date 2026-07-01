@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect } from "react";
 
-const ACTION_WORDS = ["Threats.", "Malware.", "Campaigns.", "Spyware."];
+const ACTION_WORDS = ["Adversaries.", "Botnets.", "Ransomware.", "C2 Networks.", "Zero-Days."];
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
@@ -57,7 +57,7 @@ export default function LandingPage() {
           className="flex flex-col items-center justify-center w-full"
         >
           <motion.h1 variants={itemVariants} className="font-display text-6xl md:text-8xl lg:text-[9rem] font-extrabold text-forensic-blue mb-8 tracking-tighter leading-[1.05] flex flex-col items-center">
-            <span>Deconstruct</span>
+            <span>Unmask</span>
             <span className="relative inline-block h-[1.1em] w-[300px] md:w-[600px] lg:w-[800px] overflow-visible mt-2">
               <AnimatePresence mode="popLayout">
                 <motion.span
