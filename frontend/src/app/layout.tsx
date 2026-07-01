@@ -4,7 +4,7 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/components/LenisProvider";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ShieldAlert, LogOut, User } from "lucide-react";
 import CoPilot from "@/components/CoPilot";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,20 +32,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, username, loadFromStorage, logout } = useAuth();
   const isLoginPage = pathname === "/login";
 
   useEffect(() => {
     loadFromStorage();
-  }, [loadFromStorage]);
+    // Simple client-side auth guard
+    const token = localStorage.getItem("apex_token");
+    if (!token && pathname !== "/" && pathname !== "/login") {
+      router.push("/");
+    }
+  }, [loadFromStorage, pathname, router]);
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/upload", label: "Upload" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/graph", label: "Graph Explorer" },
-    { href: "/copilot", label: "Co-Pilot" },
-    { href: "/reports", label: "Reports" },
+    ...(isAuthenticated ? [
+      { href: "/upload", label: "Upload" },
+      { href: "/dashboard", label: "Dashboard" },
+      { href: "/graph", label: "Graph Explorer" },
+      { href: "/copilot", label: "Co-Pilot" },
+      { href: "/reports", label: "Reports" },
+    ] : [])
   ];
 
   return (
