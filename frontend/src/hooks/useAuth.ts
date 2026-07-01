@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { loginAPI } from "@/services/api";
+import { loginAPI, signupAPI } from "@/services/api";
 
 interface AuthState {
   token: string | null;
@@ -11,6 +11,7 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   login: (username: string, password: string) => Promise<boolean>;
+  signup: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   loadFromStorage: () => void;
 }
@@ -30,6 +31,31 @@ export const useAuth = create<AuthState>((set) => ({
 
     if (error || !data) {
       set({ isLoading: false, error: error || "Login failed" });
+      return false;
+    }
+
+    // Store token
+    localStorage.setItem("apex_token", data.access_token);
+    localStorage.setItem("apex_username", username);
+
+    set({
+      token: data.access_token,
+      username,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+    });
+
+    return true;
+  },
+
+  signup: async (username: string, password: string) => {
+    set({ isLoading: true, error: null });
+
+    const { data, error } = await signupAPI(username, password);
+
+    if (error || !data) {
+      set({ isLoading: false, error: error || "Signup failed" });
       return false;
     }
 

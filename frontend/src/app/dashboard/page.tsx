@@ -6,18 +6,21 @@ import { useRouter } from "next/navigation";
 import { ActivitySquare, CheckCircle2, Search, Filter } from "lucide-react";
 import CaseCard from "@/components/CaseCard";
 import PhaseProgress from "@/components/PhaseProgress";
-import { MOCK_CASES, MOCK_ACTIVITY, MOCK_PHASE_STATUS_ANALYZING } from "@/services/mockData";
-import { getCases } from "@/services/api";
+import { MOCK_ACTIVITY, MOCK_PHASE_STATUS_ANALYZING } from "@/services/mockData";
+import { getCases, CaseResponse } from "@/services/api";
 
 export default function Dashboard() {
   const router = useRouter();
-  const [cases, setCases] = useState(MOCK_CASES);
+  const [cases, setCases] = useState<CaseResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Example of how we might load from API if available
   useEffect(() => {
-    // getCases().then(({ data }) => {
-    //   if (data && data.length > 0) setCases(data);
-    // });
+    getCases().then(({ data }) => {
+      if (data) {
+        setCases(data);
+      }
+      setIsLoading(false);
+    });
   }, []);
 
   const containerVariants: Variants = {

@@ -7,7 +7,8 @@ import { ShieldAlert } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error } = useAuth();
+  const { login, signup, isLoading, error } = useAuth();
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [localError, setLocalError] = useState("");
@@ -17,11 +18,19 @@ export default function LoginPage() {
     setLocalError("");
 
     if (!username || !password) {
-      setLocalError("Username and password are required");
+      setLocalError("Email and password are required");
       return;
     }
 
-    const success = await login(username, password);
+    if (!isLogin && !username.endsWith("@cyber.gov")) {
+      setLocalError("Only @cyber.gov emails are allowed for registration");
+      return;
+    }
+
+    const success = isLogin 
+      ? await login(username, password)
+      : await signup(username, password);
+      
     if (success) {
       router.push("/dashboard");
     }
@@ -31,12 +40,12 @@ export default function LoginPage() {
   function handleDemoLogin() {
     if (typeof window !== "undefined") {
       localStorage.setItem("apex_token", "demo_token");
-      localStorage.setItem("apex_username", "demo_officer");
+      localStorage.setItem("apex_username", "demo_officer@cyber.gov");
       localStorage.setItem("apex_role", "investigator");
     }
     useAuth.setState({
       token: "demo_token",
-      username: "demo_officer",
+      username: "demo_officer@cyber.gov",
       role: "investigator",
       isAuthenticated: true,
     });
@@ -59,16 +68,29 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <div className="bg-panel border border-border-subtle p-6">
-          <h2 className="font-display font-semibold text-lg mb-6">Investigator Login</h2>
+          <div className="flex gap-4 mb-6 border-b border-border-subtle pb-2">
+            <button 
+              className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${isLogin ? "border-b-2 border-forensic-blue text-forensic-blue" : "text-forensic-blue/50"}`}
+              onClick={() => { setIsLogin(true); setLocalError(""); }}
+            >
+              Sign In
+            </button>
+            <button 
+              className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${!isLogin ? "border-b-2 border-forensic-blue text-forensic-blue" : "text-forensic-blue/50"}`}
+              onClick={() => { setIsLogin(false); setLocalError(""); }}
+            >
+              Sign Up
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">USERNAME</label>
+              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">EMAIL (@cyber.gov)</label>
               <input
-                type="text"
+                type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter username"
+                placeholder="agent@cyber.gov"
                 className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
                 autoComplete="username"
               />
@@ -82,7 +104,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
-                autoComplete="current-password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
 
@@ -98,7 +120,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full bg-forensic-blue text-white py-2.5 font-medium text-sm hover:bg-forensic-blue/90 transition-colors disabled:opacity-50"
             >
-              {isLoading ? "Authenticating..." : "Sign In"}
+              {isLoading ? "Authenticating..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
           </form>
 

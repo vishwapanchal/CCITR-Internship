@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.routes import upload, auth, ws
+
 from app.models.session import engine
 from app.models.database import Base
 
@@ -16,16 +16,20 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Configure CORS for local development
+# Configure CORS to allow all origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://10.61.191.170:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+from app.api.routes import upload, auth, ws, cases, results
+
+app.include_router(cases.router, prefix=settings.API_V1_STR + "/cases", tags=["cases"])
 app.include_router(upload.router, prefix=settings.API_V1_STR + "/cases", tags=["cases"])
+app.include_router(results.router, prefix=settings.API_V1_STR + "/cases", tags=["results"])
 app.include_router(auth.router, prefix=settings.API_V1_STR + "/auth", tags=["auth"])
 app.include_router(ws.router, prefix=settings.API_V1_STR + "/copilot", tags=["websocket"])
 

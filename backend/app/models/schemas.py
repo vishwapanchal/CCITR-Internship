@@ -42,6 +42,15 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+from pydantic import validator
+
+class UserSignup(UserCreate):
+    @validator("username")
+    def validate_username(cls, v):
+        if not v.endswith("@cyber.gov"):
+            raise ValueError("Email must end with @cyber.gov")
+        return v
+
 class UserResponse(UserBase):
     id: int
     created_at: datetime

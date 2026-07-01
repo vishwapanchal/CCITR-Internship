@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import ThreatScore from "@/components/ThreatScore";
 import BehaviorTimeline from "@/components/BehaviorTimeline";
 import NetworkGraph from "@/components/NetworkGraph";
@@ -21,7 +21,7 @@ import {
   MOCK_PHASE_STATUS_ANALYZING,
   MOCK_REPORTS,
 } from "@/services/mockData";
-import { downloadReport, downloadEvidencePackage } from "@/services/api";
+import { downloadReport, downloadEvidencePackage, getCaseDetail } from "@/services/api";
 import { FileText, Download, AlertTriangle, Shield, Activity, Network, Bug, FileDown } from "lucide-react";
 
 const TABS = [
@@ -37,15 +37,42 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function CaseDetailClient({ caseId }: { caseId: string }) {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [caseData, setCaseData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [caseReports, setCaseReports] = useState<any[]>([]);
 
-  // Find case from mock data (or fallback to first case)
-  const caseData = useMemo(
-    () => MOCK_CASES.find((c) => c.id === caseId) || MOCK_CASES[0],
-    [caseId]
-  );
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      
+      const { data: detailData, error: detailError } = await getCaseDetail(caseId);
+      if (detailError || !detailData) {
+        setError(detailError || "Failed to load case details");
+        setIsLoading(false);
+        return;
+      }
+      
+      setCaseData(detailData);
+      
+      // Load mock reports for now, since we haven't implemented backend reports endpoint yet
+      setCaseReports(MOCK_REPORTS.filter((r) => r.case_id === detailData.id));
+      
+      setIsLoading(false);
+    }
+    
+    loadData();
+  }, [caseId]);
+
+  if (isLoading) {
+    return <div className="p-8 flex justify-center"><p className="font-mono text-forensic-blue">Loading case {caseId}...</p></div>;
+  }
+  
+  if (error || !caseData) {
+    return <div className="p-8 flex justify-center"><p className="font-mono text-red-600">{error || "Case not found"}</p></div>;
+  }
 
   const phaseStatus = caseData.status === "analyzing" ? MOCK_PHASE_STATUS_ANALYZING : MOCK_PHASE_STATUS;
-  const caseReports = MOCK_REPORTS.filter((r) => r.case_id === caseData.id);
 
   return (
     <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6">
