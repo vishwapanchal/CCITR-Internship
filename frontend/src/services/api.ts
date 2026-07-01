@@ -76,6 +76,8 @@ export interface CaseResponse {
   status: string;
   created_at: string;
   updated_at: string | null;
+  threat_score?: number;
+  verdict?: string;
 }
 
 export async function getCases() {

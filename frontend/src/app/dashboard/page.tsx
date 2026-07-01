@@ -38,7 +38,7 @@ export default function Dashboard() {
 
   const stats = {
     total: cases.length,
-    critical: cases.filter((c) => c.threat_score >= 75).length,
+    critical: cases.filter((c) => (c.threat_score || 0) >= 75).length,
     analyzing: cases.filter((c) => c.status === "analyzing").length,
     completed: cases.filter((c) => c.status === "completed").length,
   };
