@@ -78,6 +78,8 @@ export interface CaseResponse {
   updated_at: string | null;
   threat_score?: number;
   verdict?: string;
+  package_name?: string;
+  priority?: string;
 }
 
 export async function getCases() {

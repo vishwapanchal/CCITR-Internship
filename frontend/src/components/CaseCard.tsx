@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import type { MockCase } from "@/services/mockData";
+import type { CaseResponse } from "@/services/api";
 
 interface CaseCardProps {
-  caseData: MockCase;
+  caseData: CaseResponse;
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
@@ -38,8 +38,8 @@ export default function CaseCard({ caseData }: CaseCardProps) {
         <div className="flex items-center justify-between mb-2">
           <span className="font-mono text-xs font-semibold tracking-wider">{caseData.case_number}</span>
           <div className="flex items-center gap-2">
-            <span className={`text-xs font-mono ${priorityColors[caseData.priority] || ""}`}>
-              {caseData.priority.toUpperCase()}
+            <span className={`text-xs font-mono ${priorityColors[caseData.priority || "medium"]} `}>
+              {(caseData.priority || "medium").toUpperCase()}
             </span>
             <span className={`text-xs font-mono font-semibold px-2 py-0.5 ${statusStyle.bg} ${statusStyle.text}`}>
               {caseData.status.toUpperCase()}
@@ -49,12 +49,12 @@ export default function CaseCard({ caseData }: CaseCardProps) {
 
         {/* APK name */}
         <h3 className="font-medium text-sm mb-1 truncate">{caseData.apk_name}</h3>
-        <p className="text-xs text-forensic-blue/60 font-mono truncate mb-3">{caseData.package_name}</p>
+        <p className="text-xs text-forensic-blue/60 font-mono truncate mb-3">{caseData.package_name || "Unknown package"}</p>
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border-subtle/50">
-          {caseData.threat_score > 0 ? (
-            <span className={`text-sm font-bold font-mono ${getScoreColor(caseData.threat_score)}`}>
+          {(caseData.threat_score || 0) > 0 ? (
+            <span className={`text-sm font-bold font-mono ${getScoreColor(caseData.threat_score || 0)}`}>
               Score: {caseData.threat_score}/100
             </span>
           ) : (
