@@ -10,6 +10,7 @@ import CoPilot from "@/components/CoPilot";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import BackendStatus from "@/components/BackendStatus";
+import Footer from "@/components/Footer";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -178,6 +179,9 @@ export default function RootLayout({
           <div className="flex-1 flex flex-col relative">
             {children}
           </div>
+          
+          {/* Global Footer (Only on Landing Page) */}
+          {pathname === "/" && <Footer />}
           
           {/* Floating CoPilot (only show if logged in and not on full copilot page) */}
           {isAuthenticated && pathname !== "/copilot" && !isLoginPage && <CoPilot />}

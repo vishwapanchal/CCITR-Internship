@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Shield, Activity, Network } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const ACTION_WORDS = ["Threats.", "Malware.", "Campaigns.", "Spyware."];
