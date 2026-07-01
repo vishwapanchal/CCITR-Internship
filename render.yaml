@@ -10,19 +10,3 @@ services:
         sync: false
       - key: PYTHON_VERSION
         value: 3.11.0
-
-  - type: web
-    name: apex-x-frontend
-    env: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
-    envVars:
-      - key: NEXT_PUBLIC_API_URL
-        sync: false
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-        sync: false
-      - key: NODE_VERSION
-        value: 18.17.0
