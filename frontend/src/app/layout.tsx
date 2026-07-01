@@ -79,14 +79,6 @@ export default function RootLayout({
                 <span>APEX-X</span>
               </Link>
 
-              {/* Center Status Badge */}
-              <div className="hidden lg:flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="flex items-center gap-2 bg-critical/5 text-critical border border-critical/20 px-4 py-1.5 rounded-full text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_10px_rgba(211,47,47,0.1)]">
-                  <span className="w-2 h-2 rounded-full bg-critical animate-pulse shadow-[0_0_8px_rgba(211,47,47,0.8)]"></span>
-                  GLOBAL THREAT LEVEL: ELEVATED
-                </div>
-              </div>
-              
               {/* Desktop Nav */}
               <div className="hidden md:flex space-x-6 text-sm font-medium">
                 {navLinks.map((link) => (
