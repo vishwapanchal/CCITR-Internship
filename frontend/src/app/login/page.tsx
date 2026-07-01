@@ -62,7 +62,7 @@ export default function LoginPage() {
         </div>
 
         {/* Login Form */}
-        <div className="bg-panel border border-border-subtle p-6">
+        <div className="bg-panel border border-border-subtle p-6 rounded-2xl shadow-xl">
           <div className="flex gap-4 mb-6 border-b border-border-subtle pb-2">
             <button 
               className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${isLogin ? "border-b-2 border-forensic-blue text-forensic-blue" : "text-forensic-blue/50"}`}
@@ -86,7 +86,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="agent@cyber.gov"
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
+                className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 rounded-xl"
                 autoComplete="username"
               />
             </div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
+                className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 rounded-xl"
                 autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
@@ -111,7 +111,7 @@ export default function LoginPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
-                  className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors"
+                  className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors rounded-xl"
                   autoComplete="new-password"
                 />
               </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-forensic-blue text-white py-2.5 font-medium text-sm hover:bg-forensic-blue/90 transition-colors disabled:opacity-50"
+              className="w-full bg-forensic-blue text-white py-3 font-medium text-sm hover:bg-forensic-blue/90 transition-colors disabled:opacity-50 rounded-xl mt-2"
             >
               {isLoading ? "Authenticating..." : isLogin ? "Sign In" : "Sign Up"}
             </button>

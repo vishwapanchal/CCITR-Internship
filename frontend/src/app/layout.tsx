@@ -113,7 +113,7 @@ export default function RootLayout({
                 ) : (
                   <Link 
                     href="/login" 
-                    className="text-xs font-mono font-semibold bg-canvas border border-border-subtle px-3 py-1.5 hover:bg-border-subtle/30 transition-colors"
+                    className="text-xs font-mono font-semibold bg-canvas border border-border-subtle px-4 py-2 hover:bg-border-subtle/30 transition-colors rounded-full"
                   >
                     LOGIN
                   </Link>
@@ -155,7 +155,7 @@ export default function RootLayout({
                         </div>
                         <button 
                           onClick={() => logout()}
-                          className="flex items-center gap-2 text-sm font-semibold bg-red-500/10 text-critical border border-red-500/20 p-3 hover:bg-red-500/20 transition-colors w-full justify-center"
+                          className="flex items-center gap-2 text-sm font-semibold bg-red-500/10 text-critical border border-red-500/20 p-3 hover:bg-red-500/20 transition-colors w-full justify-center rounded-xl"
                         >
                           <LogOut className="w-4 h-4" />
                           LOGOUT
@@ -164,7 +164,7 @@ export default function RootLayout({
                     ) : (
                       <Link 
                         href="/login" 
-                        className="flex items-center justify-center text-sm font-mono font-semibold bg-canvas border border-border-subtle p-3 hover:bg-border-subtle/30 transition-colors"
+                        className="flex items-center justify-center text-sm font-mono font-semibold bg-canvas border border-border-subtle p-3 hover:bg-border-subtle/30 transition-colors rounded-full"
                       >
                         LOGIN
                       </Link>

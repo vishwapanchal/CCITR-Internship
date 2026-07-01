@@ -81,14 +81,14 @@ export default function LandingPage() {
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row items-center gap-6 w-full sm:w-auto">
             <Link 
               href={isAuthenticated ? "/upload" : "/login"} 
-              className="group flex items-center justify-center gap-3 bg-forensic-blue text-white px-10 py-5 font-semibold text-lg hover:bg-forensic-blue/90 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 rounded-sm w-full sm:w-auto"
+              className="group flex items-center justify-center gap-3 bg-forensic-blue text-white px-10 py-5 font-semibold text-lg hover:bg-forensic-blue/90 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-0.5 rounded-full w-full sm:w-auto"
             >
               Launch Investigation
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
             </Link>
             <Link 
               href={isAuthenticated ? "/dashboard" : "/login"} 
-              className="flex items-center justify-center gap-3 bg-canvas border-2 border-border-subtle text-forensic-blue px-10 py-5 font-semibold text-lg hover:bg-border-subtle/40 transition-all rounded-sm w-full sm:w-auto"
+              className="flex items-center justify-center gap-3 bg-canvas border-2 border-border-subtle text-forensic-blue px-10 py-5 font-semibold text-lg hover:bg-border-subtle/40 transition-all rounded-full w-full sm:w-auto"
             >
               Access Dashboard
             </Link>
