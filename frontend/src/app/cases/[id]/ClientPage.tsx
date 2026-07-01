@@ -78,9 +78,9 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
     <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6">
       {/* Case Header */}
       <div className="bg-panel border border-border-subtle p-4 mb-4">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
               <span className="font-mono text-sm font-bold tracking-wider">{caseData.case_number}</span>
               <span
                 className={`text-xs font-mono font-semibold px-2 py-0.5 ${
@@ -94,13 +94,13 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 {caseData.status.toUpperCase()}
               </span>
             </div>
-            <h1 className="font-display text-xl font-bold mb-1">{caseData.apk_name}</h1>
-            <p className="text-xs font-mono text-forensic-blue/60">{caseData.package_name}</p>
+            <h1 className="font-display text-xl font-bold mb-1 break-words">{caseData.apk_name}</h1>
+            <p className="text-xs font-mono text-forensic-blue/60 break-all">{caseData.package_name}</p>
             <p className="text-xs text-forensic-blue/50 mt-1">{caseData.description}</p>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right w-full sm:w-auto">
             <span className="text-xs font-mono text-forensic-blue/50 block">SHA-256</span>
-            <span className="text-xs font-mono text-forensic-blue/70 break-all max-w-[280px] block">
+            <span className="text-xs font-mono text-forensic-blue/70 break-all sm:max-w-[280px] block">
               {caseData.apk_hash}
             </span>
           </div>
@@ -253,91 +253,95 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
             </div>
 
             {/* API Traces */}
-            <div className="bg-panel border border-border-subtle p-4">
+            <div className="bg-panel border border-border-subtle p-4 overflow-hidden">
               <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
                 Suspicious API Calls
               </h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border-subtle text-left">
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">API</th>
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Class</th>
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Risk</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { api: "DexClassLoader()", cls: "dalvik.system", risk: "CRITICAL" },
-                    { api: "getLastKnownLocation()", cls: "android.location.LocationManager", risk: "HIGH" },
-                    { api: "query(content://sms)", cls: "android.content.ContentResolver", risk: "CRITICAL" },
-                    { api: "sendTextMessage()", cls: "android.telephony.SmsManager", risk: "CRITICAL" },
-                    { api: "open(CAMERA_FACING_FRONT)", cls: "android.hardware.Camera", risk: "HIGH" },
-                    { api: "setActiveAdmin()", cls: "android.app.admin.DevicePolicyManager", risk: "CRITICAL" },
-                    { api: "getInstance(AES/CBC)", cls: "javax.crypto.Cipher", risk: "MEDIUM" },
-                  ].map((row, idx) => (
-                    <tr key={idx} className="border-b border-border-subtle/50">
-                      <td className="py-2 font-mono text-xs">{row.api}</td>
-                      <td className="py-2 text-xs text-forensic-blue/60 font-mono">{row.cls}</td>
-                      <td className="py-2">
-                        <span
-                          className={`text-xs font-mono font-semibold px-2 py-0.5 ${
-                            row.risk === "CRITICAL"
-                              ? "bg-red-100 text-red-700"
-                              : row.risk === "HIGH"
-                              ? "bg-orange-100 text-orange-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {row.risk}
-                        </span>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-border-subtle text-left">
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">API</th>
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Class</th>
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Risk</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {[
+                      { api: "DexClassLoader()", cls: "dalvik.system", risk: "CRITICAL" },
+                      { api: "getLastKnownLocation()", cls: "android.location.LocationManager", risk: "HIGH" },
+                      { api: "query(content://sms)", cls: "android.content.ContentResolver", risk: "CRITICAL" },
+                      { api: "sendTextMessage()", cls: "android.telephony.SmsManager", risk: "CRITICAL" },
+                      { api: "open(CAMERA_FACING_FRONT)", cls: "android.hardware.Camera", risk: "HIGH" },
+                      { api: "setActiveAdmin()", cls: "android.app.admin.DevicePolicyManager", risk: "CRITICAL" },
+                      { api: "getInstance(AES/CBC)", cls: "javax.crypto.Cipher", risk: "MEDIUM" },
+                    ].map((row, idx) => (
+                      <tr key={idx} className="border-b border-border-subtle/50">
+                        <td className="py-2 font-mono text-xs">{row.api}</td>
+                        <td className="py-2 text-xs text-forensic-blue/60 font-mono break-all">{row.cls}</td>
+                        <td className="py-2">
+                          <span
+                            className={`text-xs font-mono font-semibold px-2 py-0.5 ${
+                              row.risk === "CRITICAL"
+                                ? "bg-red-100 text-red-700"
+                                : row.risk === "HIGH"
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
+                            {row.risk}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Network Activity */}
-            <div className="bg-panel border border-border-subtle p-4">
+            <div className="bg-panel border border-border-subtle p-4 overflow-hidden">
               <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
                 Network Activity
               </h3>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border-subtle text-left">
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Destination</th>
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Protocol</th>
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Port</th>
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Data Size</th>
-                    <th className="pb-2 font-mono text-xs text-forensic-blue/60">Direction</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { dest: "c2.malware-ops.ru", proto: "HTTPS", port: "443", size: "12 KB", dir: "OUTBOUND" },
-                    { dest: "91.234.99.18", proto: "HTTPS", port: "443", size: "8 KB", dir: "OUTBOUND" },
-                    { dest: "update-service.ddns.net", proto: "DNS", port: "53", size: "128 B", dir: "OUTBOUND" },
-                    { dest: "cdn-payload.s3.amazonaws.com", proto: "HTTPS", port: "443", size: "45 KB", dir: "INBOUND" },
-                    { dest: "185.220.101.42", proto: "HTTPS", port: "443", size: "256 B", dir: "OUTBOUND" },
-                  ].map((row, idx) => (
-                    <tr key={idx} className="border-b border-border-subtle/50">
-                      <td className="py-2 font-mono text-xs">{row.dest}</td>
-                      <td className="py-2 text-xs font-mono">{row.proto}</td>
-                      <td className="py-2 text-xs font-mono">{row.port}</td>
-                      <td className="py-2 text-xs font-mono">{row.size}</td>
-                      <td className="py-2">
-                        <span
-                          className={`text-xs font-mono font-semibold ${
-                            row.dir === "OUTBOUND" ? "text-red-600" : "text-blue-600"
-                          }`}
-                        >
-                          {row.dir}
-                        </span>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-border-subtle text-left">
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Destination</th>
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Protocol</th>
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Port</th>
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Data Size</th>
+                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Direction</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {[
+                      { dest: "c2.malware-ops.ru", proto: "HTTPS", port: "443", size: "12 KB", dir: "OUTBOUND" },
+                      { dest: "91.234.99.18", proto: "HTTPS", port: "443", size: "8 KB", dir: "OUTBOUND" },
+                      { dest: "update-service.ddns.net", proto: "DNS", port: "53", size: "128 B", dir: "OUTBOUND" },
+                      { dest: "cdn-payload.s3.amazonaws.com", proto: "HTTPS", port: "443", size: "45 KB", dir: "INBOUND" },
+                      { dest: "185.220.101.42", proto: "HTTPS", port: "443", size: "256 B", dir: "OUTBOUND" },
+                    ].map((row, idx) => (
+                      <tr key={idx} className="border-b border-border-subtle/50">
+                        <td className="py-2 font-mono text-xs">{row.dest}</td>
+                        <td className="py-2 text-xs font-mono">{row.proto}</td>
+                        <td className="py-2 text-xs font-mono">{row.port}</td>
+                        <td className="py-2 text-xs font-mono">{row.size}</td>
+                        <td className="py-2">
+                          <span
+                            className={`text-xs font-mono font-semibold ${
+                              row.dir === "OUTBOUND" ? "text-red-600" : "text-blue-600"
+                            }`}
+                          >
+                            {row.dir}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -458,7 +462,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
                 Section 65B Evidence Package
               </h3>
-              <div className="flex items-center justify-between p-3 border border-border-subtle">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-border-subtle gap-3">
                 <div>
                   <span className="text-sm font-medium">Complete Evidence Package</span>
                   <p className="text-xs font-mono text-forensic-blue/50 mt-0.5">
@@ -467,7 +471,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 </div>
                 <button
                   onClick={() => downloadEvidencePackage(caseData.id)}
-                  className="flex items-center gap-1 text-xs font-mono px-3 py-1.5 bg-forensic-blue text-white hover:bg-forensic-blue/90 transition-colors"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1 text-xs font-mono px-3 py-2 bg-forensic-blue text-white hover:bg-forensic-blue/90 transition-colors shrink-0"
                 >
                   <Download className="w-3 h-3" />
                   Download ZIP

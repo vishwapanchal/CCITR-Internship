@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,31 +38,24 @@ export default function LoginPage() {
     }
   }
 
-  // Allow bypassing login for demo/testing when backend is not running
-  function handleDemoLogin() {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("apex_token", "demo_token");
-      localStorage.setItem("apex_username", "demo_officer@cyber.gov");
-      localStorage.setItem("apex_role", "investigator");
-    }
-    useAuth.setState({
-      token: "demo_token",
-      username: "demo_officer@cyber.gov",
-      role: "investigator",
-      isAuthenticated: true,
-    });
-    router.push("/dashboard");
-  }
+
 
   return (
-    <main className="flex-1 flex items-center justify-center p-8">
+    <main className="flex-1 flex items-center justify-center p-4 md:p-8">
       <div className="w-full max-w-md">
+        <div className="mb-6 flex justify-start">
+          <Link href="/" className="flex items-center text-xs font-mono text-forensic-blue/60 hover:text-forensic-blue transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            BACK TO HOME
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <Link href="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <ShieldAlert className="w-10 h-10 text-critical" />
             <h1 className="font-display text-3xl font-bold text-forensic-blue">APEX-X</h1>
-          </div>
+          </Link>
           <p className="text-sm text-forensic-blue/60">
             Agentic APK Profiling, Exploitation Intelligence & Threat Attribution
           </p>
@@ -152,15 +146,7 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Demo login */}
-          <div className="mt-4 pt-4 border-t border-border-subtle">
-            <button
-              onClick={handleDemoLogin}
-              className="w-full bg-canvas border border-border-subtle py-2 text-xs font-mono text-forensic-blue/60 hover:border-forensic-blue/30 transition-colors"
-            >
-              DEMO LOGIN (Skip Authentication)
-            </button>
-          </div>
+
         </div>
 
         <p className="text-center text-xs text-forensic-blue/40 mt-4 font-mono">

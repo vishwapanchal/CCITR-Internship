@@ -45,21 +45,21 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      <header className="flex items-center justify-between border-b border-border-subtle pb-6">
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-border-subtle pb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold tracking-wide text-forensic-blue flex items-center">
-            <ActivitySquare className="mr-3 w-8 h-8 text-critical" />
-            INVESTIGATOR DASHBOARD
+          <h1 className="text-2xl md:text-3xl font-display font-bold tracking-wide text-forensic-blue flex items-center">
+            <ActivitySquare className="mr-3 w-6 h-6 md:w-8 md:h-8 text-critical shrink-0" />
+            <span className="truncate">INVESTIGATOR DASHBOARD</span>
           </h1>
-          <p className="font-mono text-sm text-forensic-blue/60 mt-2 flex items-center">
-            <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
+          <p className="font-mono text-xs md:text-sm text-forensic-blue/60 mt-2 flex items-center">
+            <CheckCircle2 className="w-4 h-4 mr-2 text-success shrink-0" />
             System nominal. {stats.analyzing} active analysis tasks.
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 w-full md:w-auto">
           <button 
             onClick={() => router.push("/")}
-            className="bg-forensic-blue text-white px-6 py-2.5 font-medium text-sm hover:bg-forensic-blue/90 transition-colors"
+            className="w-full md:w-auto bg-forensic-blue text-white px-6 py-2.5 font-medium text-sm hover:bg-forensic-blue/90 transition-colors"
           >
             + New Upload
           </button>
@@ -127,18 +127,18 @@ export default function Dashboard() {
 
         {/* Middle Column: Case List */}
         <motion.div variants={itemVariants} className="lg:col-span-2 bg-panel border border-border-subtle p-4 flex flex-col">
-          <div className="flex justify-between items-center mb-4 border-b border-border-subtle pb-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b border-border-subtle pb-2 gap-3">
             <h3 className="font-display font-semibold text-sm">Case Inventory</h3>
-            <div className="flex gap-2">
-              <div className="relative">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="w-4 h-4 absolute left-2.5 top-2 text-forensic-blue/40" />
                 <input 
                   type="text" 
                   placeholder="Search cases..." 
-                  className="bg-canvas border border-border-subtle pl-8 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-forensic-blue/50"
+                  className="w-full bg-canvas border border-border-subtle pl-8 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-forensic-blue/50"
                 />
               </div>
-              <button className="bg-canvas border border-border-subtle p-1.5 hover:bg-border-subtle/50 transition-colors">
+              <button className="bg-canvas border border-border-subtle p-1.5 hover:bg-border-subtle/50 transition-colors shrink-0">
                 <Filter className="w-4 h-4" />
               </button>
             </div>

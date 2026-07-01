@@ -76,9 +76,9 @@ export default function CoPilotPage() {
   }, [messages]);
 
   return (
-    <main className="flex-1 flex max-w-7xl mx-auto w-full p-6 gap-6 h-[calc(100vh-70px)]">
+    <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-4 md:p-6 gap-4 md:gap-6 h-[calc(100vh-70px)]">
       {/* Sidebar: Context & Suggestions */}
-      <div className="w-80 flex flex-col gap-4">
+      <div className="w-full md:w-80 flex md:flex-col gap-4 shrink-0">
         {/* Case Selector */}
         <div className="bg-panel border border-border-subtle p-4">
           <label className="block text-xs font-mono text-forensic-blue/60 mb-2">ACTIVE CONTEXT</label>
@@ -102,7 +102,7 @@ export default function CoPilotPage() {
         </div>
 
         {/* Suggested Queries */}
-        <div className="bg-panel border border-border-subtle p-4 flex-1 overflow-y-auto">
+        <div className="bg-panel border border-border-subtle p-4 flex-1 overflow-y-auto hidden md:block">
           <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
             Suggested Queries
           </h3>
