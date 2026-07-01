@@ -7,9 +7,12 @@ import { ShieldAlert } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error } = useAuth();
+  const { login, register, isLoading, error } = useAuth();
+  
+  const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [localError, setLocalError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -21,7 +24,18 @@ export default function LoginPage() {
       return;
     }
 
-    const success = await login(username, password);
+    if (!isLogin && password !== confirmPassword) {
+      setLocalError("Passwords do not match");
+      return;
+    }
+
+    let success = false;
+    if (isLogin) {
+      success = await login(username, password);
+    } else {
+      success = await register(username, password);
+    }
+    
     if (success) {
       router.push("/dashboard");
     }
@@ -57,9 +71,11 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-panel border border-border-subtle p-6">
-          <h2 className="font-display font-semibold text-lg mb-6">Investigator Login</h2>
+        {/* Auth Form */}
+        <div className="bg-panel border border-border-subtle p-6 shadow-sm">
+          <h2 className="font-display font-semibold text-lg mb-6">
+            {isLogin ? "Investigator Login" : "Investigator Registration"}
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -69,7 +85,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter username"
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
+                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors"
                 autoComplete="username"
               />
             </div>
@@ -81,10 +97,24 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
-                autoComplete="current-password"
+                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors"
+                autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
+            
+            {!isLogin && (
+              <div>
+                <label className="block text-xs font-mono text-forensic-blue/60 mb-1">CONFIRM PASSWORD</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                  className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors"
+                  autoComplete="new-password"
+                />
+              </div>
+            )}
 
             {/* Error display */}
             {(error || localError) && (
@@ -98,9 +128,22 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full bg-forensic-blue text-white py-2.5 font-medium text-sm hover:bg-forensic-blue/90 transition-colors disabled:opacity-50"
             >
-              {isLoading ? "Authenticating..." : "Sign In"}
+              {isLoading ? (isLogin ? "Authenticating..." : "Registering...") : (isLogin ? "Sign In" : "Sign Up")}
             </button>
           </form>
+
+          {/* Toggle Mode */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setLocalError("");
+              }}
+              className="text-xs text-forensic-blue/70 hover:text-forensic-blue font-medium transition-colors"
+            >
+              {isLogin ? "Need an account? Sign Up" : "Already have an account? Sign In"}
+            </button>
+          </div>
 
           {/* Demo login */}
           <div className="mt-4 pt-4 border-t border-border-subtle">
@@ -120,3 +163,4 @@ export default function LoginPage() {
     </main>
   );
 }
+

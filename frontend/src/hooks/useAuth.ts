@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { loginAPI } from "@/services/api";
+import { loginAPI, registerAPI } from "@/services/api";
 
 interface AuthState {
   token: string | null;
@@ -11,11 +11,12 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   login: (username: string, password: string) => Promise<boolean>;
+  register: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   loadFromStorage: () => void;
 }
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   token: null,
   username: null,
   role: null,
@@ -46,6 +47,28 @@ export const useAuth = create<AuthState>((set) => ({
     });
 
     return true;
+  },
+
+  register: async (username, password) => {
+    set({ isLoading: true, error: null });
+    const { data, error } = await registerAPI(username, password);
+
+    if (error) {
+      let parsedError = error;
+      try {
+        parsedError = JSON.parse(error).detail || error;
+      } catch {}
+      set({ error: parsedError || "Registration failed", isLoading: false });
+      return false;
+    }
+
+    if (data) {
+      // Auto login after successful registration
+      return get().login(username, password);
+    }
+
+    set({ error: "Registration failed", isLoading: false });
+    return false;
   },
 
   logout: () => {

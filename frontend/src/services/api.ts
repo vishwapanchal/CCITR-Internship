@@ -59,6 +59,13 @@ export async function loginAPI(username: string, password: string) {
   });
 }
 
+export async function registerAPI(username: string, password: string) {
+  return apiFetch<{ id: number; username: string; role: string; created_at: string }>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ username, password, role: "investigator" }),
+  });
+}
+
 // ---- Cases ----
 
 export interface CaseResponse {
