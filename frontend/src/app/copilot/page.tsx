@@ -17,7 +17,7 @@ export default function CoPilotPage() {
   const [selectedCase, setSelectedCase] = useState(MOCK_CASES[0].id);
 
   // In a real app, this would connect to the actual backend websocket
-  const wsUrl = `ws://10.61.191.252:8080/api/v1/copilot/${selectedCase}`;
+  const wsUrl = `wss://apex-x-backend.onrender.com/api/v1/copilot/${selectedCase}`;
   const { sendMessage, isConnected } = useWebSocket({
     url: wsUrl,
     onMessage: (data: any) => {
