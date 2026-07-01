@@ -73,11 +73,19 @@ export default function RootLayout({
         <LenisProvider>
           {/* Navigation */}
           {!isLoginPage && (
-            <nav className="bg-panel border-b border-border-subtle sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-4">
+            <nav className="bg-panel/80 backdrop-blur-md border-b border-border-subtle border-t-[3px] border-t-forensic-blue sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-4 shadow-sm">
               <Link href="/" className="flex items-center space-x-2 font-display font-bold text-xl tracking-tight text-forensic-blue z-50">
                 <ShieldAlert className="w-6 h-6 text-critical" />
                 <span>APEX-X</span>
               </Link>
+
+              {/* Center Status Badge */}
+              <div className="hidden lg:flex items-center gap-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                <div className="flex items-center gap-2 bg-critical/5 text-critical border border-critical/20 px-4 py-1.5 rounded-full text-xs font-mono font-bold tracking-widest uppercase shadow-[0_0_10px_rgba(211,47,47,0.1)]">
+                  <span className="w-2 h-2 rounded-full bg-critical animate-pulse shadow-[0_0_8px_rgba(211,47,47,0.8)]"></span>
+                  GLOBAL THREAT LEVEL: ELEVATED
+                </div>
+              </div>
               
               {/* Desktop Nav */}
               <div className="hidden md:flex space-x-6 text-sm font-medium">

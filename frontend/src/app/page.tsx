@@ -61,11 +61,11 @@ export default function LandingPage() {
           animate="show"
           className="flex flex-col items-center justify-center w-full"
         >
-          <motion.div variants={itemVariants} className="w-full flex justify-center mb-4 relative z-20">
+          <motion.div variants={itemVariants} className="w-full flex justify-center mb-10 relative z-20">
             <CyberGlobe />
           </motion.div>
           
-          <motion.h1 variants={itemVariants} className="font-display text-4xl md:text-6xl font-extrabold text-forensic-blue mb-6 tracking-tighter mt-[-40px] md:mt-[-80px] relative z-10 pointer-events-none">
+          <motion.h1 variants={itemVariants} className="font-display text-4xl md:text-6xl font-extrabold text-forensic-blue mb-6 tracking-tighter relative z-10">
             Global Threat Intelligence
           </motion.h1>
           
