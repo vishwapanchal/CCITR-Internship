@@ -1,230 +1,71 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { UploadCloud, File, AlertCircle, CheckCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
-import { uploadAPK } from "@/services/api";
-import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
+import { ShieldAlert, ArrowRight, Shield, Activity, Network } from "lucide-react";
 
-export default function IntakePage() {
-  const router = useRouter();
-  const { isAuthenticated } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [isDragging, setIsDragging] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-
-  const [metadata, setMetadata] = useState({
-    description: "",
-    priority: "medium",
-  });
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      validateAndSetFile(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      validateAndSetFile(e.target.files[0]);
-    }
-  };
-
-  const validateAndSetFile = (selectedFile: File) => {
-    setError(null);
-    if (!selectedFile.name.toLowerCase().endsWith(".apk")) {
-      setError("Invalid file type. Only .apk files are accepted.");
-      return;
-    }
-    if (selectedFile.size > 200 * 1024 * 1024) { // 200MB limit
-      setError("File is too large. Maximum size is 200MB.");
-      return;
-    }
-    setFile(selectedFile);
-  };
-
-  const startScan = async () => {
-    if (!file) return;
-
-    // Optional: force login before upload in a real app
-    // if (!isAuthenticated) {
-    //   router.push("/login");
-    //   return;
-    // }
-
-    setIsScanning(true);
-    setError(null);
-    setProgress(0);
-
-    // Simulate progress if backend is down, or use real progress
-    const progressInterval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 90) return 90;
-        return p + 10;
-      });
-    }, 500);
-
-    try {
-      // In a real app, we'd send metadata too
-      const { data, error } = await uploadAPK(file, (p) => setProgress(p));
-      
-      clearInterval(progressInterval);
-      setProgress(100);
-
-      setTimeout(() => {
-        if (data && data.id) {
-          router.push(`/cases/${data.id}`);
-        } else {
-          // If backend failed, use a mock ID for demo purposes
-          console.warn("Upload API failed, simulating success for demo:", error);
-          router.push(`/cases/c3d4e5f6-a7b8-9012-cdef-123456789012`); 
-        }
-      }, 1000);
-
-    } catch (err) {
-      clearInterval(progressInterval);
-      setIsScanning(false);
-      setError("Upload failed. Please check backend connection.");
-    }
-  };
-
+export default function LandingPage() {
   return (
-    <main className="flex-1 flex flex-col items-center justify-center p-8 w-full max-w-4xl mx-auto">
-      
-      <div className="text-center mb-8">
-        <h1 className="font-display text-3xl font-bold text-forensic-blue mb-2">New Investigation</h1>
-        <p className="text-forensic-blue/70">Upload a suspicious APK for full-spectrum analysis.</p>
-      </div>
-
-      <div className="w-full max-w-2xl bg-panel border border-border-subtle p-6 flex flex-col gap-6 shadow-sm">
+    <main className="flex-1 flex flex-col min-h-0 bg-canvas">
+      {/* Hero Section */}
+      <section className="flex-1 flex flex-col items-center justify-center p-8 max-w-5xl mx-auto w-full text-center">
+        <div className="inline-flex items-center justify-center gap-2 mb-6 p-4 bg-panel border border-border-subtle rounded-full shadow-sm">
+          <ShieldAlert className="w-8 h-8 text-critical" />
+          <h1 className="font-display text-2xl font-bold text-forensic-blue tracking-wider">APEX-X</h1>
+        </div>
         
-        {/* Drop Zone */}
-        <motion.div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onClick={() => !isScanning && !file && fileInputRef.current?.click()}
-          className={`w-full h-64 border-2 border-dashed flex flex-col items-center justify-center p-6 transition-colors ${
-            isScanning ? "border-border-subtle bg-canvas opacity-50" :
-            isDragging ? "border-forensic-blue bg-forensic-blue/5" : 
-            file ? "border-success bg-green-50/50" :
-            "border-border-subtle bg-canvas hover:border-forensic-blue/50 cursor-pointer"
-          }`}
-        >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange}
-            accept=".apk"
-            className="hidden" 
-          />
+        <h2 className="font-display text-4xl md:text-6xl font-extrabold text-forensic-blue mb-6 tracking-tight">
+          Agentic APK Profiling &<br />Threat Attribution
+        </h2>
+        
+        <p className="text-lg md:text-xl text-forensic-blue/70 max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
+          A powerful forensic intelligence platform for analyzing Android malware, identifying C2 infrastructure, and generating Section 65B compliant court evidence.
+        </p>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link 
+            href="/upload" 
+            className="flex items-center gap-2 bg-forensic-blue text-white px-8 py-3.5 font-semibold hover:bg-forensic-blue/90 transition-colors shadow-sm"
+          >
+            Start Investigation
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+          <Link 
+            href="/dashboard" 
+            className="flex items-center gap-2 bg-canvas border border-border-subtle text-forensic-blue px-8 py-3.5 font-semibold hover:bg-border-subtle/30 transition-colors"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
+      </section>
 
-          {isScanning ? (
-            <div className="flex flex-col items-center space-y-6 w-full max-w-xs">
-              <div className="animate-spin w-10 h-10 border-4 border-forensic-blue border-t-transparent rounded-full" />
-              <div className="w-full bg-border-subtle h-2 overflow-hidden">
-                <div 
-                  className="bg-forensic-blue h-full transition-all duration-300 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <p className="font-mono text-sm text-forensic-blue font-semibold tracking-wider">
-                UPLOADING... {progress}%
-              </p>
-            </div>
-          ) : file ? (
-            <div className="flex flex-col items-center text-center">
-              <File className="w-16 h-16 text-success mb-4" />
-              <p className="font-mono font-bold text-lg mb-1 break-all max-w-md">{file.name}</p>
-              <p className="text-xs text-forensic-blue/60 mb-6 font-mono">
-                {(file.size / (1024 * 1024)).toFixed(2)} MB
-              </p>
-              <button 
-                onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                className="text-xs font-mono text-red-600 hover:underline"
-              >
-                Remove / Select different file
-              </button>
-            </div>
-          ) : (
-            <>
-              <UploadCloud className={`w-12 h-12 mb-4 ${isDragging ? "text-forensic-blue" : "text-forensic-blue/40"}`} />
-              <h2 className="font-semibold text-base text-forensic-blue mb-1">
-                Drag & Drop APK File
-              </h2>
-              <p className="text-xs text-forensic-blue/60 mb-6">
-                or click to browse local files (Max 200MB)
-              </p>
-              <div className="bg-forensic-blue text-white px-6 py-2 font-medium text-sm">
-                Select File
-              </div>
-            </>
-          )}
-        </motion.div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 p-3 flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-            <p className="text-xs font-mono text-red-700">{error}</p>
+      {/* Features Section */}
+      <section className="border-t border-border-subtle bg-panel py-16 px-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="p-6 border border-border-subtle bg-canvas">
+            <Shield className="w-10 h-10 text-forensic-blue mb-4" />
+            <h3 className="font-display font-semibold text-lg mb-2">Static & Dynamic Analysis</h3>
+            <p className="text-sm text-forensic-blue/70 leading-relaxed">
+              Decompile DEX files, analyze AndroidManifest permissions, and monitor behavioral events in a sandboxed environment to catch evasion techniques.
+            </p>
           </div>
-        )}
-
-        {/* Metadata Form */}
-        {file && !isScanning && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">CASE DESCRIPTION (OPTIONAL)</label>
-              <input
-                type="text"
-                value={metadata.description}
-                onChange={(e) => setMetadata({ ...metadata, description: e.target.value })}
-                placeholder="Brief context about how this APK was found..."
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:border-forensic-blue/50"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">PRIORITY</label>
-              <select
-                value={metadata.priority}
-                onChange={(e) => setMetadata({ ...metadata, priority: e.target.value })}
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:border-forensic-blue/50"
-              >
-                <option value="low">Low - Routine Analysis</option>
-                <option value="medium">Medium - Suspicious Activity</option>
-                <option value="high">High - Active Incident</option>
-                <option value="critical">Critical - Priority Intelligence Requirement</option>
-              </select>
-            </div>
-
-            <button
-              onClick={startScan}
-              className="w-full bg-forensic-blue text-white py-3 font-semibold text-sm hover:bg-forensic-blue/90 transition-colors flex items-center justify-center gap-2"
-            >
-              <CheckCircle className="w-4 h-4" />
-              BEGIN ANALYSIS
-            </button>
+          
+          <div className="p-6 border border-border-subtle bg-canvas">
+            <Network className="w-10 h-10 text-forensic-blue mb-4" />
+            <h3 className="font-display font-semibold text-lg mb-2">C2 Graph Explorer</h3>
+            <p className="text-sm text-forensic-blue/70 leading-relaxed">
+              Visualize threat infrastructure using React Flow. Connect the dots between IPs, domains, and known threat actor campaigns.
+            </p>
           </div>
-        )}
-      </div>
-      
+          
+          <div className="p-6 border border-border-subtle bg-canvas">
+            <Activity className="w-10 h-10 text-forensic-blue mb-4" />
+            <h3 className="font-display font-semibold text-lg mb-2">Forensic Reporting</h3>
+            <p className="text-sm text-forensic-blue/70 leading-relaxed">
+              Automatically generate multilingual PDF reports and Section 65B compliant evidence packages signed with HMAC algorithms.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

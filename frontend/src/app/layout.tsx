@@ -39,7 +39,8 @@ export default function RootLayout({
   }, [loadFromStorage]);
 
   const navLinks = [
-    { href: "/", label: "Upload" },
+    { href: "/", label: "Home" },
+    { href: "/upload", label: "Upload" },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/graph", label: "Graph Explorer" },
     { href: "/copilot", label: "Co-Pilot" },
