@@ -5,6 +5,7 @@ import { ArrowRight, Shield, Activity, Network } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useState, useEffect } from "react";
+import CyberGlobe from "@/components/CyberGlobe";
 
 const ACTION_WORDS = ["Adversaries.", "Botnets.", "Ransomware.", "C2 Networks.", "Zero-Days."];
 
@@ -56,22 +57,12 @@ export default function LandingPage() {
           animate="show"
           className="flex flex-col items-center justify-center w-full"
         >
-          <motion.h1 variants={itemVariants} className="font-display text-6xl md:text-8xl lg:text-[9rem] font-extrabold text-forensic-blue mb-8 tracking-tighter leading-[1.05] flex flex-col items-center">
-            <span>Unmask</span>
-            <span className="relative inline-block h-[1.1em] w-[300px] md:w-[600px] lg:w-[800px] overflow-visible mt-2">
-              <AnimatePresence mode="popLayout">
-                <motion.span
-                  key={wordIndex}
-                  initial={{ y: 50, opacity: 0, filter: "blur(10px)", scale: 0.9 }}
-                  animate={{ y: 0, opacity: 1, filter: "blur(0px)", scale: 1 }}
-                  exit={{ y: -50, opacity: 0, filter: "blur(10px)", scale: 1.05 }}
-                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute inset-x-0 text-transparent bg-clip-text bg-gradient-to-r from-forensic-blue via-blue-600 to-blue-400 drop-shadow-sm"
-                >
-                  {ACTION_WORDS[wordIndex]}
-                </motion.span>
-              </AnimatePresence>
-            </span>
+          <motion.div variants={itemVariants} className="w-full flex justify-center mb-4 relative z-20">
+            <CyberGlobe />
+          </motion.div>
+          
+          <motion.h1 variants={itemVariants} className="font-display text-4xl md:text-6xl font-extrabold text-forensic-blue mb-6 tracking-tighter mt-[-40px] md:mt-[-80px] relative z-10 pointer-events-none">
+            Global Threat Intelligence
           </motion.h1>
           
           <motion.p variants={itemVariants} className="text-base md:text-xl text-forensic-blue/70 max-w-2xl mb-12 leading-relaxed font-sans font-medium">
