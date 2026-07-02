@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import Lenis from 'lenis';
 import Header from "@/components/Header";
+import { pingAPI } from "@/services/api";
 
 export default function RootLayout({
   children,
@@ -22,6 +23,13 @@ export default function RootLayout({
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
+
+  useEffect(() => {
+    // Ping the backend every 60 seconds to prevent it from going to sleep
+    pingAPI();
+    const interval = setInterval(pingAPI, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
 
 

@@ -59,6 +59,16 @@ export async function loginAPI(username: string, password: string) {
   });
 }
 
+// ---- Health / Ping ----
+
+export async function pingAPI() {
+  try {
+    await fetch(`${API_BASE_URL}/health`);
+  } catch {
+    // Ignore errors for background ping
+  }
+}
+
 export async function signupAPI(username: string, password: string) {
   return apiFetch<{ access_token: string; token_type: string }>("/auth/signup", {
     method: "POST",
