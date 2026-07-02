@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { m, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import AnimatedLogo from "./AnimatedLogo";
 
@@ -13,6 +13,35 @@ export default function Header() {
   const { isAuthenticated, username, logout } = useAuth();
   const isLoginPage = pathname === "/login";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Typewriter effect state
+  const phrases = ["Analyze APKs securely...", "Discover hidden vulnerabilities...", "Protect your users..."];
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    const currentPhrase = phrases[phraseIndex];
+    const typingSpeed = isDeleting ? 30 : 80;
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting && charIndex === currentPhrase.length) {
+        // Pause before deleting
+        setTimeout(() => setIsDeleting(true), 2000);
+      } else if (isDeleting && charIndex === 0) {
+        // Move to next phrase
+        setIsDeleting(false);
+        setPhraseIndex((prev) => (prev + 1) % phrases.length);
+      } else {
+        // Type or delete character
+        setCharIndex((prev) => prev + (isDeleting ? -1 : 1));
+        setText(currentPhrase.substring(0, charIndex + (isDeleting ? -1 : 1)));
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [charIndex, isDeleting, phraseIndex]);
   
   // Scroll hide/show logic
   const { scrollY } = useScroll();
@@ -59,22 +88,41 @@ export default function Header() {
           <AnimatedLogo />
         </Link>
 
-        {/* Desktop Nav */}
+        {/* Desktop Nav / Typewriter */}
         <div className="hidden md:flex items-center gap-2">
-          {navLinks.map((link) => (
-            <Link
-              prefetch={false}
-              key={link.href}
-              href={link.href}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
-                pathname === link.href
-                  ? "bg-slate-800 text-white shadow-md hover:shadow-lg hover:scale-105"
-                  : "text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/80 hover:scale-105"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {!isAuthenticated && isLandingPage ? (
+            <div className="px-6 py-2 font-mono text-sm text-primary/80 font-medium whitespace-nowrap min-w-[280px]">
+              {text}
+              <m.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                className="inline-block w-1.5 h-4 ml-1 bg-primary align-middle"
+              />
+            </div>
+          ) : (
+            navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  prefetch={false}
+                  key={link.href}
+                  href={link.href}
+                  className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${
+                    isActive ? "text-indigo-900" : "text-slate-500 hover:text-indigo-600"
+                  }`}
+                >
+                  {isActive && (
+                    <m.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 bg-indigo-50/80 rounded-full z-[-1] border border-indigo-100"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{link.label}</span>
+                </Link>
+              );
+            })
+          )}
         </div>
 
         {/* Desktop Auth */}
