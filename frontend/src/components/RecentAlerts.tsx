@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { AlertCircle, Eye, Wifi, ShieldAlert } from "lucide-react";
 
 export default function RecentAlerts() {
@@ -38,7 +38,7 @@ export default function RecentAlerts() {
           const Icon = alert.icon;
           const isCritical = alert.type === "critical";
           return (
-            <motion.div
+            <m.div
               key={alert.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -54,7 +54,7 @@ export default function RecentAlerts() {
                   {alert.time}
                 </span>
               </div>
-            </motion.div>
+            </m.div>
           );
         })}
       </div>

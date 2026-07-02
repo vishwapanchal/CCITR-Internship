@@ -31,11 +31,11 @@ export default function PhaseProgress({ phases }: PhaseProgressProps) {
 
       {/* Phase list */}
       <div className="space-y-3 flex-1">
-        {phases.map((phase, idx) => {
+        {phases.map((phase) => {
           const colors = statusColors[phase.status] || statusColors.pending;
 
           return (
-            <div key={idx}>
+            <div key={phase.phase}>
               <div className="flex justify-between items-center mb-1">
                 <div className="flex items-center gap-2">
                   {/* Status indicator */}

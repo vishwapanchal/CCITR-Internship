@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useEffect, useState } from "react";
 
 export default function HeroGauge({ score = 87 }: { score?: number }) {
@@ -33,7 +33,7 @@ export default function HeroGauge({ score = 87 }: { score?: number }) {
             className="text-border-subtle"
           />
           {/* Animated Circle */}
-          <motion.circle
+          <m.circle
             cx="80"
             cy="80"
             r={radius}
@@ -51,14 +51,14 @@ export default function HeroGauge({ score = 87 }: { score?: number }) {
         </svg>
         {/* Score Text */}
         <div className="absolute flex flex-col items-center justify-center">
-          <motion.span 
+          <m.span 
             className="text-4xl font-display font-bold"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.5 }}
           >
             {animatedScore}
-          </motion.span>
+          </m.span>
           <span className="text-xs font-mono uppercase tracking-widest text-primary/70">Threat Score</span>
         </div>
       </div>

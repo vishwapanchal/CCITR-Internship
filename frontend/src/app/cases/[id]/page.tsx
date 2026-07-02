@@ -12,3 +12,8 @@ export default async function CaseDetailPage({ params }: { params: Promise<{ id:
   return <ClientPage caseId={resolvedParams.id} />;
 }
 
+
+export const metadata = {
+  title: "APEX-X | [id]",
+  description: "APEX-X [id] Page",
+};

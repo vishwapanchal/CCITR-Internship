@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, Variants } from "framer-motion";
+import { m, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ActivitySquare, CheckCircle2, Search, Filter } from "lucide-react";
@@ -9,32 +9,30 @@ import PhaseProgress from "@/components/PhaseProgress";
 import { REAL_ACTIVITY, REAL_PHASE_STATUS_ANALYZING } from "@/services/realData";
 import { getCases, CaseResponse } from "@/services/api";
 
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const [cases, setCases] = useState<CaseResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     getCases().then(({ data }) => {
       if (data) {
         setCases(data);
       }
-      setIsLoading(false);
     });
   }, []);
-
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 15 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
-  };
 
   const stats = {
     total: cases.length,
@@ -60,6 +58,7 @@ export default function Dashboard() {
         </div>
         <div className="flex gap-4 w-full md:w-auto">
           <button 
+            type="button"
             onClick={() => router.push("/upload")}
             className="w-full md:w-auto bg-primary text-white px-5 py-2.5 font-medium text-sm hover:bg-primary/90 transition-colors rounded-xl"
           >
@@ -68,7 +67,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <motion.div
+      <m.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
@@ -77,7 +76,7 @@ export default function Dashboard() {
         {/* Left Column: Stats & Queue */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           {/* Quick Stats */}
-          <motion.div variants={itemVariants} className="bg-panel border border-border-subtle p-4">
+          <m.div variants={itemVariants} className="bg-panel border border-border-subtle p-4">
             <h3 className="font-display font-semibold text-sm mb-4 border-b border-border-subtle pb-2">
               Overview
             </h3>
@@ -99,10 +98,10 @@ export default function Dashboard() {
                 <span className="text-xs font-mono text-green-600 uppercase">Completed</span>
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Active Analysis Queue */}
-          <motion.div variants={itemVariants} className="bg-panel border border-border-subtle p-4 flex-1">
+          <m.div variants={itemVariants} className="bg-panel border border-border-subtle p-4 flex-1">
             <h3 className="font-display font-semibold text-sm mb-4 border-b border-border-subtle pb-2">
               Active Analysis Queue
             </h3>
@@ -124,11 +123,11 @@ export default function Dashboard() {
                 <span className="text-sm text-primary/50">Queue is empty</span>
               </div>
             )}
-          </motion.div>
+          </m.div>
         </div>
 
         {/* Middle Column: Case List */}
-        <motion.div variants={itemVariants} className="lg:col-span-2 bg-panel border border-border-subtle p-4 flex flex-col">
+        <m.div variants={itemVariants} className="lg:col-span-2 bg-panel border border-border-subtle p-4 flex flex-col">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 border-b border-border-subtle pb-2 gap-3">
             <h3 className="font-display font-semibold text-sm">Analyzed Apps</h3>
             <div className="flex gap-2 w-full sm:w-auto">
@@ -137,10 +136,11 @@ export default function Dashboard() {
                 <input 
                   type="text" 
                   placeholder="Search cases..." 
+                  aria-label="Search cases"
                   className="w-full bg-canvas border border-border-subtle pl-8 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-primary/50"
                 />
               </div>
-              <button className="bg-canvas border border-border-subtle p-1.5 hover:bg-border-subtle/50 transition-colors shrink-0">
+              <button type="button" className="bg-canvas border border-border-subtle p-1.5 hover:bg-border-subtle/50 transition-colors shrink-0">
                 <Filter className="w-4 h-4" />
               </button>
             </div>
@@ -151,10 +151,10 @@ export default function Dashboard() {
               <CaseCard key={caseData.id} caseData={caseData} />
             ))}
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Right Column: Activity Feed */}
-        <motion.div variants={itemVariants} className="lg:col-span-1 bg-panel border border-border-subtle p-4 flex flex-col">
+        <m.div variants={itemVariants} className="lg:col-span-1 bg-panel border border-border-subtle p-4 flex flex-col">
           <h3 className="font-display font-semibold text-sm mb-4 border-b border-border-subtle pb-2">
             Recent Activity
           </h3>
@@ -176,9 +176,9 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </m.div>
 
-      </motion.div>
+      </m.div>
     </main>
   );
 }

@@ -25,6 +25,15 @@ const typeLabels: Record<string, string> = {
   permission: "Permission",
 };
 
+function formatTime(ts: string): string {
+  return new Date(ts).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+}
+
 export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
   const [filter, setFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -32,14 +41,6 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
   const filteredEvents = filter === "all" ? events : events.filter((e) => e.type === filter);
   const eventTypes = ["all", ...Array.from(new Set(events.map((e) => e.type)))];
 
-  function formatTime(ts: string): string {
-    return new Date(ts).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -47,6 +48,7 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
       <div className="flex flex-wrap gap-2 mb-4">
         {eventTypes.map((type) => (
           <button
+            type="button"
             key={type}
             onClick={() => setFilter(type)}
             className={`px-3 py-1 text-xs font-mono border transition-colors ${
@@ -67,9 +69,10 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
           const isExpanded = expandedId === event.id;
 
           return (
-            <div
+            <button
+              type="button"
               key={event.id}
-              className={`flex items-start gap-3 p-3 border-l-4 ${colors.border} ${colors.bg} cursor-pointer hover:opacity-90 transition-opacity`}
+              className={`text-left w-full flex items-start gap-3 p-3 border-l-4 ${colors.border} ${colors.bg} cursor-pointer hover:opacity-90 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-primary/50`}
               onClick={() => setExpandedId(isExpanded ? null : event.id)}
             >
               {/* Time */}
@@ -92,7 +95,7 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
                   <p className="text-xs text-primary/70 mt-1 font-mono">{event.description}</p>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

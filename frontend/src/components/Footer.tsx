@@ -43,7 +43,7 @@ export default function Footer() {
           &copy; {new Date().getFullYear()} APEX-X. All rights reserved. <span className="font-script text-sm ml-1 text-slate-500">Not for commercial use.</span>
         </p>
         <div className="flex items-center gap-4 text-slate-400">
-          <a href="#" className="hover:text-indigo-500 transition-colors"><Mail className="w-4 h-4" /></a>
+          <a href="mailto:support@apex-x.com" className="hover:text-indigo-500 transition-colors"><Mail className="w-4 h-4" /></a>
         </div>
       </div>
     </footer>

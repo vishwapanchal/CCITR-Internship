@@ -87,12 +87,14 @@ export default function RootLayout({
               <Link
                 prefetch={false}
                 href="/"
-                className="flex items-center gap-2 font-display font-bold text-lg tracking-tight text-slate-800 hover:scale-105 transition-transform"
+                className="group relative flex items-center gap-1 overflow-hidden px-2 hover:scale-105 transition-transform"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-sky-500 rounded-lg flex items-center justify-center shadow-sm">
-                  <Shield className="w-4 h-4 text-white" />
+                <div className="relative font-pixel font-bold text-3xl tracking-widest text-slate-800 transition-colors duration-500 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-indigo-500 group-hover:to-cyan-400">
+                  APEX-X
+                  <span className="absolute inset-0 text-red-500 opacity-0 group-hover:opacity-100 animate-rgb-red pointer-events-none mix-blend-multiply">APEX-X</span>
+                  <span className="absolute inset-0 text-cyan-400 opacity-0 group-hover:opacity-100 animate-rgb-blue pointer-events-none mix-blend-multiply">APEX-X</span>
                 </div>
-                <span>APEX-X</span>
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-10 pointer-events-none animate-glitch bg-gradient-to-r from-transparent via-slate-500 to-transparent skew-x-12" />
               </Link>
 
               {/* Desktop Nav */}
@@ -122,6 +124,7 @@ export default function RootLayout({
                       {username}
                     </div>
                     <button
+                      type="button"
                       onClick={() => logout()}
                       className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-full"
                       title="Sign out"
@@ -142,6 +145,7 @@ export default function RootLayout({
 
               {/* Mobile Menu Toggle */}
               <button
+                type="button"
                 className="md:hidden p-2 text-slate-500 rounded-full hover:bg-slate-100 transition-colors"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
@@ -181,6 +185,7 @@ export default function RootLayout({
                           Signed in as {username}
                         </div>
                         <button
+                          type="button"
                           onClick={() => {
                             logout();
                             setIsMobileMenuOpen(false);

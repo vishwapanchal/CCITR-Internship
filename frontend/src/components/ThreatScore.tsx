@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useEffect, useState } from "react";
 
 interface ThreatScoreProps {
@@ -56,7 +56,7 @@ export default function ThreatScore({ score, size = "md", showLabel = true }: Th
             fill="transparent"
           />
           {/* Score arc */}
-          <motion.circle
+          <m.circle
             cx={half}
             cy={half}
             r={config.radius}
@@ -72,7 +72,7 @@ export default function ThreatScore({ score, size = "md", showLabel = true }: Th
         </svg>
         {/* Center text */}
         <div className="absolute flex flex-col items-center justify-center">
-          <motion.span
+          <m.span
             className={`${config.fontSize} font-bold font-display`}
             style={{ color }}
             initial={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export default function ThreatScore({ score, size = "md", showLabel = true }: Th
             transition={{ duration: 1, delay: 0.5 }}
           >
             {animatedScore}
-          </motion.span>
+          </m.span>
           {showLabel && (
             <span className={`${config.labelSize} font-mono uppercase tracking-widest text-primary/60 mt-1`}>
               {getScoreLabel(score)}

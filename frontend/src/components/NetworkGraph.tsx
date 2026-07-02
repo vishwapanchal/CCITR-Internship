@@ -145,6 +145,7 @@ export default function NetworkGraph({
               Node Details
             </h3>
             <button
+              type="button"
               onClick={() => setSelectedNode(null)}
               className="text-text-muted hover:text-text text-lg w-6 h-6 flex items-center justify-center rounded hover:bg-surface"
             >

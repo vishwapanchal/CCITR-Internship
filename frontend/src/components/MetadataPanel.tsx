@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ShieldAlert, FileCode2, Key, Activity } from "lucide-react";
 
 export default function MetadataPanel() {
@@ -20,8 +20,8 @@ export default function MetadataPanel() {
         {metadata.map((item, idx) => {
           const Icon = item.icon;
           return (
-            <motion.div 
-              key={idx}
+            <m.div 
+              key={item.label}
               className="flex items-center justify-between group"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -34,7 +34,7 @@ export default function MetadataPanel() {
               <span className={`font-mono text-sm tracking-tight bg-canvas px-2 py-0.5 border border-border-subtle group-hover:border-primary/30 transition-colors ${item.critical ? 'text-critical font-semibold' : 'text-primary/80'}`}>
                 {item.value}
               </span>
-            </motion.div>
+            </m.div>
           );
         })}
       </div>

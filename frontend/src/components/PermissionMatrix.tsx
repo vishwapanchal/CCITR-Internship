@@ -21,7 +21,7 @@ const protectionColors: Record<string, string> = {
 };
 
 export default function PermissionMatrix({ permissions }: PermissionMatrixProps) {
-  const sortedPermissions = [...permissions].sort((a, b) => {
+  const sortedPermissions = permissions.toSorted((a, b) => {
     const riskOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     return (riskOrder[a.risk] || 3) - (riskOrder[b.risk] || 3);
   });
@@ -56,11 +56,11 @@ export default function PermissionMatrix({ permissions }: PermissionMatrixProps)
             </tr>
           </thead>
           <tbody>
-            {sortedPermissions.map((perm, idx) => {
+            {sortedPermissions.map((perm) => {
               const risk = riskColors[perm.risk] || riskColors.low;
               return (
                 <tr
-                  key={idx}
+                  key={perm.name}
                   className="border-b border-border-subtle/50 hover:bg-canvas/50 transition-colors"
                   title={perm.description}
                 >

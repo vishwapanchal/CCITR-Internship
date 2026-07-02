@@ -106,18 +106,21 @@ export default function IOCTable({ iocs }: IOCTableProps) {
         {/* Export buttons */}
         <div className="flex gap-1">
           <button
+            type="button"
             onClick={() => exportIOCsAsCSV(exportData)}
             className="px-2 py-1.5 text-xs font-mono border border-border-subtle hover:bg-canvas transition-colors"
           >
             CSV
           </button>
           <button
+            type="button"
             onClick={() => exportIOCsAsJSON(exportData)}
             className="px-2 py-1.5 text-xs font-mono border border-border-subtle hover:bg-canvas transition-colors"
           >
             JSON
           </button>
           <button
+            type="button"
             onClick={() => exportIOCsAsSTIX(exportData)}
             className="px-2 py-1.5 text-xs font-mono border border-border-subtle hover:bg-canvas transition-colors"
           >
