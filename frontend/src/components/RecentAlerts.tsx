@@ -43,14 +43,14 @@ export default function RecentAlerts() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + idx * 0.15 }}
-              className="flex items-start space-x-3 p-3 bg-canvas border border-border-subtle hover:border-forensic-blue/30 transition-colors"
+              className="flex items-start space-x-3 p-3 bg-canvas border border-border-subtle hover:border-primary/30 transition-colors"
             >
               <div className={`mt-0.5 ${isCritical ? 'text-critical' : 'text-warning'}`}>
                 {isCritical ? <AlertCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </div>
               <div className="flex-grow">
-                <p className="text-sm font-medium text-forensic-blue">{alert.message}</p>
-                <span className="text-xs font-mono text-forensic-blue/60 mt-1 block">
+                <p className="text-sm font-medium text-primary">{alert.message}</p>
+                <span className="text-xs font-mono text-primary/60 mt-1 block">
                   {alert.time}
                 </span>
               </div>

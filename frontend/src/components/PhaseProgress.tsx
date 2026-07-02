@@ -24,7 +24,7 @@ export default function PhaseProgress({ phases }: PhaseProgressProps) {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h4 className="font-display font-semibold text-sm">Analysis Progress</h4>
-        <span className="text-xs font-mono text-forensic-blue/60">
+        <span className="text-xs font-mono text-primary/60">
           {completedCount}/{phases.length} phases • {overallProgress}%
         </span>
       </div>

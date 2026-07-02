@@ -1,14 +1,13 @@
 import type { NextConfig } from "next";
-import { loadEnvConfig } from "@next/env";
-import path from "path";
-
-const projectDir = process.cwd();
-loadEnvConfig(path.join(projectDir, ".."));
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // No static export — everything is server-rendered or client-rendered
   images: {
     unoptimized: true,
+  },
+  // Read env from root .env
+  env: {
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
   },
 };
 

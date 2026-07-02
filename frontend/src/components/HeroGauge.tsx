@@ -59,7 +59,7 @@ export default function HeroGauge({ score = 87 }: { score?: number }) {
           >
             {animatedScore}
           </motion.span>
-          <span className="text-xs font-mono uppercase tracking-widest text-forensic-blue/70">Threat Score</span>
+          <span className="text-xs font-mono uppercase tracking-widest text-primary/70">Threat Score</span>
         </div>
       </div>
     </div>

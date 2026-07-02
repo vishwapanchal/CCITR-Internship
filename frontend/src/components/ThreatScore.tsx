@@ -82,7 +82,7 @@ export default function ThreatScore({ score, size = "md", showLabel = true }: Th
             {animatedScore}
           </motion.span>
           {showLabel && (
-            <span className={`${config.labelSize} font-mono uppercase tracking-widest text-forensic-blue/60 mt-1`}>
+            <span className={`${config.labelSize} font-mono uppercase tracking-widest text-primary/60 mt-1`}>
               {getScoreLabel(score)}
             </span>
           )}

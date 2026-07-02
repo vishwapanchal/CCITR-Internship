@@ -24,8 +24,8 @@ export default function LoginPage() {
       return;
     }
 
-    if (!isLogin && !username.endsWith("@cyber.gov")) {
-      setLocalError("Only @cyber.gov emails are allowed for registration");
+    if (!isLogin && password !== confirmPassword) {
+      setLocalError("Passwords don't match");
       return;
     }
 
@@ -44,9 +44,9 @@ export default function LoginPage() {
     <main className="flex-1 flex items-center justify-center p-4 md:p-8">
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-start">
-          <Link prefetch={false} href="/" className="flex items-center text-xs font-mono text-forensic-blue/60 hover:text-forensic-blue transition-colors">
+          <Link prefetch={false} href="/" className="flex items-center text-sm text-text-muted hover:text-primary transition-colors">
             <ArrowLeft className="w-4 h-4 mr-1" />
-            BACK TO HOME
+            Back to home
           </Link>
         </div>
 
@@ -54,10 +54,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link prefetch={false} href="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity">
             <ShieldAlert className="w-10 h-10 text-critical" />
-            <h1 className="font-display text-3xl font-bold text-forensic-blue">APEX-X</h1>
+            <h1 className="font-display text-3xl font-bold text-primary">APEX-X</h1>
           </Link>
-          <p className="text-sm text-forensic-blue/60">
-            Agentic APK Profiling, Exploitation Intelligence & Threat Attribution
+          <p className="text-sm text-text-muted">
+            Android Security Analysis Platform
           </p>
         </div>
 
@@ -65,13 +65,13 @@ export default function LoginPage() {
         <div className="bg-panel border border-border-subtle p-6 rounded-2xl shadow-xl">
           <div className="flex gap-4 mb-6 border-b border-border-subtle pb-2">
             <button 
-              className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${isLogin ? "border-b-2 border-forensic-blue text-forensic-blue" : "text-forensic-blue/50"}`}
+              className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${isLogin ? "border-b-2 border-primary text-primary" : "text-primary/50"}`}
               onClick={() => { setIsLogin(true); setLocalError(""); }}
             >
               Sign In
             </button>
             <button 
-              className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${!isLogin ? "border-b-2 border-forensic-blue text-forensic-blue" : "text-forensic-blue/50"}`}
+              className={`font-display font-semibold text-lg pb-2 -mb-2.5 transition-colors ${!isLogin ? "border-b-2 border-primary text-primary" : "text-primary/50"}`}
               onClick={() => { setIsLogin(false); setLocalError(""); }}
             >
               Sign Up
@@ -80,38 +80,38 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">EMAIL (@cyber.gov)</label>
+              <label className="block text-sm text-text-muted mb-1">Email</label>
               <input
                 type="email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="agent@cyber.gov"
-                className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 rounded-xl"
+                placeholder="you@example.com"
+                className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-primary/50 rounded-xl"
                 autoComplete="username"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">PASSWORD</label>
+              <label className="block text-sm text-text-muted mb-1">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 rounded-xl"
+                className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-primary/50 rounded-xl"
                 autoComplete={isLogin ? "current-password" : "new-password"}
               />
             </div>
             
             {!isLogin && (
               <div>
-                <label className="block text-xs font-mono text-forensic-blue/60 mb-1">CONFIRM PASSWORD</label>
+                <label className="block text-sm text-text-muted mb-1">Confirm Password</label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
-                  className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 transition-colors rounded-xl"
+                  className="w-full bg-canvas border border-border-subtle px-4 py-3 text-sm font-mono focus:outline-none focus:border-primary/50 transition-colors rounded-xl"
                   autoComplete="new-password"
                 />
               </div>
@@ -127,7 +127,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-forensic-blue text-white py-3 font-medium text-sm hover:bg-forensic-blue/90 transition-colors disabled:opacity-50 rounded-xl mt-2"
+              className="w-full bg-primary text-white py-3 font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-50 rounded-xl mt-2"
             >
               {isLoading ? "Authenticating..." : isLogin ? "Sign In" : "Sign Up"}
             </button>
@@ -140,7 +140,7 @@ export default function LoginPage() {
                 setIsLogin(!isLogin);
                 setLocalError("");
               }}
-              className="text-xs text-forensic-blue/70 hover:text-forensic-blue font-medium transition-colors"
+              className="text-xs text-primary/70 hover:text-primary font-medium transition-colors"
             >
               {isLogin ? "Need an account? Sign Up" : "Already have an account? Sign In"}
             </button>
@@ -149,8 +149,8 @@ export default function LoginPage() {
 
         </div>
 
-        <p className="text-center text-xs text-forensic-blue/40 mt-4 font-mono">
-          Authorized personnel only. All sessions are logged.
+        <p className="text-center text-xs text-text-muted mt-4">
+          Built for CMP311 · Educational purposes only
         </p>
       </div>
     </main>

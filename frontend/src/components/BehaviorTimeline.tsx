@@ -51,8 +51,8 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
             onClick={() => setFilter(type)}
             className={`px-3 py-1 text-xs font-mono border transition-colors ${
               filter === type
-                ? "bg-forensic-blue text-white border-forensic-blue"
-                : "bg-canvas border-border-subtle hover:border-forensic-blue/50"
+                ? "bg-primary text-white border-primary"
+                : "bg-canvas border-border-subtle hover:border-primary/50"
             }`}
           >
             {type === "all" ? "ALL" : typeLabels[type] || type}
@@ -73,7 +73,7 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
               onClick={() => setExpandedId(isExpanded ? null : event.id)}
             >
               {/* Time */}
-              <div className="font-mono text-xs text-forensic-blue/60 whitespace-nowrap min-w-[70px]">
+              <div className="font-mono text-xs text-primary/60 whitespace-nowrap min-w-[70px]">
                 {formatTime(event.timestamp)}
               </div>
 
@@ -87,9 +87,9 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
                     <span className="text-xs font-mono font-bold text-red-600">● CRITICAL</span>
                   )}
                 </div>
-                <p className="text-sm font-medium mt-1 text-forensic-blue">{event.title}</p>
+                <p className="text-sm font-medium mt-1 text-primary">{event.title}</p>
                 {isExpanded && (
-                  <p className="text-xs text-forensic-blue/70 mt-1 font-mono">{event.description}</p>
+                  <p className="text-xs text-primary/70 mt-1 font-mono">{event.description}</p>
                 )}
               </div>
             </div>
@@ -98,7 +98,7 @@ export default function BehaviorTimeline({ events }: BehaviorTimelineProps) {
       </div>
 
       {/* Summary */}
-      <div className="mt-3 pt-3 border-t border-border-subtle flex justify-between text-xs font-mono text-forensic-blue/60">
+      <div className="mt-3 pt-3 border-t border-border-subtle flex justify-between text-xs font-mono text-primary/60">
         <span>{filteredEvents.length} events</span>
         <span>{filteredEvents.filter((e) => e.severity === "critical").length} critical</span>
       </div>

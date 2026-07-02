@@ -88,7 +88,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
           placeholder="Search IOCs..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="bg-canvas border border-border-subtle px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-forensic-blue/50 flex-1 min-w-[200px]"
+          className="bg-canvas border border-border-subtle px-3 py-1.5 text-sm font-mono focus:outline-none focus:border-primary/50 flex-1 min-w-[200px]"
         />
 
         <select
@@ -132,26 +132,26 @@ export default function IOCTable({ iocs }: IOCTableProps) {
           <thead>
             <tr className="border-b border-border-subtle text-left">
               <th
-                className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium cursor-pointer hover:text-forensic-blue"
+                className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary"
                 onClick={() => handleSort("type")}
               >
                 Type{renderSortArrow("type")}
               </th>
               <th
-                className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium cursor-pointer hover:text-forensic-blue"
+                className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary"
                 onClick={() => handleSort("value")}
               >
                 Value{renderSortArrow("value")}
               </th>
-              <th className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium">Context</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Context</th>
               <th
-                className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium cursor-pointer hover:text-forensic-blue text-right"
+                className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary text-right"
                 onClick={() => handleSort("confidence")}
               >
                 Confidence{renderSortArrow("confidence")}
               </th>
               <th
-                className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium cursor-pointer hover:text-forensic-blue"
+                className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary"
                 onClick={() => handleSort("first_seen")}
               >
                 First Seen{renderSortArrow("first_seen")}
@@ -167,17 +167,17 @@ export default function IOCTable({ iocs }: IOCTableProps) {
                   </span>
                 </td>
                 <td className="py-2 pr-3 font-mono text-xs break-all max-w-[300px]">{ioc.value}</td>
-                <td className="py-2 pr-3 text-xs text-forensic-blue/70 max-w-[250px]">{ioc.context}</td>
+                <td className="py-2 pr-3 text-xs text-primary/70 max-w-[250px]">{ioc.context}</td>
                 <td className="py-2 pr-3 text-right">
                   <span
                     className={`text-xs font-mono font-semibold ${
-                      ioc.confidence >= 80 ? "text-red-600" : ioc.confidence >= 60 ? "text-orange-600" : "text-forensic-blue/60"
+                      ioc.confidence >= 80 ? "text-red-600" : ioc.confidence >= 60 ? "text-orange-600" : "text-primary/60"
                     }`}
                   >
                     {ioc.confidence}%
                   </span>
                 </td>
-                <td className="py-2 text-xs font-mono text-forensic-blue/60 whitespace-nowrap">
+                <td className="py-2 text-xs font-mono text-primary/60 whitespace-nowrap">
                   {new Date(ioc.first_seen).toLocaleString()}
                 </td>
               </tr>
@@ -186,7 +186,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
         </table>
       </div>
 
-      <div className="mt-2 text-xs font-mono text-forensic-blue/50">
+      <div className="mt-2 text-xs font-mono text-primary/50">
         Showing {filtered.length} of {iocs.length} indicators
       </div>
     </div>

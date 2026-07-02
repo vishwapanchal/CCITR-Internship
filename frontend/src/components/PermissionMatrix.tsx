@@ -33,8 +33,8 @@ export default function PermissionMatrix({ permissions }: PermissionMatrixProps)
     <div className="flex flex-col h-full">
       {/* Summary bar */}
       <div className="flex gap-4 mb-4 text-xs font-mono">
-        <span className="text-forensic-blue/60">
-          Total: <strong className="text-forensic-blue">{permissions.length}</strong>
+        <span className="text-primary/60">
+          Total: <strong className="text-primary">{permissions.length}</strong>
         </span>
         <span className="text-red-600">
           Dangerous: <strong>{dangerousCount}</strong>
@@ -49,10 +49,10 @@ export default function PermissionMatrix({ permissions }: PermissionMatrixProps)
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border-subtle text-left">
-              <th className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium">Permission</th>
-              <th className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium">Protection</th>
-              <th className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium">Risk</th>
-              <th className="pb-2 font-mono text-xs text-forensic-blue/60 font-medium">Status</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Permission</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Protection</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Risk</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -66,7 +66,7 @@ export default function PermissionMatrix({ permissions }: PermissionMatrixProps)
                 >
                   <td className="py-2 pr-3">
                     <span className="font-mono text-xs break-all">{perm.name}</span>
-                    <span className="block text-xs text-forensic-blue/50 mt-0.5">{perm.description}</span>
+                    <span className="block text-xs text-primary/50 mt-0.5">{perm.description}</span>
                   </td>
                   <td className="py-2 pr-3">
                     <span className={`text-xs font-mono font-semibold ${protectionColors[perm.protection_level] || ""}`}>

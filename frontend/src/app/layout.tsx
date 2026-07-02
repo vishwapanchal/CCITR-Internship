@@ -2,15 +2,11 @@
 
 import { Outfit, JetBrains_Mono, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
-import LenisProvider from "@/components/LenisProvider";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ShieldAlert, LogOut, User, Menu, X } from "lucide-react";
-import CoPilot from "@/components/CoPilot";
+import { Shield, LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
-import BackendStatus from "@/components/BackendStatus";
-import Footer from "@/components/Footer";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -40,27 +36,27 @@ export default function RootLayout({
 
   useEffect(() => {
     loadFromStorage();
-    // Simple client-side auth guard
     const token = localStorage.getItem("apex_token");
-    if (!token && pathname !== "/" && pathname !== "/login") {
+    if (!token && pathname !== "/" && pathname !== "/login" && !pathname.startsWith("/legal")) {
       router.push("/");
     }
   }, [loadFromStorage, pathname, router]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
   const navLinks = [
     { href: "/", label: "Home" },
-    ...(isAuthenticated ? [
-      { href: "/upload", label: "Upload" },
-      { href: "/dashboard", label: "Pre-Tested Apps" },
-      { href: "/graph", label: "Graph Explorer" },
-      { href: "/copilot", label: "Co-Pilot" },
-      { href: "/reports", label: "Reports" },
-    ] : [])
+    ...(isAuthenticated
+      ? [
+          { href: "/upload", label: "Upload APK" },
+          { href: "/dashboard", label: "Results" },
+          { href: "/graph", label: "Threat Map" },
+          { href: "/copilot", label: "AI Assistant" },
+          { href: "/reports", label: "Reports" },
+        ]
+      : []),
   ];
 
   return (
@@ -69,125 +65,134 @@ export default function RootLayout({
       className={`${outfit.variable} ${jetbrainsMono.variable} ${bricolage.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-canvas text-forensic-blue font-sans">
-        <LenisProvider>
-          {/* Navigation */}
-          {!isLoginPage && (
-            <nav className="bg-panel/80 backdrop-blur-md border-b border-border-subtle border-t-[3px] border-t-forensic-blue sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-4 shadow-sm">
-              <Link prefetch={false} href="/" className="flex items-center space-x-2 font-display font-bold text-xl tracking-tight text-forensic-blue z-50">
-                <ShieldAlert className="w-6 h-6 text-critical" />
-                <span>APEX-X</span>
-              </Link>
-
-              {/* Desktop Nav */}
-              <div className="hidden md:flex space-x-6 text-sm font-medium">
-                {navLinks.map((link) => (
-                  <Link prefetch={false} 
-                    key={link.href} 
-                    href={link.href} 
-                    className={`transition-colors hover:text-critical ${
-                      pathname === link.href ? "text-critical font-semibold" : "text-forensic-blue/80"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+      <head>
+        <title>APEX-X — Android Security Analysis</title>
+        <meta name="description" content="Analyze Android apps for security vulnerabilities, malware, and privacy risks." />
+      </head>
+      <body className="min-h-full flex flex-col bg-canvas text-text font-sans">
+        {/* Navigation */}
+        {!isLoginPage && (
+          <nav className="bg-white/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3 shadow-sm">
+            <Link
+              prefetch={false}
+              href="/"
+              className="flex items-center gap-2 font-display font-bold text-lg tracking-tight text-primary"
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
+                <Shield className="w-4 h-4 text-white" />
               </div>
+              <span>APEX-X</span>
+            </Link>
 
-              {/* Desktop Auth */}
-              <div className="hidden md:flex items-center gap-4">
-                {isAuthenticated ? (
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1.5 text-xs font-mono font-medium">
-                      <User className="w-4 h-4 text-forensic-blue/50" />
-                      {username?.toUpperCase()}
-                    </div>
-                    <button 
-                      onClick={() => logout()}
-                      className="text-forensic-blue/50 hover:text-critical transition-colors"
-                      title="Logout"
-                    >
-                      <LogOut className="w-4 h-4" />
-                    </button>
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <Link
+                  prefetch={false}
+                  key={link.href}
+                  href={link.href}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === link.href
+                      ? "bg-primary/10 text-primary"
+                      : "text-text-muted hover:text-text hover:bg-surface"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop Auth */}
+            <div className="hidden md:flex items-center gap-3">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-text-muted bg-surface px-3 py-1.5 rounded-full">
+                    <User className="w-3.5 h-3.5" />
+                    {username}
                   </div>
-                ) : (
-                  <Link prefetch={false} 
-                    href="/login" 
-                    className="text-xs font-mono font-semibold bg-canvas border border-border-subtle px-4 py-2 hover:bg-border-subtle/30 transition-colors rounded-full"
+                  <button
+                    onClick={() => logout()}
+                    className="text-text-muted hover:text-critical transition-colors p-1.5 rounded-lg hover:bg-red-50"
+                    title="Sign out"
                   >
-                    LOGIN
-                  </Link>
-                )}
-              </div>
-
-              {/* Mobile Menu Toggle */}
-              <button 
-                className="md:hidden p-2 text-forensic-blue z-50 hover:bg-border-subtle/20 rounded transition-colors"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-
-              {/* Mobile Full Screen Menu Overlay */}
-              {isMobileMenuOpen && (
-                <div className="fixed inset-0 bg-panel z-40 flex flex-col pt-20 px-6 overflow-y-auto animate-in slide-in-from-top-2 md:hidden">
-                  <div className="flex flex-col gap-6 text-lg font-medium border-b border-border-subtle pb-6 mb-6">
-                    {navLinks.map((link) => (
-                      <Link prefetch={false} 
-                        key={link.href} 
-                        href={link.href} 
-                        className={`transition-colors hover:text-critical ${
-                          pathname === link.href ? "text-critical font-semibold" : "text-forensic-blue/80"
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                  
-                  {/* Mobile Auth Status */}
-                  <div>
-                    {isAuthenticated ? (
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center gap-2 text-sm font-mono font-medium bg-canvas border border-border-subtle p-3">
-                          <User className="w-4 h-4 text-forensic-blue/50" />
-                          Logged in as: {username?.toUpperCase()}
-                        </div>
-                        <button 
-                          onClick={() => logout()}
-                          className="flex items-center gap-2 text-sm font-semibold bg-red-500/10 text-critical border border-red-500/20 p-3 hover:bg-red-500/20 transition-colors w-full justify-center rounded-xl"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          LOGOUT
-                        </button>
-                      </div>
-                    ) : (
-                      <Link prefetch={false} 
-                        href="/login" 
-                        className="flex items-center justify-center text-sm font-mono font-semibold bg-canvas border border-border-subtle p-3 hover:bg-border-subtle/30 transition-colors rounded-full"
-                      >
-                        LOGIN
-                      </Link>
-                    )}
-                  </div>
+                    <LogOut className="w-4 h-4" />
+                  </button>
                 </div>
+              ) : (
+                <Link
+                  prefetch={false}
+                  href="/login"
+                  className="text-sm font-medium bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Sign In
+                </Link>
               )}
-            </nav>
-          )}
+            </div>
 
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col relative">
-            {children}
-          </div>
-          
-          {/* Global Footer (Only on Landing Page) */}
-          {pathname === "/" && <Footer />}
-          
-          {/* Floating CoPilot (only show if logged in and not on full copilot page) */}
-          {isAuthenticated && pathname !== "/copilot" && !isLoginPage && <CoPilot />}
-          
-          <BackendStatus />
-        </LenisProvider>
+            {/* Mobile Menu Toggle */}
+            <button
+              className="md:hidden p-2 text-text rounded-lg hover:bg-surface transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
+            </button>
+
+            {/* Mobile Menu */}
+            {isMobileMenuOpen && (
+              <div className="fixed inset-0 bg-white z-40 flex flex-col pt-16 px-4 overflow-y-auto md:hidden">
+                <div className="flex flex-col gap-1 py-4">
+                  {navLinks.map((link) => (
+                    <Link
+                      prefetch={false}
+                      key={link.href}
+                      href={link.href}
+                      className={`px-4 py-3 rounded-xl text-base font-medium transition-colors ${
+                        pathname === link.href
+                          ? "bg-primary/10 text-primary"
+                          : "text-text-muted hover:bg-surface"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="border-t border-border-subtle pt-4 mt-2">
+                  {isAuthenticated ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-medium text-text-muted bg-surface p-3 rounded-xl">
+                        <User className="w-4 h-4" />
+                        Signed in as {username}
+                      </div>
+                      <button
+                        onClick={() => logout()}
+                        className="flex items-center gap-2 text-sm font-medium text-critical bg-red-50 p-3 rounded-xl hover:bg-red-100 transition-colors w-full justify-center"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  ) : (
+                    <Link
+                      prefetch={false}
+                      href="/login"
+                      className="flex items-center justify-center text-sm font-medium bg-primary text-white p-3 rounded-xl hover:bg-primary/90 transition-colors"
+                    >
+                      Sign In
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </nav>
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col relative">{children}</div>
       </body>
     </html>
   );

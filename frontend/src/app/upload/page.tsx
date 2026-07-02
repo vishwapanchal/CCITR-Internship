@@ -109,8 +109,8 @@ export default function IntakePage() {
     <main className="flex-1 flex flex-col items-center justify-center p-8 w-full max-w-4xl mx-auto">
       
       <div className="text-center mb-8">
-        <h1 className="font-display text-3xl font-bold text-forensic-blue mb-2">New Investigation</h1>
-        <p className="text-forensic-blue/70">Upload a suspicious APK for full-spectrum analysis.</p>
+        <h1 className="font-display text-3xl font-bold text-primary mb-2">New Investigation</h1>
+        <p className="text-primary/70">Upload a suspicious APK for full-spectrum analysis.</p>
       </div>
 
       <div className="w-full max-w-2xl bg-panel border border-border-subtle p-6 flex flex-col gap-6 shadow-sm">
@@ -123,9 +123,9 @@ export default function IntakePage() {
           onClick={() => !isScanning && !file && fileInputRef.current?.click()}
           className={`w-full h-64 border-2 border-dashed flex flex-col items-center justify-center p-6 transition-colors ${
             isScanning ? "border-border-subtle bg-canvas opacity-50" :
-            isDragging ? "border-forensic-blue bg-forensic-blue/5" : 
+            isDragging ? "border-primary bg-primary/5" : 
             file ? "border-success bg-green-50/50" :
-            "border-border-subtle bg-canvas hover:border-forensic-blue/50 cursor-pointer"
+            "border-border-subtle bg-canvas hover:border-primary/50 cursor-pointer"
           }`}
         >
           <input 
@@ -138,14 +138,14 @@ export default function IntakePage() {
 
           {isScanning ? (
             <div className="flex flex-col items-center space-y-6 w-full max-w-xs">
-              <div className="animate-spin w-10 h-10 border-4 border-forensic-blue border-t-transparent rounded-full" />
+              <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
               <div className="w-full bg-border-subtle h-2 overflow-hidden">
                 <div 
-                  className="bg-forensic-blue h-full transition-all duration-300 ease-out"
+                  className="bg-primary h-full transition-all duration-300 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="font-mono text-sm text-forensic-blue font-semibold tracking-wider">
+              <p className="font-mono text-sm text-primary font-semibold tracking-wider">
                 UPLOADING... {progress}%
               </p>
             </div>
@@ -153,7 +153,7 @@ export default function IntakePage() {
             <div className="flex flex-col items-center text-center">
               <File className="w-16 h-16 text-success mb-4" />
               <p className="font-mono font-bold text-lg mb-1 break-all max-w-md">{file.name}</p>
-              <p className="text-xs text-forensic-blue/60 mb-6 font-mono">
+              <p className="text-xs text-primary/60 mb-6 font-mono">
                 {(file.size / (1024 * 1024)).toFixed(2)} MB
               </p>
               <button 
@@ -165,14 +165,14 @@ export default function IntakePage() {
             </div>
           ) : (
             <>
-              <UploadCloud className={`w-12 h-12 mb-4 ${isDragging ? "text-forensic-blue" : "text-forensic-blue/40"}`} />
-              <h2 className="font-semibold text-base text-forensic-blue mb-1">
+              <UploadCloud className={`w-12 h-12 mb-4 ${isDragging ? "text-primary" : "text-primary/40"}`} />
+              <h2 className="font-semibold text-base text-primary mb-1">
                 Drag & Drop APK File
               </h2>
-              <p className="text-xs text-forensic-blue/60 mb-6">
+              <p className="text-xs text-primary/60 mb-6">
                 or click to browse local files (Max 200MB)
               </p>
-              <div className="bg-forensic-blue text-white px-6 py-2 font-medium text-sm">
+              <div className="bg-primary text-white px-6 py-2 font-medium text-sm">
                 Select File
               </div>
             </>
@@ -190,22 +190,22 @@ export default function IntakePage() {
         {file && !isScanning && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">CASE DESCRIPTION (OPTIONAL)</label>
+              <label className="block text-xs font-mono text-primary/60 mb-1">CASE DESCRIPTION (OPTIONAL)</label>
               <input
                 type="text"
                 value={metadata.description}
                 onChange={(e) => setMetadata({ ...metadata, description: e.target.value })}
                 placeholder="Brief context about how this APK was found..."
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:border-forensic-blue/50"
+                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
               />
             </div>
             
             <div>
-              <label className="block text-xs font-mono text-forensic-blue/60 mb-1">PRIORITY</label>
+              <label className="block text-xs font-mono text-primary/60 mb-1">PRIORITY</label>
               <select
                 value={metadata.priority}
                 onChange={(e) => setMetadata({ ...metadata, priority: e.target.value })}
-                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:border-forensic-blue/50"
+                className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
               >
                 <option value="low">Low - Routine Analysis</option>
                 <option value="medium">Medium - Suspicious Activity</option>
@@ -216,7 +216,7 @@ export default function IntakePage() {
 
             <button
               onClick={startScan}
-              className="w-full bg-forensic-blue text-white py-3 font-semibold text-sm hover:bg-forensic-blue/90 transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-primary text-white py-3 font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
             >
               <CheckCircle className="w-4 h-4" />
               BEGIN ANALYSIS

@@ -65,7 +65,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
   }, [caseId]);
 
   if (isLoading) {
-    return <div className="p-8 flex justify-center"><p className="font-mono text-forensic-blue">Loading case {caseId}...</p></div>;
+    return <div className="p-8 flex justify-center"><p className="font-mono text-primary">Loading case {caseId}...</p></div>;
   }
   
   if (error || !caseData) {
@@ -95,12 +95,12 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               </span>
             </div>
             <h1 className="font-display text-xl font-bold mb-1 break-words">{caseData.apk_name}</h1>
-            <p className="text-xs font-mono text-forensic-blue/60 break-all">{caseData.package_name}</p>
-            <p className="text-xs text-forensic-blue/50 mt-1">{caseData.description}</p>
+            <p className="text-xs font-mono text-primary/60 break-all">{caseData.package_name}</p>
+            <p className="text-xs text-primary/50 mt-1">{caseData.description}</p>
           </div>
           <div className="sm:text-right w-full sm:w-auto">
-            <span className="text-xs font-mono text-forensic-blue/50 block">SHA-256</span>
-            <span className="text-xs font-mono text-forensic-blue/70 break-all sm:max-w-[280px] block">
+            <span className="text-xs font-mono text-primary/50 block">SHA-256</span>
+            <span className="text-xs font-mono text-primary/70 break-all sm:max-w-[280px] block">
               {caseData.apk_hash}
             </span>
           </div>
@@ -117,8 +117,8 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? "border-forensic-blue text-forensic-blue"
-                  : "border-transparent text-forensic-blue/50 hover:text-forensic-blue/80"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-primary/50 hover:text-primary/80"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -217,7 +217,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                         {match.category}
                       </span>
                     </div>
-                    <p className="text-xs text-forensic-blue/70 mb-2">{match.description}</p>
+                    <p className="text-xs text-primary/70 mb-2">{match.description}</p>
                     <div className="flex flex-wrap gap-1">
                       {match.strings_matched.map((s, i) => (
                         <span key={i} className="text-xs font-mono bg-white/60 px-1.5 py-0.5 border border-border-subtle">
@@ -261,9 +261,9 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr className="border-b border-border-subtle text-left">
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">API</th>
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Class</th>
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Risk</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">API</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Class</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Risk</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -278,7 +278,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                     ].map((row, idx) => (
                       <tr key={idx} className="border-b border-border-subtle/50">
                         <td className="py-2 font-mono text-xs">{row.api}</td>
-                        <td className="py-2 text-xs text-forensic-blue/60 font-mono break-all">{row.cls}</td>
+                        <td className="py-2 text-xs text-primary/60 font-mono break-all">{row.cls}</td>
                         <td className="py-2">
                           <span
                             className={`text-xs font-mono font-semibold px-2 py-0.5 ${
@@ -308,11 +308,11 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr className="border-b border-border-subtle text-left">
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Destination</th>
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Protocol</th>
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Port</th>
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Data Size</th>
-                      <th className="pb-2 font-mono text-xs text-forensic-blue/60">Direction</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Destination</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Protocol</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Port</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Data Size</th>
+                      <th className="pb-2 font-mono text-xs text-primary/60">Direction</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -364,15 +364,15 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 </h3>
                 <div className="space-y-2">
                   <div>
-                    <span className="text-xs font-mono text-forensic-blue/60 block">Family</span>
+                    <span className="text-xs font-mono text-primary/60 block">Family</span>
                     <span className="text-sm font-semibold">SpyAgent / PhishKing variant</span>
                   </div>
                   <div>
-                    <span className="text-xs font-mono text-forensic-blue/60 block">First Seen</span>
+                    <span className="text-xs font-mono text-primary/60 block">First Seen</span>
                     <span className="text-sm font-mono">2026-01-20</span>
                   </div>
                   <div>
-                    <span className="text-xs font-mono text-forensic-blue/60 block">Target Region</span>
+                    <span className="text-xs font-mono text-primary/60 block">Target Region</span>
                     <span className="text-sm">India — Banking sector users</span>
                   </div>
                 </div>
@@ -384,15 +384,15 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 </h3>
                 <div className="space-y-2">
                   <div>
-                    <span className="text-xs font-mono text-forensic-blue/60 block">Campaign</span>
+                    <span className="text-xs font-mono text-primary/60 block">Campaign</span>
                     <span className="text-sm font-semibold">Operation PhishKing</span>
                   </div>
                   <div>
-                    <span className="text-xs font-mono text-forensic-blue/60 block">Threat Actor</span>
+                    <span className="text-xs font-mono text-primary/60 block">Threat Actor</span>
                     <span className="text-sm font-mono">APT-IND-07 (Confidence: 65%)</span>
                   </div>
                   <div>
-                    <span className="text-xs font-mono text-forensic-blue/60 block">Motivation</span>
+                    <span className="text-xs font-mono text-primary/60 block">Motivation</span>
                     <span className="text-sm">Financial — Banking credential theft</span>
                   </div>
                 </div>
@@ -403,9 +403,9 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
 
         {activeTab === "vulns" && (
           <div className="space-y-4">
-            <div className="flex gap-4 text-xs font-mono text-forensic-blue/60 mb-2">
+            <div className="flex gap-4 text-xs font-mono text-primary/60 mb-2">
               <span>
-                Total: <strong className="text-forensic-blue">{REAL_VULNERABILITIES.length}</strong>
+                Total: <strong className="text-primary">{REAL_VULNERABILITIES.length}</strong>
               </span>
               <span className="text-red-600">
                 Critical: <strong>{REAL_VULNERABILITIES.filter((v) => v.severity === "critical").length}</strong>
@@ -435,10 +435,10 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                   return (
                     <div key={lang} className="border border-border-subtle p-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-forensic-blue/50" />
+                        <FileText className="w-5 h-5 text-primary/50" />
                         <div>
                           <span className="text-sm font-medium block">{lang}</span>
-                          <span className="text-xs font-mono text-forensic-blue/50">
+                          <span className="text-xs font-mono text-primary/50">
                             {report ? `${(report.size_kb / 1024).toFixed(1)} MB` : "Not generated"}
                           </span>
                         </div>
@@ -465,13 +465,13 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border border-border-subtle gap-3">
                 <div>
                   <span className="text-sm font-medium">Complete Evidence Package</span>
-                  <p className="text-xs font-mono text-forensic-blue/50 mt-0.5">
+                  <p className="text-xs font-mono text-primary/50 mt-0.5">
                     Includes: all artifacts, SHA256 manifest, chain of custody, Section 65B certificate
                   </p>
                 </div>
                 <button
                   onClick={() => downloadEvidencePackage(caseData.id)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-1 text-xs font-mono px-3 py-2 bg-forensic-blue text-white hover:bg-forensic-blue/90 transition-colors shrink-0"
+                  className="w-full sm:w-auto flex items-center justify-center gap-1 text-xs font-mono px-3 py-2 bg-primary text-white hover:bg-primary/90 transition-colors shrink-0"
                 >
                   <Download className="w-3 h-3" />
                   Download ZIP

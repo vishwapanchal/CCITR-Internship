@@ -28,10 +28,10 @@ export default function MetadataPanel() {
               transition={{ delay: 0.3 + idx * 0.1 }}
             >
               <div className="flex items-center space-x-2">
-                <Icon className={`w-4 h-4 ${item.critical ? 'text-critical' : 'text-forensic-blue/60'}`} />
+                <Icon className={`w-4 h-4 ${item.critical ? 'text-critical' : 'text-primary/60'}`} />
                 <span className="text-sm font-medium">{item.label}</span>
               </div>
-              <span className={`font-mono text-sm tracking-tight bg-canvas px-2 py-0.5 border border-border-subtle group-hover:border-forensic-blue/30 transition-colors ${item.critical ? 'text-critical font-semibold' : 'text-forensic-blue/80'}`}>
+              <span className={`font-mono text-sm tracking-tight bg-canvas px-2 py-0.5 border border-border-subtle group-hover:border-primary/30 transition-colors ${item.critical ? 'text-critical font-semibold' : 'text-primary/80'}`}>
                 {item.value}
               </span>
             </motion.div>

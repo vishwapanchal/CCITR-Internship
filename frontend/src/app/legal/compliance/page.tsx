@@ -6,15 +6,15 @@ import { ArrowLeft } from "lucide-react";
 export default function Compliance() {
   return (
     <main className="flex-1 flex flex-col p-6 md:p-12 lg:px-20 max-w-[1000px] mx-auto w-full pt-20">
-      <Link prefetch={false} href="/" className="inline-flex items-center gap-2 text-forensic-blue/60 hover:text-forensic-blue mb-8 font-medium transition-colors w-fit">
+      <Link prefetch={false} href="/" className="inline-flex items-center gap-2 text-primary/60 hover:text-primary mb-8 font-medium transition-colors w-fit">
         <ArrowLeft className="w-4 h-4" />
         Back to Home
       </Link>
       
-      <h1 className="font-display text-4xl md:text-5xl font-bold text-forensic-blue mb-6">Section 65B Compliance</h1>
+      <h1 className="font-display text-4xl md:text-5xl font-bold text-primary mb-6">Section 65B Compliance</h1>
       <div className="w-12 h-1 bg-critical mb-10"></div>
       
-      <div className="prose prose-blue max-w-none text-forensic-blue/80">
+      <div className="prose prose-blue max-w-none text-primary/80">
         <p className="lead text-lg mb-6">Admissibility of Electronic Records</p>
         
         <h2 className="font-display text-2xl font-semibold mt-10 mb-4">Evidentiary Standards</h2>

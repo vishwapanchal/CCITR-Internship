@@ -1651,7 +1651,18 @@ export const REAL_PHASE_STATUS_ANALYZING: PhaseStatus[] = [];
 
 export const REAL_YARA_MATCHES: YARAMatch[] = [];
 
-export const REAL_REPORTS: ReportEntry[] = [];
+export const REAL_REPORTS: ReportEntry[] = [
+  { id: "rpt-ag-en", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — Static Analysis Report", type: "pdf", language: "English", generated_at: "2026-07-02T10:15:00Z", size_kb: 1850 },
+  { id: "rpt-ag-json", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-02T10:15:00Z", size_kb: 45 },
+  { id: "rpt-ag-csv", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — IOC Export (CSV)", type: "csv", language: "N/A", generated_at: "2026-07-02T10:15:00Z", size_kb: 12 },
+  { id: "rpt-diva-en", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — Static Analysis Report", type: "pdf", language: "English", generated_at: "2026-07-02T10:02:00Z", size_kb: 1420 },
+  { id: "rpt-diva-json", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-02T10:02:00Z", size_kb: 28 },
+  { id: "rpt-diva-csv", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — IOC Export (CSV)", type: "csv", language: "N/A", generated_at: "2026-07-02T10:02:00Z", size_kb: 8 },
+  { id: "rpt-is-en", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Static Analysis Report", type: "pdf", language: "English", generated_at: "2026-07-02T10:06:00Z", size_kb: 2100 },
+  { id: "rpt-is-json", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-02T10:06:00Z", size_kb: 52 },
+  { id: "rpt-is-stix", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — IOC Export (STIX 2.1)", type: "stix", language: "N/A", generated_at: "2026-07-02T10:06:00Z", size_kb: 68 },
+  { id: "rpt-is-evidence", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Section 65B Evidence Package", type: "zip", language: "N/A", generated_at: "2026-07-02T10:06:00Z", size_kb: 9800 },
+];
 
 export const REAL_COPILOT_SUGGESTIONS: string[] = [
   "What permissions does this APK request?",
