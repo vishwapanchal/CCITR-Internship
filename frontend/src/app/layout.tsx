@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Shield, LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
-import Footer from "@/components/Footer";
 
 export default function RootLayout({
   children,
@@ -178,7 +177,6 @@ export default function RootLayout({
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col relative">{children}</div>
-        <Footer />
       </body>
     </html>
   );

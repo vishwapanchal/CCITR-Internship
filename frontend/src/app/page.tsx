@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Shield, Search, FileText, Sparkles, UploadCloud, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, Variants } from "framer-motion";
+import Footer from "@/components/Footer";
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
@@ -117,6 +118,9 @@ export default function LandingPage() {
         </motion.div>
 
       </motion.div>
+      <div className="mt-16 w-full relative z-10 mx-[-16px] md:mx-[-32px]">
+        <Footer />
+      </div>
     </main>
   );
 }
