@@ -38,7 +38,7 @@ export default function LandingPage() {
               Built for CMP311
             </span>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-800 tracking-tight mb-4 leading-[1.1] z-10">
+          <h1 className="font-pixel text-4xl md:text-5xl lg:text-6xl text-slate-800 tracking-tight mb-4 leading-[1.1] z-10">
             Android Security.
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-sky-500">Demystified.</span>
