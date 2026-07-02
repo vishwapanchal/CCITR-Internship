@@ -26,6 +26,7 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
     """
     from app.engines.static import run_full_static_analysis
     from app.engines.dynamic import run_full_dynamic_analysis
+    from app.engines.vulnerability import run_vulnerability_analysis
     from app.models.database import PhaseResult
     import os
     import logging
@@ -90,7 +91,29 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
             
             logger.info(f"Dynamic Analysis completed for {case_id} with score {phase_record.risk_score}")
 
-        # 3. Complete Case
+        # 3. Vulnerability Discovery Phase
+        if run_static and run_dynamic:
+            logger.info(f"Running Vulnerability Discovery for {case_id}")
+            
+            static_report_path = os.path.join(case_dir, "static_analysis", "static_report.json")
+            dynamic_report_path = os.path.join(case_dir, "dynamic_analysis", "dynamic_report.json")
+            
+            vuln_result = run_vulnerability_analysis(case_dir, static_report_path, dynamic_report_path)
+            
+            # Save vulnerability phase result
+            phase_record = PhaseResult(
+                case_id=case_id,
+                phase="vulnerability",
+                result=vuln_result,
+                risk_score=vuln_result.get("total_vulns", 0), # Using count as score for now
+                completed_at=vuln_result.get("completed_at")
+            )
+            db.add(phase_record)
+            db.commit()
+            
+            logger.info(f"Vulnerability Discovery completed for {case_id} with {phase_record.risk_score} findings")
+
+        # 4. Complete Case
         case.status = "completed"
         db.commit()
         logger.info(f"Successfully completed all analysis for Case ID: {case_id}")

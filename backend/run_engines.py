@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.engines.static import run_full_static_analysis
 from app.engines.dynamic import run_full_dynamic_analysis
+from app.engines.vulnerability import run_vulnerability_analysis
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -92,6 +93,27 @@ def main():
             
         except Exception as e:
             logger.error(f"Dynamic analysis failed: {e}")
+            
+    # Run Vulnerability Discovery
+    if not args.static_only and not args.dynamic_only:
+        logger.info("\n" + "="*50)
+        logger.info("PHASE 3: VULNERABILITY DISCOVERY")
+        logger.info("="*50)
+        try:
+            static_report_path = os.path.join(case_dir, "static_analysis", "static_report.json")
+            dynamic_report_path = os.path.join(case_dir, "dynamic_analysis", "dynamic_report.json")
+            
+            vuln_result = run_vulnerability_analysis(case_dir, static_report_path, dynamic_report_path)
+            results["vulnerability"] = vuln_result
+            
+            logger.info("\n[+] Vulnerability Discovery Summary:")
+            logger.info(f"  - Status: {vuln_result.get('status')}")
+            logger.info(f"  - Total Vulnerabilities: {vuln_result.get('total_vulns')}")
+            logger.info(f"  - Critical: {vuln_result.get('critical_count')}, High: {vuln_result.get('high_count')}, Medium: {vuln_result.get('medium_count')}, Low: {vuln_result.get('low_count')}")
+            logger.info(f"  - Duration: {vuln_result.get('duration_seconds', 0):.2f}s")
+            
+        except Exception as e:
+            logger.error(f"Vulnerability discovery failed: {e}")
             
     # Save combined report
     combined_report_path = os.path.join(case_dir, "combined_report.json")
