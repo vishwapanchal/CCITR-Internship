@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.api.routes import upload, auth, ws, cases, results, reports, analysis
+from app.api.routes import upload, auth, ws, cases, results, reports, analysis, copilot
 
 app.include_router(cases.router, prefix=settings.API_V1_STR + "/cases", tags=["cases"])
 app.include_router(upload.router, prefix=settings.API_V1_STR + "/cases", tags=["cases"])
@@ -33,7 +33,8 @@ app.include_router(results.router, prefix=settings.API_V1_STR + "/cases", tags=[
 app.include_router(reports.router, prefix=settings.API_V1_STR + "/reports", tags=["reports"])
 app.include_router(analysis.router, prefix=settings.API_V1_STR + "/analysis", tags=["analysis"])
 app.include_router(auth.router, prefix=settings.API_V1_STR + "/auth", tags=["auth"])
-app.include_router(ws.router, prefix=settings.API_V1_STR + "/copilot", tags=["websocket"])
+app.include_router(ws.router, prefix=settings.API_V1_STR + "/ws", tags=["websocket"])
+app.include_router(copilot.router, prefix=settings.API_V1_STR + "/copilot", tags=["copilot"])
 
 @app.get("/health")
 def health_check():
