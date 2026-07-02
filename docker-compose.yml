@@ -53,6 +53,24 @@ services:
       - chromadb_data:/chroma/chroma
     restart: unless-stopped
 
+  # ----------------------------------------------------
+  # TM2 Dynamic Analysis Infrastructure
+  # ----------------------------------------------------
+  android-emulator:
+    image: budtmo/docker-android:12.0
+    container_name: apex-x-android-emulator
+    privileged: true
+    environment:
+      - DEVICE=Nexus 5
+      - APPIUM=false
+    ports:
+      - "6080:6080"  # VNC Web UI
+      - "5554:5554"  # ADB Console
+      - "5555:5555"  # ADB Connection
+    volumes:
+      - /dev/kvm:/dev/kvm
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   neo4j_data:

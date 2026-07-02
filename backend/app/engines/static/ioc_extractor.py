@@ -1,39 +1,263 @@
+"""
+IOC (Indicator of Compromise) Extractor — Enhanced
+Extracts URLs, IPs, domains, emails, crypto wallets, API keys,
+Base64-encoded data, and other indicators from decompiled APK sources.
+Includes whitelisting to reduce false positives from Android SDK domains.
+"""
+
 import re
 import os
-from typing import List, Set
+import base64
+import logging
+from typing import Dict, Any, List, Set
 
-URL_REGEX = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-IP_REGEX = re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b')
+logger = logging.getLogger(__name__)
 
-def extract_iocs_from_file(file_path: str) -> dict:
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        content = f.read()
-    
-    urls = set(URL_REGEX.findall(content))
-    ips = set(IP_REGEX.findall(content))
-    
-    return {
-        "urls": list(urls),
-        "ips": list(ips)
+# --- Regex Patterns ---
+
+URL_REGEX = re.compile(
+    r'https?://(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)'
+    r'+[a-zA-Z]{2,}(?:/[^\s"\'<>\)\]]*)?',
+    re.IGNORECASE,
+)
+
+IP_REGEX = re.compile(
+    r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}'
+    r'(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'
+)
+
+DOMAIN_REGEX = re.compile(
+    r'\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)'
+    r'+(?:com|net|org|io|xyz|tk|ml|ga|cf|ru|cn|top|info|biz|cc|ws|pw|live|online|site|club)\b',
+    re.IGNORECASE,
+)
+
+EMAIL_REGEX = re.compile(
+    r'\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b'
+)
+
+# Bitcoin addresses (P2PKH, P2SH, Bech32)
+BTC_REGEX = re.compile(r'\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b')
+BTC_BECH32_REGEX = re.compile(r'\bbc1[a-zA-HJ-NP-Z0-9]{25,87}\b')
+
+# Ethereum addresses
+ETH_REGEX = re.compile(r'\b0x[0-9a-fA-F]{40}\b')
+
+# Monero addresses
+XMR_REGEX = re.compile(r'\b4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}\b')
+
+# API keys / secrets — generic patterns
+API_KEY_REGEX = re.compile(
+    r'(?:api[_\-]?key|apikey|api[_\-]?secret|secret[_\-]?key|access[_\-]?token|auth[_\-]?token|'
+    r'private[_\-]?key|client[_\-]?secret)\s*[:=]\s*["\']([a-zA-Z0-9_\-]{16,})["\']',
+    re.IGNORECASE,
+)
+
+# AWS access keys
+AWS_KEY_REGEX = re.compile(r'\bAKIA[0-9A-Z]{16}\b')
+
+# Google API keys
+GOOGLE_API_REGEX = re.compile(r'\bAIza[0-9A-Za-z\-_]{35}\b')
+
+# Base64-encoded strings that may contain URLs or secrets
+BASE64_REGEX = re.compile(r'\b[A-Za-z0-9+/]{20,}={0,2}\b')
+
+# --- Whitelist: known-safe domains/IPs ---
+
+WHITELISTED_DOMAINS = {
+    "schemas.android.com", "www.w3.org", "ns.adobe.com",
+    "xmlpull.org", "xml.org", "www.xml.org",
+    "google.com", "www.google.com", "googleapis.com",
+    "android.com", "www.android.com", "developer.android.com",
+    "play.google.com", "firebase.google.com", "crashlytics.com",
+    "gstatic.com", "googleadservices.com", "googlesyndication.com",
+    "doubleclick.net", "google-analytics.com", "googletagmanager.com",
+    "facebook.com", "graph.facebook.com",
+    "github.com", "raw.githubusercontent.com",
+    "apache.org", "www.apache.org",
+    "example.com", "www.example.com", "localhost",
+    "127.0.0.1", "0.0.0.0", "10.0.0.1",
+}
+
+# File extensions to scan for IOCs
+SCANNABLE_EXTENSIONS = {
+    ".smali", ".java", ".xml", ".txt", ".json", ".js",
+    ".html", ".properties", ".cfg", ".yml", ".yaml",
+}
+
+
+def extract_iocs_from_file(file_path: str) -> Dict[str, Any]:
+    """
+    Extract all IOC types from a single file.
+    """
+    result = {
+        "urls": set(),
+        "ips": set(),
+        "domains": set(),
+        "emails": set(),
+        "crypto_wallets": set(),
+        "api_keys": set(),
+        "base64_urls": set(),
     }
 
-def extract_iocs_from_directory(directory: str) -> dict:
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+    except Exception as e:
+        logger.warning(f"Failed to read {file_path}: {e}")
+        return _sets_to_lists(result)
+
+    # URLs
+    for url in URL_REGEX.findall(content):
+        if not _is_whitelisted_url(url):
+            result["urls"].add(url.rstrip(".,;:)]}"))
+
+    # IP addresses
+    for ip in IP_REGEX.findall(content):
+        if not _is_whitelisted_ip(ip):
+            result["ips"].add(ip)
+
+    # Domains
+    for domain in DOMAIN_REGEX.findall(content):
+        if domain.lower() not in WHITELISTED_DOMAINS:
+            result["domains"].add(domain.lower())
+
+    # Emails
+    for email in EMAIL_REGEX.findall(content):
+        domain = email.split('@')[-1].lower()
+        if not any(domain.endswith(d) for d in ["android.com", "google.com", "example.com"]):
+            result["emails"].add(email)
+
+    # Crypto wallets
+    for addr in BTC_REGEX.findall(content):
+        result["crypto_wallets"].add(f"btc:{addr}")
+    for addr in BTC_BECH32_REGEX.findall(content):
+        result["crypto_wallets"].add(f"btc:{addr}")
+    for addr in ETH_REGEX.findall(content):
+        result["crypto_wallets"].add(f"eth:{addr}")
+    for addr in XMR_REGEX.findall(content):
+        result["crypto_wallets"].add(f"xmr:{addr}")
+
+    # API keys and secrets
+    for key in API_KEY_REGEX.findall(content):
+        result["api_keys"].add(key)
+    for key in AWS_KEY_REGEX.findall(content):
+        result["api_keys"].add(f"aws:{key}")
+    for key in GOOGLE_API_REGEX.findall(content):
+        result["api_keys"].add(f"google:{key}")
+
+    # Base64-encoded URLs
+    for b64 in BASE64_REGEX.findall(content):
+        try:
+            decoded = base64.b64decode(b64).decode("utf-8", errors="ignore")
+            urls_in_decoded = URL_REGEX.findall(decoded)
+            for url in urls_in_decoded:
+                if not _is_whitelisted_url(url):
+                    result["base64_urls"].add(url)
+        except Exception:
+            pass
+
+    return _sets_to_lists(result)
+
+
+def extract_iocs_from_directory(directory: str) -> Dict[str, Any]:
     """
-    Recursively scans a directory (e.g., extracted smali code) for IOCs.
+    Recursively scan a directory (e.g., decompiled APK output) for IOCs.
+
+    Returns aggregated IOC dict with deduplicated indicators.
     """
-    all_urls: Set[str] = set()
-    all_ips: Set[str] = set()
-    
-    for root, _, files in os.walk(directory):
-        for file in files:
-            file_path = os.path.join(root, file)
-            # Basic check to avoid binary files, we mostly care about smali, xml, and java
-            if file.endswith((".smali", ".java", ".xml", ".txt")):
-                iocs = extract_iocs_from_file(file_path)
-                all_urls.update(iocs["urls"])
-                all_ips.update(iocs["ips"])
-                
-    return {
-        "urls": list(all_urls),
-        "ips": list(all_ips)
+    aggregated: Dict[str, Set] = {
+        "urls": set(),
+        "ips": set(),
+        "domains": set(),
+        "emails": set(),
+        "crypto_wallets": set(),
+        "api_keys": set(),
+        "base64_urls": set(),
     }
+    files_scanned = 0
+
+    if not os.path.isdir(directory):
+        logger.error(f"Directory not found: {directory}")
+        return {**_sets_to_lists(aggregated), "files_scanned": 0}
+
+    for root, _dirs, files in os.walk(directory):
+        for filename in files:
+            _, ext = os.path.splitext(filename)
+            if ext.lower() not in SCANNABLE_EXTENSIONS:
+                continue
+
+            file_path = os.path.join(root, filename)
+
+            # Skip very large files
+            try:
+                if os.path.getsize(file_path) > 5 * 1024 * 1024:  # 5 MB
+                    continue
+            except OSError:
+                continue
+
+            files_scanned += 1
+            file_iocs = extract_iocs_from_file(file_path)
+
+            for key in aggregated:
+                if key in file_iocs:
+                    aggregated[key].update(file_iocs[key])
+
+    result = _sets_to_lists(aggregated)
+    result["files_scanned"] = files_scanned
+    result["total_indicators"] = sum(
+        len(result[k]) for k in ["urls", "ips", "domains", "emails", "crypto_wallets", "api_keys", "base64_urls"]
+    )
+
+    logger.info(
+        f"IOC extraction complete: {files_scanned} files scanned, "
+        f"{result['total_indicators']} indicators found."
+    )
+
+    return result
+
+
+def _is_whitelisted_url(url: str) -> bool:
+    """Check if a URL belongs to a whitelisted domain."""
+    url_lower = url.lower()
+    for domain in WHITELISTED_DOMAINS:
+        if f"://{domain}" in url_lower or f"://{domain}/" in url_lower:
+            return True
+        if f".{domain}" in url_lower:
+            return True
+    return False
+
+
+def _is_whitelisted_ip(ip: str) -> bool:
+    """Check if an IP is a private/reserved address."""
+    parts = ip.split(".")
+    try:
+        first = int(parts[0])
+        second = int(parts[1])
+    except (ValueError, IndexError):
+        return True
+
+    # Private ranges
+    if first == 10:
+        return True
+    if first == 172 and 16 <= second <= 31:
+        return True
+    if first == 192 and second == 168:
+        return True
+    if first == 127:
+        return True
+    if first == 0 or first == 255:
+        return True
+
+    return ip in WHITELISTED_DOMAINS
+
+
+def _sets_to_lists(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert all sets in a dict to sorted lists."""
+    result = {}
+    for key, value in data.items():
+        if isinstance(value, set):
+            result[key] = sorted(value)
+        else:
+            result[key] = value
+    return result

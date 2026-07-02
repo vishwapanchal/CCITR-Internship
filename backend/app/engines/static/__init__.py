@@ -1,0 +1,311 @@
+"""
+Static Analysis Engine — Orchestrator
+Chains all static analysis tools into a complete pipeline:
+APKTool → JADX → Androguard → Manifest → YARA → IOC → Risk Score
+
+Each step is independent and the pipeline continues even if individual steps fail.
+All output artifacts are SHA256-hashed for forensic integrity.
+"""
+
+import os
+import json
+import hashlib
+import logging
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
+
+from app.engines.static import apktool_wrapper
+from app.engines.static import jadx_wrapper
+from app.engines.static import androguard_analyzer
+from app.engines.static import manifest_parser
+from app.engines.static import yara_scanner
+from app.engines.static import ioc_extractor
+from app.engines.static import risk_scorer
+
+logger = logging.getLogger(__name__)
+
+
+def run_full_static_analysis(apk_path: str, case_dir: str) -> Dict[str, Any]:
+    """
+    Execute the complete static analysis pipeline on an APK file.
+
+    Args:
+        apk_path: Absolute path to the APK file.
+        case_dir: Directory to store all analysis output and artifacts.
+
+    Returns:
+        Comprehensive analysis result dict with all findings and metadata.
+    """
+    start_time = datetime.now(timezone.utc)
+
+    result = {
+        "phase": "static",
+        "status": "running",
+        "apk_path": apk_path,
+        "case_dir": case_dir,
+        "started_at": start_time.isoformat(),
+        "completed_at": None,
+        "duration_seconds": None,
+        "steps": {},
+        "errors": [],
+        "risk_score": None,
+        "risk_breakdown": None,
+        "artifact_hashes": {},
+    }
+
+    # Create output directories
+    static_dir = os.path.join(case_dir, "static_analysis")
+    apktool_dir = os.path.join(static_dir, "apktool_output")
+    jadx_dir = os.path.join(static_dir, "jadx_output")
+    os.makedirs(static_dir, exist_ok=True)
+
+    # ── Step 1: APKTool Decompilation ────────────────────────
+    logger.info("Step 1/6: APKTool decompilation")
+    try:
+        apktool_output = apktool_wrapper.decompile_apk(apk_path, apktool_dir)
+        if apktool_output:
+            info = apktool_wrapper.get_decompiled_info(apktool_output)
+            result["steps"]["apktool"] = {
+                "status": "success",
+                "output_dir": apktool_output,
+                "info": info,
+            }
+        else:
+            result["steps"]["apktool"] = {"status": "failed", "error": "APKTool returned None"}
+            result["errors"].append("APKTool decompilation failed")
+    except Exception as e:
+        result["steps"]["apktool"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"APKTool error: {e}")
+
+    # ── Step 2: JADX Java Source Extraction ──────────────────
+    logger.info("Step 2/6: JADX Java source extraction")
+    try:
+        jadx_output = jadx_wrapper.extract_java_source(apk_path, jadx_dir, no_res=True)
+        if jadx_output:
+            stats = jadx_wrapper.get_java_source_stats(jadx_output)
+            result["steps"]["jadx"] = {
+                "status": "success",
+                "output_dir": jadx_output,
+                "stats": stats,
+            }
+        else:
+            result["steps"]["jadx"] = {"status": "failed", "error": "JADX returned None"}
+            result["errors"].append("JADX Java extraction failed")
+    except Exception as e:
+        result["steps"]["jadx"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"JADX error: {e}")
+
+    # ── Step 3: Androguard Analysis ──────────────────────────
+    logger.info("Step 3/6: Androguard APK analysis")
+    try:
+        ag_results = androguard_analyzer.analyze_apk(apk_path)
+        if "error" not in ag_results:
+            result["steps"]["androguard"] = {
+                "status": "success",
+                "data": ag_results,
+            }
+        else:
+            result["steps"]["androguard"] = {
+                "status": "failed",
+                "error": ag_results["error"],
+            }
+            result["errors"].append(f"Androguard failed: {ag_results['error']}")
+    except Exception as e:
+        result["steps"]["androguard"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"Androguard error: {e}")
+
+    # ── Step 4: Manifest Parsing ─────────────────────────────
+    logger.info("Step 4/6: Manifest parsing")
+    manifest_path = None
+    if apktool_dir and os.path.isdir(apktool_dir):
+        manifest_path = os.path.join(apktool_dir, "AndroidManifest.xml")
+
+    manifest_results = {}
+    try:
+        if manifest_path and os.path.exists(manifest_path):
+            manifest_results = manifest_parser.parse_manifest(manifest_path)
+            result["steps"]["manifest"] = {
+                "status": "success",
+                "data": manifest_results,
+            }
+        else:
+            result["steps"]["manifest"] = {
+                "status": "skipped",
+                "reason": "No AndroidManifest.xml found in APKTool output",
+            }
+    except Exception as e:
+        result["steps"]["manifest"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"Manifest parser error: {e}")
+
+    # ── Step 5: YARA Scanning ────────────────────────────────
+    logger.info("Step 5/6: YARA rule scanning")
+    yara_results = {}
+    try:
+        # Scan decompiled directory
+        scan_targets = []
+        if apktool_dir and os.path.isdir(apktool_dir):
+            scan_targets.append(apktool_dir)
+        if jadx_dir and os.path.isdir(jadx_dir):
+            scan_targets.append(jadx_dir)
+
+        compiled_rules = yara_scanner.compile_rules()
+        all_yara_matches = []
+        total_files = 0
+
+        if compiled_rules:
+            for target in scan_targets:
+                dir_result = yara_scanner.scan_directory(target, rules=compiled_rules)
+                all_yara_matches.extend(dir_result.get("matches", []))
+                total_files += dir_result.get("total_files_scanned", 0)
+
+            # Also scan raw APK binary
+            apk_result = yara_scanner.scan_apk_bytes(apk_path, rules=compiled_rules)
+            all_yara_matches.extend(apk_result.get("matches", []))
+
+            # Deduplicate by rule name
+            seen_rules = set()
+            unique_matches = []
+            for m in all_yara_matches:
+                rule_key = f"{m['rule']}:{m.get('file', '')}"
+                if rule_key not in seen_rules:
+                    seen_rules.add(rule_key)
+                    unique_matches.append(m)
+
+            yara_results = {
+                "matches": unique_matches,
+                "total_files_scanned": total_files,
+                "total_matches": len(unique_matches),
+                "rules_matched": sorted(set(m["rule"] for m in unique_matches)),
+            }
+
+            result["steps"]["yara"] = {
+                "status": "success",
+                "data": yara_results,
+            }
+        else:
+            result["steps"]["yara"] = {
+                "status": "skipped",
+                "reason": "YARA rules could not be compiled",
+            }
+    except Exception as e:
+        result["steps"]["yara"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"YARA scanner error: {e}")
+
+    # ── Step 6: IOC Extraction ───────────────────────────────
+    logger.info("Step 6/6: IOC extraction")
+    ioc_results = {}
+    try:
+        # Scan all decompiled outputs
+        scan_dirs = [d for d in [apktool_dir, jadx_dir] if d and os.path.isdir(d)]
+
+        aggregated_iocs = {
+            "urls": set(), "ips": set(), "domains": set(),
+            "emails": set(), "crypto_wallets": set(),
+            "api_keys": set(), "base64_urls": set(),
+        }
+
+        for scan_dir in scan_dirs:
+            dir_iocs = ioc_extractor.extract_iocs_from_directory(scan_dir)
+            for key in aggregated_iocs:
+                if key in dir_iocs:
+                    aggregated_iocs[key].update(dir_iocs[key])
+
+        ioc_results = {
+            k: sorted(v) if isinstance(v, set) else v
+            for k, v in aggregated_iocs.items()
+        }
+        ioc_results["total_indicators"] = sum(
+            len(v) for v in aggregated_iocs.values()
+        )
+
+        result["steps"]["iocs"] = {
+            "status": "success",
+            "data": ioc_results,
+        }
+    except Exception as e:
+        result["steps"]["iocs"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"IOC extraction error: {e}")
+
+    # ── Compute Risk Score ───────────────────────────────────
+    logger.info("Computing composite static risk score")
+    try:
+        # Build combined data for risk scorer
+        scoring_input = {}
+
+        # Permissions — prefer manifest parser output, fallback to androguard
+        if manifest_results.get("permissions"):
+            scoring_input["permissions"] = manifest_results["permissions"]
+        elif result["steps"].get("androguard", {}).get("data", {}).get("permissions"):
+            scoring_input["permissions"] = result["steps"]["androguard"]["data"]["permissions"]
+
+        scoring_input["iocs"] = ioc_results
+        scoring_input["yara_results"] = yara_results
+
+        if result["steps"].get("androguard", {}).get("data", {}).get("api_calls"):
+            scoring_input["api_calls"] = result["steps"]["androguard"]["data"]["api_calls"]
+
+        scoring_input["misconfigurations"] = manifest_results.get("misconfigurations", [])
+        scoring_input["security_flags"] = manifest_results.get("security_flags", {})
+
+        risk_breakdown = risk_scorer.compute_static_risk(scoring_input)
+        result["risk_score"] = risk_breakdown["total_score"]
+        result["risk_breakdown"] = risk_breakdown
+
+    except Exception as e:
+        logger.error(f"Risk scoring failed: {e}")
+        result["errors"].append(f"Risk scoring error: {e}")
+        result["risk_score"] = -1
+
+    # ── Save Results & Hash Artifacts ────────────────────────
+    end_time = datetime.now(timezone.utc)
+    result["completed_at"] = end_time.isoformat()
+    result["duration_seconds"] = (end_time - start_time).total_seconds()
+    result["status"] = "completed" if not result["errors"] else "completed_with_errors"
+
+    # Save the full report
+    report_path = os.path.join(static_dir, "static_report.json")
+    try:
+        with open(report_path, "w") as f:
+            json.dump(result, f, indent=2, default=str)
+        result["artifact_hashes"]["static_report.json"] = _hash_file(report_path)
+    except Exception as e:
+        logger.error(f"Failed to save static report: {e}")
+
+    # Save IOC list separately
+    ioc_path = os.path.join(static_dir, "ioc_list.json")
+    try:
+        with open(ioc_path, "w") as f:
+            json.dump(ioc_results, f, indent=2, default=str)
+        result["artifact_hashes"]["ioc_list.json"] = _hash_file(ioc_path)
+    except Exception as e:
+        logger.error(f"Failed to save IOC list: {e}")
+
+    # Save permissions profile
+    perm_path = os.path.join(static_dir, "permissions_profile.json")
+    try:
+        perm_data = scoring_input.get("permissions", {})
+        with open(perm_path, "w") as f:
+            json.dump(perm_data, f, indent=2, default=str)
+        result["artifact_hashes"]["permissions_profile.json"] = _hash_file(perm_path)
+    except Exception as e:
+        logger.error(f"Failed to save permissions profile: {e}")
+
+    logger.info(
+        f"Static analysis complete in {result['duration_seconds']:.1f}s — "
+        f"Risk score: {result['risk_score']}/100 "
+        f"({len(result['errors'])} errors)"
+    )
+
+    return result
+
+
+def _hash_file(file_path: str) -> str:
+    """Compute SHA256 hash of a file."""
+    sha256 = hashlib.sha256()
+    try:
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                sha256.update(chunk)
+        return sha256.hexdigest()
+    except Exception:
+        return "error"
