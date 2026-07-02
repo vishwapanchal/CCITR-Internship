@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { UploadCloud, File, AlertCircle, CheckCircle } from "lucide-react";
+import { UploadCloud, File, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { uploadAPK } from "@/services/api";
@@ -106,9 +107,13 @@ export default function IntakePage() {
   };
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center p-8 w-full max-w-4xl mx-auto">
+    <main className="flex-1 flex flex-col items-center justify-center p-8 w-full max-w-4xl mx-auto relative">
+      <Link href="/dashboard" className="absolute top-4 left-4 flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        Back to Dashboard
+      </Link>
       
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 mt-6">
         <h1 className="font-display text-3xl font-bold text-primary mb-2">New Investigation</h1>
         <p className="text-primary/70">Upload a suspicious APK for full-spectrum analysis.</p>
       </div>

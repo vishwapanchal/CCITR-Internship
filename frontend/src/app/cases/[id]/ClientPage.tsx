@@ -22,7 +22,8 @@ import {
   REAL_REPORTS,
 } from "@/services/realData";
 import { downloadReport, downloadEvidencePackage, getCaseDetail } from "@/services/api";
-import { FileText, Download, AlertTriangle, Shield, Activity, Network, Bug, FileDown } from "lucide-react";
+import { FileText, Download, AlertTriangle, Shield, Activity, Network, Bug, FileDown, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: Shield },
@@ -76,6 +77,11 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
 
   return (
     <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6">
+      <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors mb-4">
+        <ArrowLeft className="w-4 h-4" />
+        Back to Dashboard
+      </Link>
+      
       {/* Case Header */}
       <div className="bg-panel border border-border-subtle p-4 mb-4">
         <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-4">

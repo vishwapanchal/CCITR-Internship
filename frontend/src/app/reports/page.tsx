@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, Download, FileArchive, Search, FileJson, FileSpreadsheet } from "lucide-react";
+import { FileText, Download, FileArchive, Search, FileJson, FileSpreadsheet, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import {
   REAL_REPORTS,
@@ -220,8 +221,12 @@ export default function ReportsCenter() {
   };
 
   return (
-    <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full">
-      <header className="mb-8">
+    <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full relative">
+      <Link href="/dashboard" className="absolute top-4 left-4 md:top-8 md:-left-8 xl:-left-24 flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        Back
+      </Link>
+      <header className="mb-8 mt-8 md:mt-0">
         <h1 className="text-2xl md:text-3xl font-display font-bold text-text mb-2">
           Reports & Downloads
         </h1>

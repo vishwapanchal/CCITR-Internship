@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Cpu, Loader2, Zap } from "lucide-react";
+import { Send, Cpu, Loader2, Zap, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import {
   REAL_COPILOT_SUGGESTIONS,
   REAL_CASES,
@@ -230,6 +231,11 @@ export default function CoPilotPage() {
     <main className="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-4 md:p-6 gap-4 md:gap-6 h-[calc(100vh-70px)]">
       {/* Sidebar */}
       <div className="w-full md:w-80 flex md:flex-col gap-4 shrink-0">
+        <Link href="/dashboard" className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors mb-2">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Link>
+        
         {/* Case Selector */}
         <div className="bg-panel border border-border-subtle p-4">
           <label className="block text-xs font-mono text-primary/60 mb-2">
