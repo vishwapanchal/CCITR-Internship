@@ -43,12 +43,17 @@ export function buildCaseContext(selectedCase: string) {
   const activity = REAL_ACTIVITY.filter((a) => a.case_id === c.id);
 
   // All other cases for cross-referencing
-  const otherCases = REAL_CASES.filter((x) => x.id !== c.id).map((x) => ({
-    apk_name: x.apk_name,
-    package_name: x.package_name,
-    threat_score: x.threat_score,
-    verdict: x.verdict,
-  }));
+  const otherCases = REAL_CASES.reduce((acc, x) => {
+    if (x.id !== c.id) {
+      acc.push({
+        apk_name: x.apk_name,
+        package_name: x.package_name,
+        threat_score: x.threat_score,
+        verdict: x.verdict,
+      });
+    }
+    return acc;
+  }, [] as Array<{ apk_name: string; package_name: string; threat_score: number; verdict: string }>);
 
   return {
     // ---- Case Overview ----
@@ -107,9 +112,10 @@ export function buildCaseContext(selectedCase: string) {
     })),
 
     // ---- Threat Graph (connected nodes) ----
-    connected_domains: graphNodes
-      .filter((n) => n.type === "domain")
-      .map((n) => n.label),
+    connected_domains: graphNodes.reduce((acc, n) => {
+      if (n.type === "domain") acc.push(n.label);
+      return acc;
+    }, [] as string[]),
     graph_edges: graphEdges.map((e) => ({
       label: e.label,
       confidence: e.confidence,

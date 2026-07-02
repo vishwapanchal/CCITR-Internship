@@ -3,31 +3,38 @@
 import { m } from "framer-motion";
 import { AlertCircle, Eye, Wifi, ShieldAlert } from "lucide-react";
 
-export default function RecentAlerts() {
-  const alerts = [
-    {
-      id: 1,
-      type: "critical",
-      message: "C2 Beacon detected to 192.168.x.x",
-      time: "2ms ago",
-      icon: Wifi,
-    },
-    {
-      id: 2,
-      type: "warning",
-      message: "Dynamic code loading via DexClassLoader",
-      time: "15ms ago",
-      icon: ShieldAlert,
-    },
-    {
-      id: 3,
-      type: "warning",
-      message: "Attempted to read SMS content provider",
-      time: "45ms ago",
-      icon: Eye,
-    },
-  ];
+const alerts = [
+  {
+    id: 1,
+    type: "critical",
+    message: "C2 Beacon detected to 192.168.x.x",
+    time: "2ms ago",
+    icon: Wifi,
+  },
+  {
+    id: 2,
+    type: "warning",
+    message: "Suspicious API: Runtime.exec()",
+    time: "45s ago",
+    icon: Eye,
+  },
+  {
+    id: 3,
+    type: "critical",
+    message: "Vulnerable dependency: log4j-1.2",
+    time: "1m ago",
+    icon: ShieldAlert,
+  },
+  {
+    id: 4,
+    type: "info",
+    message: "Dynamic analysis sandbox started",
+    time: "5m ago",
+    icon: AlertCircle,
+  },
+];
 
+export default function RecentAlerts() {
   return (
     <div className="flex flex-col h-full w-full">
       <h3 className="font-display text-lg font-semibold border-b border-border-subtle pb-2 mb-4">

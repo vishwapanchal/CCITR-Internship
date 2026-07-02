@@ -19,6 +19,11 @@ const typeColors: Record<string, string> = {
 
 type SortField = "type" | "value" | "confidence" | "first_seen";
 
+const SortArrow = ({ field, currentSortField, sortAsc }: { field: SortField, currentSortField: SortField, sortAsc: boolean }) => {
+  if (currentSortField !== field) return null;
+  return <span className="ml-1">{sortAsc ? "↑" : "↓"}</span>;
+};
+
 export default function IOCTable({ iocs }: IOCTableProps) {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("confidence");
@@ -67,10 +72,6 @@ export default function IOCTable({ iocs }: IOCTableProps) {
     }
   }
 
-  function renderSortArrow(field: SortField) {
-    if (sortField !== field) return null;
-    return <span className="ml-1">{sortAsc ? "↑" : "↓"}</span>;
-  }
 
   const exportData = filtered.map((i) => ({
     type: i.type,
@@ -85,6 +86,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
       <div className="flex flex-wrap gap-3 mb-4 items-center">
         <input
           type="text"
+          aria-label="Search IOCs"
           placeholder="Search IOCs..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -92,6 +94,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
         />
 
         <select
+          aria-label="Filter IOCs by type"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
           className="bg-canvas border border-border-subtle px-3 py-1.5 text-sm font-mono focus:outline-none"
@@ -138,26 +141,26 @@ export default function IOCTable({ iocs }: IOCTableProps) {
                 className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary"
                 onClick={() => handleSort("type")}
               >
-                Type{renderSortArrow("type")}
+                Type<SortArrow field="type" currentSortField={sortField} sortAsc={sortAsc} />
               </th>
               <th
                 className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary"
                 onClick={() => handleSort("value")}
               >
-                Value{renderSortArrow("value")}
+                Value<SortArrow field="value" currentSortField={sortField} sortAsc={sortAsc} />
               </th>
               <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Context</th>
               <th
                 className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary text-right"
                 onClick={() => handleSort("confidence")}
               >
-                Confidence{renderSortArrow("confidence")}
+                Confidence<SortArrow field="confidence" currentSortField={sortField} sortAsc={sortAsc} />
               </th>
               <th
                 className="pb-2 font-mono text-xs text-primary/60 font-medium cursor-pointer hover:text-primary"
                 onClick={() => handleSort("first_seen")}
               >
-                First Seen{renderSortArrow("first_seen")}
+                First Seen<SortArrow field="first_seen" currentSortField={sortField} sortAsc={sortAsc} />
               </th>
             </tr>
           </thead>

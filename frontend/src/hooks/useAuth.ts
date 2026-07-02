@@ -34,9 +34,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       return false;
     }
 
-    // Store token
-    localStorage.setItem("apex_token", data.access_token);
-    localStorage.setItem("apex_username", username);
+    // Store token securely in cookies
+    document.cookie = `apex_token=${data.access_token}; path=/; Secure; SameSite=Strict`;
+    document.cookie = `apex_username=${username}; path=/; Secure; SameSite=Strict`;
 
     set({
       token: data.access_token,
@@ -59,9 +59,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       return false;
     }
 
-    // Store token
-    localStorage.setItem("apex_token", data.access_token);
-    localStorage.setItem("apex_username", username);
+    // Store token securely in cookies
+    document.cookie = `apex_token=${data.access_token}; path=/; Secure; SameSite=Strict`;
+    document.cookie = `apex_username=${username}; path=/; Secure; SameSite=Strict`;
 
     set({
       token: data.access_token,
@@ -75,9 +75,9 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    localStorage.removeItem("apex_token");
-    localStorage.removeItem("apex_username");
-    localStorage.removeItem("apex_role");
+    document.cookie = "apex_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "apex_username=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "apex_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 
     set({
       token: null,
@@ -91,9 +91,12 @@ export const useAuth = create<AuthState>((set, get) => ({
   loadFromStorage: () => {
     if (typeof window === "undefined") return;
     
-    const token = localStorage.getItem("apex_token");
-    const username = localStorage.getItem("apex_username");
-    const role = localStorage.getItem("apex_role");
+    const cookies = document.cookie.split("; ");
+    const getCookie = (name: string) => cookies.find(row => row.startsWith(`${name}=`))?.split("=")[1];
+
+    const token = getCookie("apex_token");
+    const username = getCookie("apex_username");
+    const role = getCookie("apex_role");
 
     if (token) {
       set({

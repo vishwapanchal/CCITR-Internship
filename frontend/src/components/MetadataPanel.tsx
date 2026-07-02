@@ -3,13 +3,14 @@
 import { m } from "framer-motion";
 import { ShieldAlert, FileCode2, Key, Activity } from "lucide-react";
 
+const metadata = [
+  { label: "File Name", value: "com.whatsapp.update.apk", icon: FileCode2 },
+  { label: "Package", value: "com.hidden.spyware.v2", icon: Activity },
+  { label: "SHA-256", value: "8f4e9a0c2b5d...e3f1", icon: Key },
+  { label: "Signature", value: "Untrusted (Debug)", icon: ShieldAlert, critical: true },
+];
+
 export default function MetadataPanel() {
-  const metadata = [
-    { label: "File Name", value: "com.whatsapp.update.apk", icon: FileCode2 },
-    { label: "Package", value: "com.hidden.spyware.v2", icon: Activity },
-    { label: "SHA-256", value: "8f4e9a0c2b5d...e3f1", icon: Key },
-    { label: "Signature", value: "Untrusted (Debug)", icon: ShieldAlert, critical: true },
-  ];
 
   return (
     <div className="flex flex-col justify-center h-full space-y-4">

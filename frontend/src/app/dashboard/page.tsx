@@ -4,7 +4,6 @@ import { m, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ActivitySquare, CheckCircle2, Search, Filter } from "lucide-react";
-import CaseCard from "@/components/CaseCard";
 import PhaseProgress from "@/components/PhaseProgress";
 import { REAL_ACTIVITY, REAL_PHASE_STATUS_ANALYZING } from "@/services/realData";
 import { getCases, CaseResponse } from "@/services/api";
@@ -43,24 +42,46 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-border-subtle pb-6 gap-4">
+      <m.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+        className="flex flex-col md:flex-row md:items-end justify-between border-b border-border-subtle pb-8 gap-6"
+      >
         <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-text flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shrink-0">
-              <ActivitySquare className="w-5 h-5 text-white" />
+          <m.h1 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, type: "spring" }}
+            className="text-4xl md:text-5xl font-display font-black flex items-center gap-4 tracking-tight"
+          >
+            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20">
+              <ActivitySquare className="w-7 h-7 text-white" />
             </div>
-            Analysis Results
-          </h1>
-          <p className="text-sm text-text-muted mt-2 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-success shrink-0" />
-            These apps have been scanned and analyzed. Click any card to see details.
-          </p>
+            <span className="bg-gradient-to-r from-slate-900 via-indigo-900 to-slate-900 bg-clip-text text-transparent">
+              Analysis Results
+            </span>
+          </m.h1>
+          <m.p 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-base font-sans text-text-muted mt-4 flex items-center gap-2"
+          >
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+            These applications have been deeply scanned and analyzed. Click any card for comprehensive details.
+          </m.p>
         </div>
-        <div className="flex gap-4 w-full md:w-auto">
+        <m.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex gap-4 w-full md:w-auto"
+        >
           <button 
             type="button"
             onClick={() => router.push("/upload")}
-            className="w-full md:w-auto bg-primary text-white px-5 py-2.5 font-medium text-sm hover:bg-primary/90 transition-colors rounded-xl"
+            className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-8 py-3.5 font-display font-bold text-sm tracking-wide hover:shadow-lg hover:shadow-indigo-500/30 hover:scale-105 transition-all rounded-2xl"
           >
             + Upload New APK
           </button>
@@ -107,15 +128,20 @@ export default function Dashboard() {
             </h3>
             {stats.analyzing > 0 ? (
               <div className="space-y-4">
-                {cases.filter(c => c.status === "analyzing").map(caseItem => (
-                  <div key={caseItem.id} className="border border-border-subtle p-3">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-mono text-xs font-semibold">{caseItem.case_number}</span>
-                    </div>
-                    <p className="text-xs truncate mb-3">{caseItem.apk_name}</p>
-                    <PhaseProgress phases={REAL_PHASE_STATUS_ANALYZING} />
-                  </div>
-                ))}
+                {cases.reduce<React.ReactNode[]>((acc, caseItem) => {
+                  if (caseItem.status === "analyzing") {
+                    acc.push(
+                      <div key={caseItem.id} className="border border-border-subtle p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-mono text-xs font-semibold">{caseItem.case_number}</span>
+                        </div>
+                        <p className="text-xs truncate mb-3">{caseItem.apk_name}</p>
+                        <PhaseProgress phases={REAL_PHASE_STATUS_ANALYZING} />
+                      </div>
+                    );
+                  }
+                  return acc;
+                }, [])}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-40 text-center">

@@ -15,7 +15,7 @@ export default function TermsOfService() {
       <div className="w-12 h-1 bg-critical mb-10"></div>
       
       <div className="prose prose-blue max-w-none text-primary/80">
-        <p className="lead text-lg mb-6">Last updated: {new Date().toLocaleDateString()}</p>
+        <p className="lead text-lg mb-6" suppressHydrationWarning>Last updated: {new Date().toLocaleDateString()}</p>
         
         <h2 className="font-display text-2xl font-semibold mt-10 mb-4">1. Acceptance of Terms</h2>
         <p className="mb-4">

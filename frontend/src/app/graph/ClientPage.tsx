@@ -43,11 +43,13 @@ export default function GraphExplorer() {
             <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-text-muted" />
             <input
               type="text"
+              aria-label="Search nodes"
               placeholder="Search nodes..."
               className="bg-white border border-border-subtle pl-8 pr-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-56"
             />
           </div>
           <select
+            aria-label="Filter nodes by type"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             className="bg-white border border-border-subtle px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"

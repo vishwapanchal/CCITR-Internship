@@ -6,13 +6,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { m, Variants } from "framer-motion";
 import Footer from "@/components/Footer";
 
+const bentoVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80, damping: 20 } },
+};
+
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
-
-  const bentoVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 80, damping: 20 } },
-  };
 
   return (
     <main className="flex-1 flex flex-col min-h-[calc(100vh-80px)] bg-[#f4f7f9] relative overflow-hidden p-4 md:p-8">

@@ -39,7 +39,7 @@ export default function Footer() {
       </div>
       
       <div className="max-w-7xl mx-auto px-4 md:px-6 mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-400" suppressHydrationWarning>
           &copy; {new Date().getFullYear()} APEX-X. All rights reserved. <span className="font-script text-sm ml-1 text-slate-500">Not for commercial use.</span>
         </p>
         <div className="flex items-center gap-4 text-slate-400">

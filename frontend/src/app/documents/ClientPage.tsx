@@ -199,6 +199,16 @@ const typeIcons: Record<string, typeof FileText> = {
   zip: FileArchive,
 };
 
+const handleDownload = (report: (typeof REAL_REPORTS)[0]) => {
+  if (report.type === "pdf") {
+    generatePDFReport(report.case_id);
+  } else if (report.type === "json" || report.type === "stix") {
+    downloadJSON(report.case_id);
+  } else if (report.type === "csv") {
+    downloadCSV(report.case_id);
+  }
+};
+
 export default function ReportsCenter() {
   const [search, setSearch] = useState("");
 
@@ -209,16 +219,6 @@ export default function ReportsCenter() {
           r.title.toLowerCase().includes(search.toLowerCase())
       )
     : REAL_REPORTS;
-
-  const handleDownload = (report: (typeof REAL_REPORTS)[0]) => {
-    if (report.type === "pdf") {
-      generatePDFReport(report.case_id);
-    } else if (report.type === "json" || report.type === "stix") {
-      downloadJSON(report.case_id);
-    } else if (report.type === "csv") {
-      downloadCSV(report.case_id);
-    }
-  };
 
   return (
     <main className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full relative">
