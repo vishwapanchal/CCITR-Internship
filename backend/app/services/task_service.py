@@ -27,6 +27,7 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
     from app.engines.static import run_full_static_analysis
     from app.engines.dynamic import run_full_dynamic_analysis
     from app.models.database import PhaseResult
+    from app.services.hash_service import calculate_sha256, append_to_manifest
     import os
     import logging
 
@@ -48,6 +49,12 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         case_dir = os.path.join(DATA_DIR, str(case_id))
         apk_path = os.path.join(case_dir, case.apk_name)
         
+        def hash_and_log(file_path: str, artifact_name: str):
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    file_hash = calculate_sha256(f)
+                append_to_manifest(case_dir, artifact_name, file_hash)
+                
         if not os.path.exists(apk_path):
             case.status = "failed"
             db.commit()
@@ -70,6 +77,7 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
             db.add(phase_record)
             db.commit()
             
+            hash_and_log(os.path.join(case_dir, "static_analysis", "static_report.json"), "static_report.json")
             logger.info(f"Static Analysis completed for {case_id} with score {phase_record.risk_score}")
 
         # 2. Dynamic Analysis Phase
@@ -88,6 +96,7 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
             db.add(phase_record)
             db.commit()
             
+            hash_and_log(os.path.join(case_dir, "dynamic_analysis", "dynamic_report.json"), "dynamic_report.json")
             logger.info(f"Dynamic Analysis completed for {case_id} with score {phase_record.risk_score}")
 
         # TM3 INTELLIGENCE LAYER PHASES --------------------------------------
@@ -121,6 +130,8 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         )
         db.add(phase_record)
         db.commit()
+        
+        hash_and_log(os.path.join(case_dir, "vulnerability_analysis", "vulnerability_report.json"), "vulnerability_report.json")
 
         # 5. Threat Reasoning (LLM Narrative)
         from app.engines.intelligence import threat_reasoner
@@ -143,6 +154,8 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         )
         db.add(phase_record)
         db.commit()
+        
+        hash_and_log(os.path.join(narrative_dir, "threat_narrative.json"), "threat_narrative.json")
 
         # 6. Co-Pilot RAG Indexing
         from app.engines.intelligence import copilot_rag
