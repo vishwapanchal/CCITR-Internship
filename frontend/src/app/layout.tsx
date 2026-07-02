@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Shield, LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
+import Lenis from 'lenis';
 
 export default function RootLayout({
   children,
@@ -30,15 +31,40 @@ export default function RootLayout({
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  const isLandingPage = pathname === "/";
+
   const navLinks = [
-    { href: "/", label: "Home" },
+    ...(isLandingPage ? [] : [{ href: "/", label: "Home" }]),
     ...(isAuthenticated
       ? [
           { href: "/upload", label: "Upload APK" },
           { href: "/dashboard", label: "Results" },
           { href: "/graph", label: "Threat Map" },
           { href: "/copilot", label: "AI Assistant" },
-          { href: "/reports", label: "Reports" },
+          { href: "/documents", label: "Reports" },
         ]
       : []),
   ];

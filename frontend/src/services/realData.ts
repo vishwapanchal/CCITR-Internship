@@ -622,7 +622,7 @@ export const REAL_IOCS: IOCEntry[] = [
     "case_id": "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396",
     "id": "ioc-766ae1cb",
     "type": "hash",
-    "value": "aws:AKIAX56QKKOLPQ7G7ABC",
+    "value": "aws:MOCK_KEY_X56QKKOLPQ7G7ABC",
     "context": "Hardcoded API Key / Secret Token",
     "confidence": 90,
     "first_seen": "2026-07-02T10:04:35.889494+00:00"
@@ -631,7 +631,7 @@ export const REAL_IOCS: IOCEntry[] = [
     "case_id": "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396",
     "id": "ioc-0b887629",
     "type": "hash",
-    "value": "sk-abcdef1234567890abcdef1234567890abcdef12",
+    "value": "mock-api-abcdef1234567890abcdef1234567890abcdef12",
     "context": "Hardcoded API Key / Secret Token",
     "confidence": 90,
     "first_seen": "2026-07-02T10:04:35.889494+00:00"

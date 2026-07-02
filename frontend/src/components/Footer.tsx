@@ -21,14 +21,14 @@ export default function Footer() {
         </div>
 
         <div className="flex gap-12 text-center md:text-left">
-          <div className="flex flex-col gap-3">
-            <h4 className="font-semibold text-slate-800 text-sm">Product</h4>
-            <Link href="/upload" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Scan APK</Link>
-            <Link href="/dashboard" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Results</Link>
-            <Link href="/reports" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Reports</Link>
+          <div className="flex flex-col gap-2">
+            <h4 className="font-semibold text-slate-900 mb-2">Platform</h4>
+            <Link href="/dashboard" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Dashboard</Link>
+            <Link href="/upload" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">New Scan</Link>
+            <Link href="/documents" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Reports</Link>
           </div>
           
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <h4 className="font-semibold text-slate-800 text-sm">Legal</h4>
             <Link href="/legal/privacy" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Privacy</Link>
             <Link href="/legal/terms" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">Terms</Link>
