@@ -1,54 +1,74 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import Dict, List
+import json
+import logging
+from typing import Dict, Any
+
+from app.engines.intelligence import copilot_rag
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Connection manager for WebSockets
 class ConnectionManager:
     def __init__(self):
-        # Maps case_id to a list of active websocket connections
-        self.active_connections: Dict[str, List[WebSocket]] = {}
+        self.active_connections: Dict[str, WebSocket] = {}
 
     async def connect(self, websocket: WebSocket, case_id: str):
         await websocket.accept()
-        if case_id not in self.active_connections:
-            self.active_connections[case_id] = []
-        self.active_connections[case_id].append(websocket)
+        self.active_connections[case_id] = websocket
+        logger.info(f"WebSocket connected for case {case_id}")
 
-    def disconnect(self, websocket: WebSocket, case_id: str):
+    def disconnect(self, case_id: str):
         if case_id in self.active_connections:
-            self.active_connections[case_id].remove(websocket)
-            if not self.active_connections[case_id]:
-                del self.active_connections[case_id]
+            del self.active_connections[case_id]
+            logger.info(f"WebSocket disconnected for case {case_id}")
 
-    async def broadcast_to_case(self, case_id: str, message: dict):
+    async def send_message(self, case_id: str, message: dict):
         if case_id in self.active_connections:
-            for connection in self.active_connections[case_id]:
-                try:
-                    await connection.send_json(message)
-                except:
-                    pass
+            await self.active_connections[case_id].send_json(message)
 
 manager = ConnectionManager()
 
 @router.websocket("/{case_id}")
-async def websocket_endpoint(websocket: WebSocket, case_id: str):
-    """
-    WebSocket endpoint for real-time Co-Pilot chat and task status updates.
-    """
+async def copilot_websocket(websocket: WebSocket, case_id: str):
     await manager.connect(websocket, case_id)
     try:
         while True:
-            # Receive messages from the frontend (e.g., Co-Pilot questions)
             data = await websocket.receive_text()
+            logger.info(f"Received WS message for case {case_id}: {data}")
             
-            # TM3 will handle the actual LLM logic, we just echo for now
-            response = {
-                "type": "copilot_response",
-                "message": f"Received your query for case {case_id}: {data}",
-                "status": "echo"
-            }
-            await manager.broadcast_to_case(case_id, response)
+            # Send initial thinking status
+            await manager.send_message(case_id, {
+                "type": "copilot_status",
+                "status": "thinking"
+            })
             
+            # Stream the LLM response chunk by chunk
+            full_response = ""
+            try:
+                for token in copilot_rag.stream_answer(case_id, data):
+                    full_response += token
+                    # Stream tokens directly to the UI
+                    await manager.send_message(case_id, {
+                        "type": "copilot_chunk",
+                        "chunk": token
+                    })
+                
+                # Signal completion
+                await manager.send_message(case_id, {
+                    "type": "copilot_done",
+                    "full_message": full_response
+                })
+
+            except Exception as e:
+                logger.error(f"LLM streaming error for case {case_id}: {e}")
+                await manager.send_message(case_id, {
+                    "type": "copilot_error",
+                    "error": str(e)
+                })
+
     except WebSocketDisconnect:
-        manager.disconnect(websocket, case_id)
+        manager.disconnect(case_id)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(case_id)

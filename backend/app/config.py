@@ -25,6 +25,21 @@ class Settings(BaseSettings):
     # Redis & Celery
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: str = os.getenv("REDIS_PORT", "6379")
+
+    # Ollama (Local LLM)
+    OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    OLLAMA_MODEL_CODER: str = "qwen2.5-coder:7b-instruct-q4_K_M"
+    OLLAMA_MODEL_SECURITY: str = "whiterabbitneo"
+    OLLAMA_TIMEOUT: int = 300  # 5 min for slow machines
+
+    # Neo4j
+    NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
+    NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "apexpassword")
+
+    # ChromaDB
+    CHROMADB_HOST: str = os.getenv("CHROMADB_HOST", "localhost")
+    CHROMADB_PORT: int = int(os.getenv("CHROMADB_PORT", "8000"))
     
     @property
     def CELERY_BROKER_URL(self) -> str:

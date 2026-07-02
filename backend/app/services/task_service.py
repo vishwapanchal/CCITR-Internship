@@ -26,7 +26,6 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
     """
     from app.engines.static import run_full_static_analysis
     from app.engines.dynamic import run_full_dynamic_analysis
-    from app.engines.vulnerability import run_vulnerability_analysis
     from app.models.database import PhaseResult
     import os
     import logging
@@ -91,29 +90,68 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
             
             logger.info(f"Dynamic Analysis completed for {case_id} with score {phase_record.risk_score}")
 
-        # 3. Vulnerability Discovery Phase
-        if run_static and run_dynamic:
-            logger.info(f"Running Vulnerability Discovery for {case_id}")
-            
-            static_report_path = os.path.join(case_dir, "static_analysis", "static_report.json")
-            dynamic_report_path = os.path.join(case_dir, "dynamic_analysis", "dynamic_report.json")
-            
-            vuln_result = run_vulnerability_analysis(case_dir, static_report_path, dynamic_report_path)
-            
-            # Save vulnerability phase result
-            phase_record = PhaseResult(
-                case_id=case_id,
-                phase="vulnerability",
-                result=vuln_result,
-                risk_score=vuln_result.get("total_vulns", 0), # Using count as score for now
-                completed_at=vuln_result.get("completed_at")
-            )
-            db.add(phase_record)
-            db.commit()
-            
-            logger.info(f"Vulnerability Discovery completed for {case_id} with {phase_record.risk_score} findings")
+        # TM3 INTELLIGENCE LAYER PHASES --------------------------------------
+        
+        # 3. C2 Intelligence Phase
+        from app.engines.c2 import run_full_c2_intelligence
+        logger.info(f"Running C2 Intelligence for {case_id}")
+        c2_result = run_full_c2_intelligence(apk_path, case_dir, str(case_id))
+        
+        phase_record = PhaseResult(
+            case_id=case_id,
+            phase="c2_intelligence",
+            result=c2_result,
+            risk_score=c2_result.get("risk_score", 0),
+            completed_at=c2_result.get("completed_at")
+        )
+        db.add(phase_record)
+        db.commit()
 
-        # 4. Complete Case
+        # 4. Vulnerability Discovery Phase
+        from app.engines.vulnerability import run_vulnerability_scan
+        logger.info(f"Running Vulnerability Discovery for {case_id}")
+        vuln_result = run_vulnerability_scan(case_dir, str(case_id))
+        
+        phase_record = PhaseResult(
+            case_id=case_id,
+            phase="vulnerability",
+            result=vuln_result,
+            risk_score=vuln_result.get("risk_score", 0),
+            completed_at=vuln_result.get("completed_at")
+        )
+        db.add(phase_record)
+        db.commit()
+
+        # 5. Threat Reasoning (LLM Narrative)
+        from app.engines.intelligence import threat_reasoner
+        logger.info(f"Running Threat Reasoning Agent for {case_id}")
+        narrative_result = threat_reasoner.generate_threat_narrative(case_dir)
+        
+        # Save narrative to file so it can be indexed
+        narrative_dir = os.path.join(case_dir, "intelligence_analysis")
+        os.makedirs(narrative_dir, exist_ok=True)
+        with open(os.path.join(narrative_dir, "threat_narrative.json"), "w") as f:
+            import json
+            json.dump(narrative_result, f, indent=2)
+
+        phase_record = PhaseResult(
+            case_id=case_id,
+            phase="threat_reasoning",
+            result=narrative_result,
+            risk_score=0,
+            completed_at=None
+        )
+        db.add(phase_record)
+        db.commit()
+
+        # 6. Co-Pilot RAG Indexing
+        from app.engines.intelligence import copilot_rag
+        logger.info(f"Indexing artifacts for Officer Co-Pilot: Case {case_id}")
+        copilot_rag.index_case_artifacts(str(case_id), case_dir)
+
+        # ---------------------------------------------------------------------
+
+        # Complete Case
         case.status = "completed"
         db.commit()
         logger.info(f"Successfully completed all analysis for Case ID: {case_id}")

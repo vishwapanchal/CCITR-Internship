@@ -42,9 +42,16 @@ class TestIntegrationAnalysis(unittest.TestCase):
             shutil.rmtree(self.case_dir, ignore_errors=True)
 
     @patch('app.services.task_service.SessionLocal')
-    @patch('app.services.task_service.run_full_static_analysis')
-    @patch('app.services.task_service.run_full_dynamic_analysis')
-    def test_analyze_apk_task_full(self, mock_dynamic, mock_static, mock_session_maker):
+    @patch('app.engines.static.run_full_static_analysis')
+    @patch('app.engines.dynamic.run_full_dynamic_analysis')
+    @patch('app.engines.c2.run_full_c2_intelligence')
+    @patch('app.engines.vulnerability.run_vulnerability_scan')
+    @patch('app.engines.intelligence.threat_reasoner.generate_threat_narrative')
+    @patch('app.engines.intelligence.copilot_rag.index_case_artifacts')
+    def test_analyze_apk_task_full(
+        self, mock_index_rag, mock_threat_reasoner, mock_vuln, mock_c2, 
+        mock_dynamic, mock_static, mock_session_maker
+    ):
         # Setup DB mocks
         mock_db = MagicMock(spec=Session)
         mock_session_maker.return_value = mock_db
@@ -83,6 +90,27 @@ class TestIntegrationAnalysis(unittest.TestCase):
             "completed_at": "2023-01-01T12:05:00Z"
         }
         
+        mock_c2.return_value = {
+            "phase": "c2",
+            "status": "completed",
+            "risk_score": 40,
+            "completed_at": "2023-01-01T12:06:00Z"
+        }
+        
+        mock_vuln.return_value = {
+            "phase": "vulnerability",
+            "status": "completed",
+            "risk_score": 84,
+            "completed_at": "2023-01-01T12:07:00Z"
+        }
+        
+        mock_threat_reasoner.return_value = {
+            "status": "success",
+            "narrative_text": "Mock narrative."
+        }
+        
+        mock_index_rag.return_value = True
+        
         # Execute the task directly (synchronously)
         result = analyze_apk_task(self.case_id, run_static=True, run_dynamic=True)
         
@@ -90,12 +118,16 @@ class TestIntegrationAnalysis(unittest.TestCase):
         self.assertEqual(result["status"], "completed")
         self.assertEqual(result["case_id"], self.case_id)
         
-        # Verify both engines were called
+        # Verify all engines were called in the pipeline
         mock_static.assert_called_once_with(self.apk_path, self.case_dir)
         mock_dynamic.assert_called_once_with(self.apk_path, self.case_dir, duration=60)
+        mock_c2.assert_called_once_with(self.apk_path, self.case_dir, str(self.case_id))
+        mock_vuln.assert_called_once_with(self.case_dir, str(self.case_id))
+        mock_threat_reasoner.assert_called_once_with(self.case_dir)
+        mock_index_rag.assert_called_once_with(str(self.case_id), self.case_dir)
         
-        # Verify db phase results were added
-        self.assertEqual(mock_db.add.call_count, 2)
+        # Verify db phase results were added (static, dynamic, c2, vuln, threat)
+        self.assertEqual(mock_db.add.call_count, 5)
         
         # Verify status updates
         self.assertEqual(mock_case.status, "completed")

@@ -71,6 +71,25 @@ services:
       - /dev/kvm:/dev/kvm
     restart: unless-stopped
 
+  # ----------------------------------------------------
+  # TM3 Local LLM Infrastructure
+  # ----------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: apex-x-ollama
+    environment:
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=30s
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+
 volumes:
   postgres_data:
   neo4j_data:
@@ -79,3 +98,4 @@ volumes:
   neo4j_plugins:
   redis_data:
   chromadb_data:
+  ollama_data:
