@@ -92,6 +92,7 @@ export default function CoPilotPage() {
       setMessages((prev) => [
         ...prev,
         {
+          id: crypto.randomUUID(),
           role: "ai",
           content:
             "⚠️ Network error — could not reach the AI service. Please check your connection.",

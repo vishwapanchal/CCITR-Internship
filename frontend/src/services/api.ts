@@ -139,7 +139,7 @@ export async function uploadAPK(
 
 // ---- Results ----
 
-export async function getCaseResults(caseId: string, phase?: string) {
+async function getCaseResults(caseId: string, phase?: string) {
   const query = phase ? `?phase=${phase}` : "";
   return apiFetch<Record<string, unknown>>(`/cases/${caseId}/results${query}`);
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import { m } from "framer-motion";
+import { m, Variants } from "framer-motion";
 
 const text = "APEX-X";
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -15,7 +15,7 @@ const containerVariants = {
   },
 };
 
-const letterVariants = {
+const letterVariants: Variants = {
   hidden: { opacity: 0, y: 20, scale: 0.5, rotateX: -90 },
   visible: {
     opacity: 1,

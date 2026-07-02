@@ -4,6 +4,7 @@ import { m, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ActivitySquare, CheckCircle2, Search, Filter } from "lucide-react";
+import CaseCard from "@/components/CaseCard";
 import PhaseProgress from "@/components/PhaseProgress";
 import { REAL_ACTIVITY, REAL_PHASE_STATUS_ANALYZING } from "@/services/realData";
 import { getCases, CaseResponse } from "@/services/api";
@@ -85,8 +86,8 @@ export default function Dashboard() {
           >
             + Upload New APK
           </button>
-        </div>
-      </header>
+        </m.div>
+      </m.header>
 
       <m.div
         variants={containerVariants}
