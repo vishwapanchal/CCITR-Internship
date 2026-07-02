@@ -5,10 +5,8 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Read env from root .env
-  env: {
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
-  },
+  // Removed the env block to ensure OPENROUTER_API_KEY is read dynamically at runtime
+  // by the server-side API route, rather than baked in at build time.
 };
 
 export default nextConfig;
