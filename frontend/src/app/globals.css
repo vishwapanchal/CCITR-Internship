@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist+Pixel&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Geist+Pixel&family=Hammersmith+One&family=Play:wght@400;700&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -16,10 +16,11 @@
   --color-border-subtle: #e2e8f0;
   --color-surface: #f1f5f9;
 
-  --font-display: var(--font-display), sans-serif;
-  --font-sans: var(--font-sans), sans-serif;
-  --font-mono: var(--font-mono), monospace;
+  --font-display: "Hammersmith One", sans-serif;
+  --font-sans: "Play", sans-serif;
+  --font-mono: "Source Code Pro", monospace;
   --font-pixel: "Geist Pixel", sans-serif;
+  --font-script: "Dancing Script", cursive;
 }
 
 :root {

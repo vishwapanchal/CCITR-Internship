@@ -33,7 +33,7 @@ export default function LandingPage() {
         <motion.div variants={bentoVariants} className="col-span-1 md:col-span-2 lg:col-span-2 md:row-span-2 bg-white/60 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] p-8 md:p-12 flex flex-col justify-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <div className="mb-6 z-10">
-            <span className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 border border-indigo-100 text-xs font-semibold px-4 py-1.5 rounded-full shadow-sm">
+            <span className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 border border-indigo-100 font-script text-lg px-4 py-1.5 rounded-full shadow-sm">
               <Sparkles className="w-3.5 h-3.5" />
               Built for CMP311
             </span>

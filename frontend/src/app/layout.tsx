@@ -1,6 +1,5 @@
 "use client";
 
-import { Outfit, JetBrains_Mono, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -8,21 +7,6 @@ import { Shield, LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
-
-const outfit = Outfit({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-});
-
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-display",
-  subsets: ["latin"],
-});
 
 export default function RootLayout({
   children,
@@ -63,7 +47,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${jetbrainsMono.variable} ${bricolage.variable} h-full antialiased`}
+      className="h-full antialiased"
       suppressHydrationWarning
     >
       <head>
