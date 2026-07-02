@@ -5,6 +5,6 @@ export const metadata = {
   description: "APEX-X Documents Page",
 };
 
-export default function Page(props: any) {
-  return <ClientPage {...props} />;
+export default function Page() {
+  return <ClientPage />;
 }
