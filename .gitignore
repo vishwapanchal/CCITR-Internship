@@ -1,8 +1,40 @@
+# Dependencies
 node_modules/
+backend/venv/
+
+# Build outputs
 .next/
-.venv/
+frontend/.next/
+frontend/out/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+
+# Environment
 .env
+backend/.env
+
+# Database
 *.db
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test output
 backend/test_output/
+backend/test_results/*/static_analysis/
+backend/test_results/*/dynamic_analysis/
+test_cases/
+
+# Temporary
+*.log
+*.tmp
