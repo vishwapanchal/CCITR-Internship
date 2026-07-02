@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import NetworkGraph from "@/components/NetworkGraph";
-import { MOCK_GRAPH_NODES, MOCK_GRAPH_EDGES } from "@/services/mockData";
+import { REAL_GRAPH_NODES, REAL_GRAPH_EDGES } from "@/services/realData";
 import { Network, Search, Filter } from "lucide-react";
 
 export default function GraphExplorer() {
@@ -10,11 +10,11 @@ export default function GraphExplorer() {
   
   // Simple filtering
   const nodes = filterType === "all" 
-    ? MOCK_GRAPH_NODES 
-    : MOCK_GRAPH_NODES.filter(n => n.type === filterType || n.type === "apk");
+    ? REAL_GRAPH_NODES 
+    : REAL_GRAPH_NODES.filter(n => n.type === filterType || n.type === "apk");
     
   const nodeIds = new Set(nodes.map(n => n.id));
-  const edges = MOCK_GRAPH_EDGES.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target));
+  const edges = REAL_GRAPH_EDGES.filter(e => nodeIds.has(e.source) && nodeIds.has(e.target));
 
   return (
     <main className="flex-1 p-6 flex flex-col h-[calc(100vh-70px)] max-w-[1600px] mx-auto w-full">

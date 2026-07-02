@@ -56,7 +56,7 @@ export default function RootLayout({
     { href: "/", label: "Home" },
     ...(isAuthenticated ? [
       { href: "/upload", label: "Upload" },
-      { href: "/dashboard", label: "Dashboard" },
+      { href: "/dashboard", label: "Pre-Tested Apps" },
       { href: "/graph", label: "Graph Explorer" },
       { href: "/copilot", label: "Co-Pilot" },
       { href: "/reports", label: "Reports" },

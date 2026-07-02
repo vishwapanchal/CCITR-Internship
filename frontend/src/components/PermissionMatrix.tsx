@@ -1,6 +1,6 @@
 "use client";
 
-import type { Permission } from "@/services/mockData";
+import type { Permission } from "@/services/realData";
 
 interface PermissionMatrixProps {
   permissions: Permission[];

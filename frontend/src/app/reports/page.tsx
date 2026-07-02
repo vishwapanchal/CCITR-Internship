@@ -2,18 +2,18 @@
 
 import { FileText, Download, FileArchive, Search, Filter } from "lucide-react";
 import { useState } from "react";
-import { MOCK_REPORTS } from "@/services/mockData";
+import { REAL_REPORTS } from "@/services/realData";
 import { downloadReport, downloadEvidencePackage } from "@/services/api";
 
 export default function ReportsCenter() {
   const [search, setSearch] = useState("");
   
   const filteredReports = search 
-    ? MOCK_REPORTS.filter(r => 
+    ? REAL_REPORTS.filter(r => 
         r.case_number.toLowerCase().includes(search.toLowerCase()) || 
         r.title.toLowerCase().includes(search.toLowerCase())
       )
-    : MOCK_REPORTS;
+    : REAL_REPORTS;
 
   return (
     <main className="flex-1 p-6 md:p-8 max-w-5xl mx-auto w-full">

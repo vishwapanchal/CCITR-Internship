@@ -1,8 +1,8 @@
 import ClientPage from "./ClientPage";
-import { MOCK_CASES } from "@/services/mockData";
+import { REAL_CASES } from "@/services/realData";
 
 export function generateStaticParams() {
-  return MOCK_CASES.map((caseData) => ({
+  return REAL_CASES.map((caseData) => ({
     id: caseData.id,
   }));
 }

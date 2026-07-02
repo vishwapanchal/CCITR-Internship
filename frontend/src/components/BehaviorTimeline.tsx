@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { TimelineEvent } from "@/services/mockData";
+import type { TimelineEvent } from "@/services/realData";
 
 interface BehaviorTimelineProps {
   events: TimelineEvent[];

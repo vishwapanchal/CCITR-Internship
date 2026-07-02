@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ActivitySquare, CheckCircle2, Search, Filter } from "lucide-react";
 import CaseCard from "@/components/CaseCard";
 import PhaseProgress from "@/components/PhaseProgress";
-import { MOCK_ACTIVITY, MOCK_PHASE_STATUS_ANALYZING } from "@/services/mockData";
+import { REAL_ACTIVITY, REAL_PHASE_STATUS_ANALYZING } from "@/services/realData";
 import { getCases, CaseResponse } from "@/services/api";
 
 export default function Dashboard() {
@@ -49,11 +49,11 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold tracking-wide text-forensic-blue flex items-center">
             <ActivitySquare className="mr-3 w-6 h-6 md:w-8 md:h-8 text-critical shrink-0" />
-            <span className="truncate">INVESTIGATOR DASHBOARD</span>
+            <span className="truncate">PRE-TESTED APPS</span>
           </h1>
           <p className="font-mono text-xs md:text-sm text-forensic-blue/60 mt-2 flex items-center">
             <CheckCircle2 className="w-4 h-4 mr-2 text-success shrink-0" />
-            System nominal. {stats.analyzing} active analysis tasks.
+            Displaying statically analyzed test cases.
           </p>
         </div>
         <div className="flex gap-4 w-full md:w-auto">
@@ -112,7 +112,7 @@ export default function Dashboard() {
                       <span className="font-mono text-xs font-semibold">{caseItem.case_number}</span>
                     </div>
                     <p className="text-xs truncate mb-3">{caseItem.apk_name}</p>
-                    <PhaseProgress phases={MOCK_PHASE_STATUS_ANALYZING} />
+                    <PhaseProgress phases={REAL_PHASE_STATUS_ANALYZING} />
                   </div>
                 ))}
               </div>
@@ -157,7 +157,7 @@ export default function Dashboard() {
             Recent Activity
           </h3>
           <div className="flex-1 overflow-y-auto space-y-4">
-            {MOCK_ACTIVITY.map((activity) => (
+            {REAL_ACTIVITY.map((activity) => (
               <div key={activity.id} className="relative pl-4 border-l border-border-subtle">
                 <div className="absolute w-2 h-2 bg-forensic-blue rounded-full -left-[4.5px] top-1" />
                 <div className="mb-1">

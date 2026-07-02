@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { IOCEntry } from "@/services/mockData";
+import type { IOCEntry } from "@/services/realData";
 import { exportIOCsAsCSV, exportIOCsAsJSON, exportIOCsAsSTIX } from "@/services/api";
 
 interface IOCTableProps {

@@ -68,6 +68,8 @@ export async function signupAPI(username: string, password: string) {
 
 // ---- Cases ----
 
+import { REAL_CASES } from "./realData";
+
 export interface CaseResponse {
   id: string;
   case_number: string;
@@ -82,12 +84,14 @@ export interface CaseResponse {
   priority?: string;
 }
 
-export async function getCases() {
-  return apiFetch<CaseResponse[]>("/cases/");
+export async function getCases(): Promise<{ data: CaseResponse[] | null; error: string | null; status: number }> {
+  return { data: REAL_CASES as unknown as CaseResponse[], error: null, status: 200 };
 }
 
-export async function getCaseDetail(caseId: string) {
-  return apiFetch<CaseResponse>(`/cases/${caseId}`);
+export async function getCaseDetail(caseId: string): Promise<{ data: CaseResponse | null; error: string | null; status: number }> {
+  const c = REAL_CASES.find((c) => c.id === caseId);
+  if (c) return { data: c as unknown as CaseResponse, error: null, status: 200 };
+  return { data: null, error: "Not found", status: 404 };
 }
 
 // ---- Upload ----

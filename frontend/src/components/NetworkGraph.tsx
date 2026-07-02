@@ -15,7 +15,7 @@ import {
   BackgroundVariant,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import type { GraphNode, GraphEdge } from "@/services/mockData";
+import type { GraphNode, GraphEdge } from "@/services/realData";
 
 interface NetworkGraphProps {
   nodes: GraphNode[];

@@ -1,6 +1,6 @@
 "use client";
 
-import type { PhaseStatus } from "@/services/mockData";
+import type { PhaseStatus } from "@/services/realData";
 
 interface PhaseProgressProps {
   phases: PhaseStatus[];

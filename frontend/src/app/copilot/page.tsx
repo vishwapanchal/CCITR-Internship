@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageSquare, Send, ShieldAlert, Cpu } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { MOCK_COPILOT_SUGGESTIONS, MOCK_CASES } from "@/services/mockData";
+import { REAL_COPILOT_SUGGESTIONS, REAL_CASES } from "@/services/realData";
 
 export default function CoPilotPage() {
   const [messages, setMessages] = useState<{ role: "system" | "user" | "ai"; content: string; citations?: string[] }[]>([
@@ -14,7 +14,7 @@ export default function CoPilotPage() {
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [selectedCase, setSelectedCase] = useState(MOCK_CASES[0].id);
+  const [selectedCase, setSelectedCase] = useState(REAL_CASES[0].id);
 
   // In a real app, this would connect to the actual backend websocket
   const wsUrl = `wss://apex-x-backend.onrender.com/api/v1/copilot/${selectedCase}`;
@@ -87,7 +87,7 @@ export default function CoPilotPage() {
             onChange={(e) => setSelectedCase(e.target.value)}
             className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-forensic-blue/50"
           >
-            {MOCK_CASES.map((c) => (
+            {REAL_CASES.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.case_number} - {c.apk_name}
               </option>
@@ -107,7 +107,7 @@ export default function CoPilotPage() {
             Suggested Queries
           </h3>
           <div className="space-y-2">
-            {MOCK_COPILOT_SUGGESTIONS.map((suggestion, idx) => (
+            {REAL_COPILOT_SUGGESTIONS.map((suggestion, idx) => (
               <button
                 key={idx}
                 onClick={() => {

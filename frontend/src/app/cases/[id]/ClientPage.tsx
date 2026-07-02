@@ -9,18 +9,18 @@ import IOCTable from "@/components/IOCTable";
 import VulnerabilityCard from "@/components/VulnerabilityCard";
 import PhaseProgress from "@/components/PhaseProgress";
 import {
-  MOCK_CASES,
-  MOCK_PERMISSIONS,
-  MOCK_IOCS,
-  MOCK_TIMELINE_EVENTS,
-  MOCK_GRAPH_NODES,
-  MOCK_GRAPH_EDGES,
-  MOCK_VULNERABILITIES,
-  MOCK_YARA_MATCHES,
-  MOCK_PHASE_STATUS,
-  MOCK_PHASE_STATUS_ANALYZING,
-  MOCK_REPORTS,
-} from "@/services/mockData";
+  REAL_CASES,
+  REAL_PERMISSIONS,
+  REAL_IOCS,
+  REAL_TIMELINE_EVENTS,
+  REAL_GRAPH_NODES,
+  REAL_GRAPH_EDGES,
+  REAL_VULNERABILITIES,
+  REAL_YARA_MATCHES,
+  REAL_PHASE_STATUS,
+  REAL_PHASE_STATUS_ANALYZING,
+  REAL_REPORTS,
+} from "@/services/realData";
 import { downloadReport, downloadEvidencePackage, getCaseDetail } from "@/services/api";
 import { FileText, Download, AlertTriangle, Shield, Activity, Network, Bug, FileDown } from "lucide-react";
 
@@ -56,7 +56,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
       setCaseData(detailData);
       
       // Load mock reports for now, since we haven't implemented backend reports endpoint yet
-      setCaseReports(MOCK_REPORTS.filter((r) => r.case_id === detailData.id));
+      setCaseReports(REAL_REPORTS.filter((r) => r.case_id === detailData.id));
       
       setIsLoading(false);
     }
@@ -72,7 +72,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
     return <div className="p-8 flex justify-center"><p className="font-mono text-red-600">{error || "Case not found"}</p></div>;
   }
 
-  const phaseStatus = caseData.status === "analyzing" ? MOCK_PHASE_STATUS_ANALYZING : MOCK_PHASE_STATUS;
+  const phaseStatus = caseData.status === "analyzing" ? REAL_PHASE_STATUS_ANALYZING : REAL_PHASE_STATUS;
 
   return (
     <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6">
@@ -190,7 +190,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 Android Permissions
               </h3>
               <div className="max-h-[400px] overflow-auto">
-                <PermissionMatrix permissions={MOCK_PERMISSIONS} />
+                <PermissionMatrix permissions={REAL_PERMISSIONS} />
               </div>
             </div>
 
@@ -200,7 +200,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 YARA Rule Matches
               </h3>
               <div className="space-y-2">
-                {MOCK_YARA_MATCHES.map((match, idx) => (
+                {REAL_YARA_MATCHES.map((match, idx) => (
                   <div
                     key={idx}
                     className={`p-3 border ${
@@ -235,7 +235,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
                 Indicators of Compromise (IOCs)
               </h3>
-              <IOCTable iocs={MOCK_IOCS} />
+              <IOCTable iocs={REAL_IOCS} />
             </div>
           </div>
         )}
@@ -248,7 +248,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
                 Behavioral Event Timeline
               </h3>
               <div className="h-[500px]">
-                <BehaviorTimeline events={MOCK_TIMELINE_EVENTS} />
+                <BehaviorTimeline events={REAL_TIMELINE_EVENTS} />
               </div>
             </div>
 
@@ -351,8 +351,8 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
             {/* Graph */}
             <div className="bg-panel border border-border-subtle" style={{ height: "500px" }}>
               <NetworkGraph
-                nodes={MOCK_GRAPH_NODES}
-                edges={MOCK_GRAPH_EDGES}
+                nodes={REAL_GRAPH_NODES}
+                edges={REAL_GRAPH_EDGES}
               />
             </div>
 
@@ -405,17 +405,17 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
           <div className="space-y-4">
             <div className="flex gap-4 text-xs font-mono text-forensic-blue/60 mb-2">
               <span>
-                Total: <strong className="text-forensic-blue">{MOCK_VULNERABILITIES.length}</strong>
+                Total: <strong className="text-forensic-blue">{REAL_VULNERABILITIES.length}</strong>
               </span>
               <span className="text-red-600">
-                Critical: <strong>{MOCK_VULNERABILITIES.filter((v) => v.severity === "critical").length}</strong>
+                Critical: <strong>{REAL_VULNERABILITIES.filter((v) => v.severity === "critical").length}</strong>
               </span>
               <span className="text-orange-600">
-                High: <strong>{MOCK_VULNERABILITIES.filter((v) => v.severity === "high").length}</strong>
+                High: <strong>{REAL_VULNERABILITIES.filter((v) => v.severity === "high").length}</strong>
               </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {MOCK_VULNERABILITIES.map((vuln) => (
+              {REAL_VULNERABILITIES.map((vuln) => (
                 <VulnerabilityCard key={vuln.id} vulnerability={vuln} />
               ))}
             </div>
@@ -484,7 +484,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
                 IOC Exports
               </h3>
-              <IOCTable iocs={MOCK_IOCS} />
+              <IOCTable iocs={REAL_IOCS} />
             </div>
           </div>
         )}
