@@ -25,8 +25,9 @@ def _find_adb() -> Optional[str]:
     result = shutil.which("adb")
     if result:
         return result
-    # Check common Android SDK locations
+    # Check common Android SDK locations including Windows
     sdk_paths = [
+        os.path.expanduser("~/AppData/Local/Android/Sdk/platform-tools/adb.exe"),
         os.path.expanduser("~/Android/Sdk/platform-tools/adb"),
         os.path.expanduser("~/Library/Android/sdk/platform-tools/adb"),
         "/usr/local/android-sdk/platform-tools/adb",
@@ -44,6 +45,7 @@ def _find_emulator() -> Optional[str]:
     if result:
         return result
     sdk_paths = [
+        os.path.expanduser("~/AppData/Local/Android/Sdk/emulator/emulator.exe"),
         os.path.expanduser("~/Android/Sdk/emulator/emulator"),
         os.path.expanduser("~/Library/Android/sdk/emulator/emulator"),
         "/usr/local/android-sdk/emulator/emulator",

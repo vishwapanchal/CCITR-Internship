@@ -39,6 +39,34 @@ class FridaManager:
         self._lock = threading.Lock()
         self._running = False
 
+    def start_frida_server(self, device_id: Optional[str] = None) -> bool:
+        """Attempt to start frida-server on the device via ADB."""
+        from app.engines.dynamic.vm_orchestrator import _run_adb
+        
+        # Check if already running
+        check = _run_adb(["shell", "ps", "|", "grep", "frida-server"], device=device_id)
+        if check["success"] and "frida-server" in check["stdout"]:
+            logger.info("frida-server is already running")
+            return True
+            
+        logger.info("Attempting to start frida-server via ADB")
+        
+        # We assume frida-server is located at /data/local/tmp/frida-server
+        # Run it in the background as root
+        # First ensure it's executable
+        _run_adb(["shell", "chmod", "755", "/data/local/tmp/frida-server"], device=device_id)
+        
+        # Start it
+        res = _run_adb(["shell", "su", "-c", "'/data/local/tmp/frida-server &'" ], device=device_id)
+        
+        if res["success"]:
+            # Give it a moment to bind
+            time.sleep(2)
+            return True
+        else:
+            self.errors.append(f"Failed to start frida-server: {res['error']}")
+            return False
+
     def connect_device(self, device_id: Optional[str] = None) -> bool:
         """
         Connect to a Frida device (USB device or emulator).
@@ -67,6 +95,20 @@ class FridaManager:
             logger.error("Frida device connection timed out")
             return False
         except frida.ServerNotRunningError:
+            logger.warning("Frida server not running. Attempting to start it automatically...")
+            if self.start_frida_server(device_id):
+                # Retry connection
+                try:
+                    if device_id:
+                        self.device = frida.get_device(device_id)
+                    else:
+                        self.device = frida.get_usb_device(timeout=10)
+                    logger.info(f"Connected to Frida device: {self.device.name} after auto-start")
+                    return True
+                except Exception as e:
+                    self.errors.append(f"Failed to connect after starting frida-server: {e}")
+                    return False
+            
             self.errors.append("Frida server not running on device. Start frida-server first.")
             logger.error("Frida server not running on device")
             return False

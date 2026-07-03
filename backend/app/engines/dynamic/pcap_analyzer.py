@@ -58,7 +58,14 @@ def analyze_pcap(pcap_path: str) -> Dict[str, Any]:
     try:
         # Load PCAP file
         logger.info(f"Analyzing PCAP: {pcap_path}")
-        packets = rdpcap(pcap_path)
+        try:
+            packets = rdpcap(pcap_path)
+        except Exception as pcap_err:
+            logger.error(f"Malformed or empty PCAP file: {pcap_err}")
+            result["status"] = "failed"
+            result["error"] = f"PCAP parsing failed: {pcap_err}"
+            return result
+            
         result["stats"]["total_packets"] = len(packets)
 
         dns_set: Set[str] = set()

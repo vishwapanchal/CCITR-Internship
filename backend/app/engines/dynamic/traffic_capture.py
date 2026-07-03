@@ -50,6 +50,14 @@ class TrafficCapture:
         Returns:
             True if capture started successfully.
         """
+        import platform
+        is_windows = platform.system() == "Windows"
+        
+        # Force device_serial capture on Windows since tcpdump isn't natively available
+        if is_windows and not device_serial:
+            logger.warning("Windows host detected without device_serial. tcpdump capture will fail.")
+            return False
+            
         if device_serial:
             return self._start_device_tcpdump(device_serial)
 
@@ -82,8 +90,11 @@ class TrafficCapture:
         """Start tcpdump on Android device via ADB."""
         adb = shutil.which("adb")
         if not adb:
-            logger.warning("adb not found — cannot run tcpdump on device")
-            return False
+            from app.engines.dynamic.vm_orchestrator import _find_adb
+            adb = _find_adb()
+            if not adb:
+                logger.warning("adb not found — cannot run tcpdump on device")
+                return False
 
         remote_pcap = "/sdcard/capture.pcap"
         cmd = [
@@ -115,7 +126,7 @@ class TrafficCapture:
         Returns:
             True if mitmproxy started successfully.
         """
-        mitmdump_bin = shutil.which("mitmdump")
+        mitmdump_bin = shutil.which("mitmdump") or shutil.which("mitmdump.exe")
         if not mitmdump_bin:
             logger.warning(
                 "mitmdump not found. Install: pip install mitmproxy"
