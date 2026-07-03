@@ -3,7 +3,9 @@ import zipfile
 import json
 import hashlib
 import hmac
+import secrets
 from datetime import datetime
+
 
 class EvidencePackager:
     """
@@ -14,11 +16,73 @@ class EvidencePackager:
     def __init__(self, cases_dir: str, keys_dir: str):
         self.cases_dir = cases_dir
         self.keys_dir = keys_dir
+        os.makedirs(keys_dir, exist_ok=True)
         
     def _get_system_key(self) -> bytes:
-        """Loads the system HMAC key for signing evidence."""
-        # Stub: In production, load from secure vault/HSM
-        return b"apex_x_forensic_signing_key_v1"
+        """
+        Loads the HMAC signing key from a secure source.
+        
+        Priority:
+        1. APEX_SIGNING_KEY environment variable (for Docker/production)
+        2. keys/hmac_signing.key file (persistent file-based vault)
+        3. Auto-generate a 256-bit random key and save it (first-run bootstrap)
+        """
+        # 1. Environment variable (production / Docker Secrets)
+        env_key = os.environ.get("APEX_SIGNING_KEY")
+        if env_key:
+            return env_key.encode("utf-8")
+        
+        # 2. File-based key vault
+        key_path = os.path.join(self.keys_dir, "hmac_signing.key")
+        meta_path = os.path.join(self.keys_dir, "hmac_signing.meta.json")
+        
+        if os.path.exists(key_path):
+            with open(key_path, "rb") as f:
+                return f.read()
+        
+        # 3. Auto-generate on first run
+        new_key = secrets.token_bytes(32)  # 256-bit key
+        
+        with open(key_path, "wb") as f:
+            f.write(new_key)
+        
+        # Restrict file permissions (owner read-only)
+        try:
+            os.chmod(key_path, 0o400)
+        except OSError:
+            pass  # Windows doesn't support chmod
+            
+        # Save key metadata
+        meta = {
+            "key_id": secrets.token_hex(8),
+            "algorithm": "HMAC-SHA256",
+            "key_size_bits": 256,
+            "generated_at": datetime.utcnow().isoformat(),
+            "generated_by": "APEX-X EvidencePackager (auto-bootstrap)",
+            "note": "This key signs evidence packages. Back it up securely."
+        }
+        with open(meta_path, "w") as f:
+            json.dump(meta, f, indent=2)
+            
+        return new_key
+
+    def _get_key_id(self) -> str:
+        """Get the key ID for the current signing key (for audit trail)."""
+        meta_path = os.path.join(self.keys_dir, "hmac_signing.meta.json")
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, "r") as f:
+                    meta = json.load(f)
+                return meta.get("key_id", "unknown")
+            except Exception:
+                pass
+        
+        # If using env var, derive a key_id from its hash
+        env_key = os.environ.get("APEX_SIGNING_KEY")
+        if env_key:
+            return hashlib.sha256(env_key.encode()).hexdigest()[:16]
+        
+        return "unknown"
         
     def _calculate_sha256(self, filepath: str) -> str:
         sha256_hash = hashlib.sha256()
@@ -67,16 +131,25 @@ class EvidencePackager:
             zipf.writestr("section_65b_certificate.txt", cert_content)
             
         # 2. Calculate HMAC-SHA256 of the final ZIP
-        hmac_obj = hmac.new(self._get_system_key(), msg=None, digestmod=hashlib.sha256)
+        signing_key = self._get_system_key()
+        hmac_obj = hmac.new(signing_key, msg=None, digestmod=hashlib.sha256)
         with open(output_zip, 'rb') as f:
             for byte_block in iter(lambda: f.read(4096), b""):
                 hmac_obj.update(byte_block)
                 
         signature = hmac_obj.hexdigest()
         
-        # 3. Save signature file alongside ZIP
+        # 3. Save signature file with key metadata alongside ZIP
         sig_path = f"{output_zip}.sig"
+        sig_data = {
+            "signature": signature,
+            "algorithm": "HMAC-SHA256",
+            "key_id": self._get_key_id(),
+            "signed_at": datetime.utcnow().isoformat(),
+            "file": os.path.basename(output_zip),
+            "file_sha256": self._calculate_sha256(output_zip),
+        }
         with open(sig_path, 'w') as f:
-            f.write(signature)
+            json.dump(sig_data, f, indent=2)
             
         return output_zip

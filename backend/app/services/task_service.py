@@ -157,7 +157,24 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         
         hash_and_log(os.path.join(narrative_dir, "threat_narrative.json"), "threat_narrative.json")
 
-        # 6. Co-Pilot RAG Indexing
+        # 6. Malware Family Classification
+        from app.engines.intelligence import malware_classifier
+        logger.info(f"Running Malware Family Classification for {case_id}")
+        classification_result = malware_classifier.classify_malware(case_dir)
+
+        phase_record = PhaseResult(
+            case_id=case_id,
+            phase="malware_classification",
+            result=classification_result,
+            risk_score=0,
+            completed_at=None
+        )
+        db.add(phase_record)
+        db.commit()
+
+        hash_and_log(os.path.join(case_dir, "intelligence_analysis", "malware_classification.json"), "malware_classification.json")
+
+        # 7. Co-Pilot RAG Indexing
         from app.engines.intelligence import copilot_rag
         logger.info(f"Indexing artifacts for Officer Co-Pilot: Case {case_id}")
         copilot_rag.index_case_artifacts(str(case_id), case_dir)

@@ -1,15 +1,19 @@
-from fastapi import APIRouter, HTTPException, Depends
+"""
+Co-Pilot REST API — Local Ollama-Only Chat Endpoint
+Provides a REST fallback alongside the WebSocket endpoint.
+All inference is routed through the local Ollama instance — zero external API calls.
+"""
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
-import os
-import httpx
 import json
+import logging
+
+from app.engines.intelligence import llm_client
 
 router = APIRouter()
-
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "deepseek/deepseek-r1:free"
+logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are APEX-X Co-Pilot, an expert Android malware forensics AI assistant embedded in the APEX-X threat intelligence platform. You are built for CMP311 — Professional Project Planning and Prototyping.
 
@@ -30,59 +34,76 @@ HOW TO RESPOND:
 
 IMPORTANT: The pre-tested APKs (DIVA, InsecureShop, AndroGoat) are intentionally vulnerable educational apps. Explain findings in that context when relevant."""
 
+
 class Message(BaseModel):
     role: str
     content: str
+
 
 class CopilotRequest(BaseModel):
     message: str
     context: Optional[Dict[str, Any]] = None
     history: Optional[List[Message]] = []
 
+
 @router.post("")
 async def copilot_chat(request: CopilotRequest):
+    """
+    REST endpoint for Co-Pilot chat.
+    Routes all inference to the LOCAL Ollama instance — no external APIs.
+    """
     if not request.message:
         raise HTTPException(status_code=400, detail="No message provided")
-        
-    if not OPENROUTER_API_KEY:
-        raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY not configured on backend")
 
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    # Check local LLM health
+    health = llm_client.check_health()
+    if health.get("status") != "healthy":
+        raise HTTPException(
+            status_code=503,
+            detail="Local LLM (Ollama) is not available. Start it with: ollama serve"
+        )
+
+    # Build the prompt with context
+    prompt_parts = []
 
     if request.context:
-        messages.append({
-            "role": "system",
-            "content": f"CURRENT CASE CONTEXT:\n{json.dumps(request.context, indent=2)}"
-        })
+        prompt_parts.append(
+            f"CURRENT CASE CONTEXT:\n{json.dumps(request.context, indent=2)}"
+        )
 
+    # Add conversation history
     if request.history:
         for msg in request.history:
-            if msg.role in ["user", "assistant"]:
-                messages.append({"role": msg.role, "content": msg.content})
+            if msg.role == "user":
+                prompt_parts.append(f"User: {msg.content}")
+            elif msg.role in ("assistant", "ai"):
+                prompt_parts.append(f"Assistant: {msg.content}")
 
-    messages.append({"role": "user", "content": request.message})
+    prompt_parts.append(f"User: {request.message}")
+    prompt_parts.append("Assistant:")
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                OPENROUTER_URL,
-                headers={
-                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://apex-x.onrender.com",
-                    "X-Title": "APEX-X Co-Pilot"
-                },
-                json={
-                    "model": MODEL,
-                    "messages": messages,
-                    "max_tokens": 1024,
-                    "temperature": 0.3
-                },
-                timeout=60.0
+    full_prompt = "\n\n".join(prompt_parts)
+
+    try:
+        logger.info(f"Co-Pilot REST request: prompt_len={len(full_prompt)}")
+        response_text = llm_client.generate(
+            prompt=full_prompt,
+            model=llm_client.MODEL_CODER,
+            system=SYSTEM_PROMPT,
+            temperature=0.3,
+            max_tokens=1024,
+        )
+
+        if response_text.startswith("[ERROR"):
+            raise HTTPException(
+                status_code=503,
+                detail=f"LLM inference error: {response_text}"
             )
-            response.raise_for_status()
-            data = response.json()
-            ai_message = data.get("choices", [{}])[0].get("message", {}).get("content", "No response generated.")
-            return {"message": ai_message}
-        except Exception as e:
-            raise HTTPException(status_code=502, detail=f"AI service error: {str(e)}")
+
+        return {"message": response_text.strip()}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Co-Pilot error: {e}")
+        raise HTTPException(status_code=502, detail=f"AI service error: {str(e)}")

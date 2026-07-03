@@ -47,9 +47,10 @@ class TestIntegrationAnalysis(unittest.TestCase):
     @patch('app.engines.c2.run_full_c2_intelligence')
     @patch('app.engines.vulnerability.run_vulnerability_scan')
     @patch('app.engines.intelligence.threat_reasoner.generate_threat_narrative')
+    @patch('app.engines.intelligence.malware_classifier.classify_malware')
     @patch('app.engines.intelligence.copilot_rag.index_case_artifacts')
     def test_analyze_apk_task_full(
-        self, mock_index_rag, mock_threat_reasoner, mock_vuln, mock_c2, 
+        self, mock_index_rag, mock_classifier, mock_threat_reasoner, mock_vuln, mock_c2, 
         mock_dynamic, mock_static, mock_session_maker
     ):
         # Setup DB mocks
@@ -111,6 +112,12 @@ class TestIntegrationAnalysis(unittest.TestCase):
         
         mock_index_rag.return_value = True
         
+        mock_classifier.return_value = {
+            "status": "success",
+            "predicted_family": "spyware",
+            "confidence": 0.87
+        }
+        
         # Execute the task directly (synchronously)
         result = analyze_apk_task(self.case_id, run_static=True, run_dynamic=True)
         
@@ -126,8 +133,8 @@ class TestIntegrationAnalysis(unittest.TestCase):
         mock_threat_reasoner.assert_called_once_with(self.case_dir)
         mock_index_rag.assert_called_once_with(str(self.case_id), self.case_dir)
         
-        # Verify db phase results were added (static, dynamic, c2, vuln, threat)
-        self.assertEqual(mock_db.add.call_count, 5)
+        # Verify db phase results were added (static, dynamic, c2, vuln, threat, classification)
+        self.assertEqual(mock_db.add.call_count, 6)
         
         # Verify status updates
         self.assertEqual(mock_case.status, "completed")
