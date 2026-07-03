@@ -117,7 +117,11 @@ export default function CaseTabs({
                 severity: severity,
               };
             });
-            const timelineEventsToUse = dynamicEvents || [];
+            const isMockCase = caseData?.id?.startsWith("CASE-");
+            
+            const timelineEventsToUse = (dynamicEvents && dynamicEvents.length > 0) 
+              ? dynamicEvents 
+              : (isMockCase ? REAL_TIMELINE_EVENTS : []);
 
             // Process Suspicious APIs
             const dynamicApis = analysisResults?.dynamic?.behavior_profile?.timeline?.map((evt: any) => {
@@ -133,13 +137,22 @@ export default function CaseTabs({
                 };
             }).filter((v: any, i: number, a: any[]) => a.findIndex((t: any) => (t.api === v.api)) === i) || [];
             
-            const apisToUse = dynamicApis;
+            const MOCK_APIS = [
+              { api: "DexClassLoader()", cls: "dalvik.system", risk: "CRITICAL" },
+              { api: "getLastKnownLocation()", cls: "android.location.LocationManager", risk: "HIGH" },
+              { api: "query(content://sms)", cls: "android.content.ContentResolver", risk: "CRITICAL" },
+              { api: "sendTextMessage()", cls: "android.telephony.SmsManager", risk: "CRITICAL" },
+              { api: "open(CAMERA_FACING_FRONT)", cls: "android.hardware.Camera", risk: "HIGH" },
+              { api: "setActiveAdmin()", cls: "android.app.admin.DevicePolicyManager", risk: "CRITICAL" },
+              { api: "getInstance(AES/CBC)", cls: "javax.crypto.Cipher", risk: "MEDIUM" },
+            ];
+            const apisToUse = (dynamicApis && dynamicApis.length > 0) ? dynamicApis : (isMockCase ? MOCK_APIS : []);
 
             // Process Network Connections
             const dynamicConnections = analysisResults?.dynamic?.steps?.network?.connections?.map((conn: any) => ({
-                dest: conn.dst_ip,
-                proto: conn.protocol,
-                port: String(conn.dst_port),
+                dest: conn.dst_ip || conn.pair,
+                proto: conn.protocol || "TCP",
+                port: String(conn.dst_port || 443),
                 size: "-",
                 dir: "OUTBOUND"
             }));
@@ -152,7 +165,14 @@ export default function CaseTabs({
             })) || [];
             const allNetwork = [...(dynamicConnections || []), ...dnsQueries];
             
-            const networkToUse = allNetwork;
+            const MOCK_NETWORK = [
+              { dest: "c2.malware-ops.ru", proto: "HTTPS", port: "443", size: "12 KB", dir: "OUTBOUND" },
+              { dest: "91.234.99.18", proto: "HTTPS", port: "443", size: "8 KB", dir: "OUTBOUND" },
+              { dest: "update-service.ddns.net", proto: "DNS", port: "53", size: "128 B", dir: "OUTBOUND" },
+              { dest: "cdn-payload.s3.amazonaws.com", proto: "HTTPS", port: "443", size: "45 KB", dir: "INBOUND" },
+              { dest: "185.220.101.42", proto: "HTTPS", port: "443", size: "256 B", dir: "OUTBOUND" },
+            ];
+            const networkToUse = (allNetwork && allNetwork.length > 0) ? allNetwork : (isMockCase ? MOCK_NETWORK : []);
 
             return (
               <>

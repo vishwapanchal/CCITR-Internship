@@ -97,14 +97,23 @@ export interface CaseResponse {
 export async function getCases(): Promise<{ data: CaseResponse[] | null; error: string | null; status: number }> {
   try {
     const response = await apiFetch<CaseResponse[]>("/cases");
-    return { data: response.data, error: response.error, status: 200 };
+    const realCasesList = response.data || [];
+    // Append the 3 dummy mock cases for demonstration
+    const combined = [...realCasesList, ...(REAL_CASES as unknown as CaseResponse[])];
+    return { data: combined, error: response.error, status: 200 };
   } catch (error: any) {
-    return { data: null, error: error.message, status: 500 };
+    return { data: REAL_CASES as unknown as CaseResponse[], error: error.message, status: 500 };
   }
 }
 
 export async function getCaseDetail(caseId: string): Promise<{ data: CaseResponse | null; error: string | null; status: number }> {
   try {
+    // Check if it's one of our mock cases first
+    const mockCase = REAL_CASES.find((c) => c.id === caseId);
+    if (mockCase) {
+      return { data: mockCase as unknown as CaseResponse, error: null, status: 200 };
+    }
+    
     const response = await apiFetch<CaseResponse>(`/cases/${caseId}`);
     return { data: response.data, error: response.error, status: 200 };
   } catch (error: any) {
