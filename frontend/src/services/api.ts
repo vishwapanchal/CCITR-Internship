@@ -95,13 +95,21 @@ export interface CaseResponse {
 }
 
 export async function getCases(): Promise<{ data: CaseResponse[] | null; error: string | null; status: number }> {
-  return { data: REAL_CASES as unknown as CaseResponse[], error: null, status: 200 };
+  try {
+    const response = await apiFetch<CaseResponse[]>("/cases");
+    return { data: response.data, error: response.error, status: 200 };
+  } catch (error: any) {
+    return { data: null, error: error.message, status: 500 };
+  }
 }
 
 export async function getCaseDetail(caseId: string): Promise<{ data: CaseResponse | null; error: string | null; status: number }> {
-  const c = REAL_CASES.find((c) => c.id === caseId);
-  if (c) return { data: c as unknown as CaseResponse, error: null, status: 200 };
-  return { data: null, error: "Not found", status: 404 };
+  try {
+    const response = await apiFetch<CaseResponse>(`/cases/${caseId}`);
+    return { data: response.data, error: response.error, status: 200 };
+  } catch (error: any) {
+    return { data: null, error: error.message, status: 404 };
+  }
 }
 
 // ---- Upload ----
@@ -149,7 +157,7 @@ export async function uploadAPK(
 
 // ---- Results ----
 
-async function getCaseResults(caseId: string, phase?: string) {
+export async function getCaseResults(caseId: string, phase?: string) {
   const query = phase ? `?phase=${phase}` : "";
   return apiFetch<Record<string, unknown>>(`/cases/${caseId}/results${query}`);
 }

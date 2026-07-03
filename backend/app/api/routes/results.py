@@ -12,18 +12,22 @@ router = APIRouter()
 def get_case_results(case_id: UUID, phase: str = None, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """
     Retrieve the analysis results for a specific case.
-    Returns mocked data structures for the frontend until the real analysis engine is ready.
     """
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
         
-    # Later: fetch real `PhaseResult` rows from the database.
-    # For now, returning dummy placeholder structures that the frontend won't crash on,
-    # or returning empty arrays since frontend mockData handles the real complex structure.
+    query = db.query(PhaseResult).filter(PhaseResult.case_id == case_id)
+    if phase:
+        query = query.filter(PhaseResult.phase == phase)
+        
+    phase_results = query.all()
     
-    # Ideally, frontend will just receive empty states if there is no data
+    results_dict = {}
+    for pr in phase_results:
+        results_dict[pr.phase] = pr.result
+    
     return {
         "status": case.status,
-        "results": {}
+        "results": results_dict
     }

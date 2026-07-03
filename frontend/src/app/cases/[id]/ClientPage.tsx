@@ -22,7 +22,7 @@ import {
   REAL_PHASE_STATUS_ANALYZING,
   REAL_REPORTS,
 } from "@/services/realData";
-import { downloadReport, downloadEvidencePackage, getCaseDetail } from "@/services/api";
+import { downloadReport, downloadEvidencePackage, getCaseDetail, getCaseResults } from "@/services/api";
 import { FileText, Download, AlertTriangle, Shield, Activity, Network, Bug, FileDown, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -91,30 +91,51 @@ function OverviewTab({ caseData, phaseStatus }: { caseData: any; phaseStatus: an
 export default function CaseDetailClient({ caseId }: { caseId: string }) {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [caseData, setCaseData] = useState<any>(null);
+  const [analysisResults, setAnalysisResults] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [caseReports, setCaseReports] = useState<any[]>([]);
 
   useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
+    async function loadData(isInitial = true) {
+      if (isInitial) setIsLoading(true);
       
       const { data: detailData, error: detailError } = await getCaseDetail(caseId);
       if (detailError || !detailData) {
-        setError(detailError || "Failed to load case details");
-        setIsLoading(false);
+        if (isInitial) setError(detailError || "Failed to load case details");
+        if (isInitial) setIsLoading(false);
         return;
       }
       
       setCaseData(detailData);
       
+      // Fetch analysis results
+      const { data: resultsData } = await getCaseResults(caseId);
+      if (resultsData?.results) {
+        setAnalysisResults(resultsData.results);
+      }
+      
       // Load mock reports for now, since we haven't implemented backend reports endpoint yet
       setCaseReports(REAL_REPORTS.filter((r) => r.case_id === detailData.id));
       
-      setIsLoading(false);
+      if (isInitial) setIsLoading(false);
     }
     
     loadData();
+
+    // Setup polling if the case is still analyzing
+    const intervalId = setInterval(() => {
+      setCaseData((currentCaseData: any) => {
+        if (currentCaseData && currentCaseData.status === "analyzing") {
+          loadData(false);
+        } else if (currentCaseData && currentCaseData.status !== "analyzing") {
+          clearInterval(intervalId);
+        }
+        return currentCaseData;
+      });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [caseId]);
 
   if (isLoading) {
@@ -194,6 +215,7 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
         caseData={caseData}
         phaseStatus={phaseStatus}
         caseReports={caseReports}
+        analysisResults={analysisResults}
       />
     </main>
   );
