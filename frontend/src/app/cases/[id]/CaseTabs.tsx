@@ -44,9 +44,9 @@ export default function CaseTabs({
       {activeTab === "static" && (
         <div className="space-y-4">
           {(() => {
-            const permissionsToUse = isMockCase ? REAL_PERMISSIONS : (analysisResults?.static?.permissions || []);
-            const yaraMatchesToUse = isMockCase ? REAL_YARA_MATCHES : (analysisResults?.static?.yara_matches || []);
-            const iocsToUse = isMockCase ? REAL_IOCS : (analysisResults?.static?.iocs || []);
+            const permissionsToUse = isMockCase ? REAL_PERMISSIONS.filter((p: any) => p.case_id === caseData?.id) : (analysisResults?.static?.permissions || []);
+            const yaraMatchesToUse = isMockCase ? REAL_YARA_MATCHES.filter((y: any) => y.case_id === caseData?.id) : (analysisResults?.static?.yara_matches || []);
+            const iocsToUse = isMockCase ? REAL_IOCS.filter((i: any) => i.case_id === caseData?.id) : (analysisResults?.static?.iocs || []);
 
             return (
               <>
@@ -361,7 +361,7 @@ export default function CaseTabs({
       {activeTab === "vulns" && (
         <div className="space-y-4">
           {(() => {
-            const vulnsToUse = isMockCase ? REAL_VULNERABILITIES : (analysisResults?.vulnerabilities || []);
+            const vulnsToUse = isMockCase ? REAL_VULNERABILITIES.filter((v: any) => v.case_id === caseData?.id) : (analysisResults?.vulnerabilities || []);
             return (
               <>
                 <div className="flex gap-4 text-xs font-mono text-primary/60 mb-2">
