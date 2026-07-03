@@ -3,12 +3,15 @@ import MetadataPanel from "@/components/MetadataPanel";
 import RecentAlerts from "@/components/RecentAlerts";
 import VulnerabilityRadar from "@/components/VulnerabilityRadar";
 import PhaseProgress from "@/components/PhaseProgress";
+import SyndicateAlert from "@/components/SyndicateAlert";
 import { AlertTriangle } from "lucide-react";
 
 export default function OverviewTab({ caseData, phaseStatus }: { caseData: any; phaseStatus: any }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-      {/* Hero Score - Large Animated Gauge */}
+    <>
+      {caseData.id && <SyndicateAlert caseId={caseData.id} />}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Hero Score - Large Animated Gauge */}
       <div className="bg-panel border border-border-subtle p-6 flex flex-col items-center justify-center md:col-span-4 min-h-[300px]">
         <HeroGauge score={caseData.threat_score} />
         <p className="mt-6 text-sm font-semibold text-center uppercase tracking-wider">{caseData.verdict}</p>
@@ -64,5 +67,6 @@ export default function OverviewTab({ caseData, phaseStatus }: { caseData: any; 
         <PhaseProgress phases={phaseStatus} />
       </div>
     </div>
+    </>
   );
 }

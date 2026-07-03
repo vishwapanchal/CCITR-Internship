@@ -62,6 +62,18 @@ GOOGLE_API_REGEX = re.compile(r'\bAIza[0-9A-Za-z\-_]{35}\b')
 # Base64-encoded strings that may contain URLs or secrets
 BASE64_REGEX = re.compile(r'\b[A-Za-z0-9+/]{20,}={0,2}\b')
 
+# --- Financial Indicators ---
+
+# UPI Virtual Payment Address: username@bankhandle
+UPI_REGEX = re.compile(
+    r'\b[a-zA-Z0-9.\-_]{2,256}@(?:okhdfcbank|oksbi|okicici|okaxis|ybl|paytm|apl|ibl|axl|'
+    r'upi|axisbank|icici|hdfcbank|sbi|kotak|yesbank|freecharge|jio)\b', re.IGNORECASE
+)
+
+# Indian bank account number (9-18 digits, contextual — pair with IFSC nearby)
+IFSC_REGEX = re.compile(r'\b[A-Z]{4}0[A-Z0-9]{6}\b')
+BANK_ACCOUNT_REGEX = re.compile(r'\b\d{9,18}\b')
+
 # --- Whitelist: known-safe domains/IPs ---
 
 WHITELISTED_DOMAINS = {
@@ -98,6 +110,8 @@ def extract_iocs_from_file(file_path: str) -> Dict[str, Any]:
         "crypto_wallets": set(),
         "api_keys": set(),
         "base64_urls": set(),
+        "upi_ids": set(),
+        "ifsc_bank_pairs": list(),
     }
 
     try:
@@ -156,6 +170,26 @@ def extract_iocs_from_file(file_path: str) -> Dict[str, Any]:
                     result["base64_urls"].add(url)
         except Exception:
             pass
+            
+    # Financial indicators
+    for upi in UPI_REGEX.findall(content):
+        result["upi_ids"].add(upi)
+        
+    # Contextual Bank Accounts
+    # Find IFSC codes first
+    for ifsc_match in IFSC_REGEX.finditer(content):
+        ifsc_code = ifsc_match.group(0)
+        start_pos = max(0, ifsc_match.start() - 100)
+        end_pos = min(len(content), ifsc_match.end() + 100)
+        
+        # Look for bank accounts in a 100 char window around the IFSC code
+        window = content[start_pos:end_pos]
+        for acc_match in BANK_ACCOUNT_REGEX.findall(window):
+            result["ifsc_bank_pairs"].append({
+                "ifsc": ifsc_code,
+                "account_near": acc_match,
+                "source_file": os.path.basename(file_path)
+            })
 
     return _sets_to_lists(result)
 
@@ -166,7 +200,7 @@ def extract_iocs_from_directory(directory: str) -> Dict[str, Any]:
 
     Returns aggregated IOC dict with deduplicated indicators.
     """
-    aggregated: Dict[str, Set] = {
+    aggregated: Dict[str, Any] = {
         "urls": set(),
         "ips": set(),
         "domains": set(),
@@ -174,6 +208,8 @@ def extract_iocs_from_directory(directory: str) -> Dict[str, Any]:
         "crypto_wallets": set(),
         "api_keys": set(),
         "base64_urls": set(),
+        "upi_ids": set(),
+        "ifsc_bank_pairs": list(),
     }
     files_scanned = 0
 
@@ -201,12 +237,15 @@ def extract_iocs_from_directory(directory: str) -> Dict[str, Any]:
 
             for key in aggregated:
                 if key in file_iocs:
-                    aggregated[key].update(file_iocs[key])
+                    if isinstance(aggregated[key], set):
+                        aggregated[key].update(file_iocs[key])
+                    elif isinstance(aggregated[key], list):
+                        aggregated[key].extend(file_iocs[key])
 
     result = _sets_to_lists(aggregated)
     result["files_scanned"] = files_scanned
     result["total_indicators"] = sum(
-        len(result[k]) for k in ["urls", "ips", "domains", "emails", "crypto_wallets", "api_keys", "base64_urls"]
+        len(result[k]) for k in ["urls", "ips", "domains", "emails", "crypto_wallets", "api_keys", "base64_urls", "upi_ids", "ifsc_bank_pairs"]
     )
 
     logger.info(

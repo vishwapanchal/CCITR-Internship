@@ -15,6 +15,8 @@ const typeColors: Record<string, string> = {
   hash: "text-orange-600 bg-orange-50",
   email: "text-pink-600 bg-pink-50",
   phone: "text-red-600 bg-red-50",
+  upi: "text-emerald-600 bg-emerald-50",
+  bank_account: "text-teal-600 bg-teal-50",
 };
 
 type SortField = "type" | "value" | "confidence" | "first_seen";
@@ -30,14 +32,18 @@ export default function IOCTable({ iocs }: IOCTableProps) {
   const [sortAsc, setSortAsc] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
-  const iocTypes = useMemo(() => ["all", ...Array.from(new Set(iocs.map((i) => i.type)))], [iocs]);
+  const iocTypes = useMemo(() => ["all", "financial", ...Array.from(new Set(iocs.map((i) => i.type)))], [iocs]);
 
   const filtered = useMemo(() => {
     let result = [...iocs];
 
     // Type filter
     if (typeFilter !== "all") {
-      result = result.filter((i) => i.type === typeFilter);
+      if (typeFilter === "financial") {
+        result = result.filter((i) => i.type === "upi" || i.type === "bank_account");
+      } else {
+        result = result.filter((i) => i.type === typeFilter);
+      }
     }
 
     // Search
@@ -99,11 +105,15 @@ export default function IOCTable({ iocs }: IOCTableProps) {
           onChange={(e) => setTypeFilter(e.target.value)}
           className="bg-canvas border border-border-subtle px-3 py-1.5 text-sm font-mono focus:outline-none"
         >
-          {iocTypes.map((t) => (
-            <option key={t} value={t}>
-              {t === "all" ? "All Types" : t.toUpperCase()}
-            </option>
-          ))}
+          {iocTypes.map((t) => {
+            if (t === "all") return <option key={t} value={t}>All Types</option>;
+            if (t === "financial") return <option key={t} value="financial">FINANCIAL (UPI/Bank)</option>;
+            return (
+              <option key={t} value={t}>
+                {t.toUpperCase()}
+              </option>
+            );
+          })}
         </select>
 
         {/* Export buttons */}
@@ -172,7 +182,22 @@ export default function IOCTable({ iocs }: IOCTableProps) {
                     {ioc.type.toUpperCase()}
                   </span>
                 </td>
-                <td className="py-2 pr-3 font-mono text-xs break-all max-w-[300px]">{ioc.value}</td>
+                <td className="py-2 pr-3 font-mono text-xs break-all max-w-[300px]">
+                  {ioc.value}
+                  {(ioc.type === "upi" || ioc.type === "bank_account") && (
+                    <button
+                      onClick={() => {
+                        const text = `To: Nodal Officer\nRequest to freeze ${ioc.type === 'upi' ? 'UPI ID' : 'Bank Account'}:\n${ioc.value}\nContext: ${ioc.context}\nCase relates to cyber fraud.`;
+                        navigator.clipboard.writeText(text);
+                        alert("Freeze request block copied to clipboard");
+                      }}
+                      className="ml-2 px-1.5 py-0.5 text-[10px] bg-primary/10 hover:bg-primary/20 rounded border border-primary/20 cursor-pointer"
+                      title="Copy freeze-request block"
+                    >
+                      Copy Freeze Block
+                    </button>
+                  )}
+                </td>
                 <td className="py-2 pr-3 text-xs text-primary/70 max-w-[250px]">{ioc.context}</td>
                 <td className="py-2 pr-3 text-right">
                   <span

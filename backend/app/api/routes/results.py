@@ -31,3 +31,18 @@ def get_case_results(case_id: UUID, phase: str = None, db: Session = Depends(get
         "status": case.status,
         "results": results_dict
     }
+
+@router.get("/{case_id}/correlations")
+def get_case_correlations(case_id: UUID, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """
+    Retrieve cross-case syndicate correlation alerts for a specific case.
+    """
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+        
+    record = db.query(PhaseResult).filter(PhaseResult.case_id == case_id, PhaseResult.phase == "correlation").first()
+    if not record:
+        return {"status": "pending", "correlations": []}
+        
+    return record.result

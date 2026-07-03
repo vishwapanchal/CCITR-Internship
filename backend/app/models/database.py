@@ -74,3 +74,30 @@ class EvidenceRecord(Base):
     collected_at = Column(DateTime(timezone=True), server_default=func.now())
 
     case = relationship("Case", back_populates="evidence_records")
+
+class ApkFingerprint(Base):
+    __tablename__ = "apk_fingerprints"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id"))
+    fingerprint_id = Column(String(64), index=True)
+    permission_set_hash = Column(String(64))
+    class_shape_hash = Column(String(64))
+    resource_hashes = Column(JSON)
+    api_call_signature = Column(JSON)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Batch(Base):
+    __tablename__ = "batches"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    total_files = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class BatchCase(Base):
+    __tablename__ = "batch_cases"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    batch_id = Column(UUID(as_uuid=True), ForeignKey("batches.id"))
+    case_id = Column(UUID(as_uuid=True), ForeignKey("cases.id"))

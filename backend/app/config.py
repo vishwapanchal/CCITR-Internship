@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     CHROMADB_HOST: str = os.getenv("CHROMADB_HOST", "localhost")
     CHROMADB_PORT: int = int(os.getenv("CHROMADB_PORT", "8000"))
     
+    # Feature Toggles
+    ALLOW_BAAS_NETWORK_ENRICHMENT: bool = os.getenv("ALLOW_BAAS_NETWORK_ENRICHMENT", "False").lower() in ("true", "1", "t")
+    
     @property
     def CELERY_BROKER_URL(self) -> str:
         return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/0"

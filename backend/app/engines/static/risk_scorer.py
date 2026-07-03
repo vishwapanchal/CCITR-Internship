@@ -236,6 +236,17 @@ def _score_iocs(results: Dict[str, Any]) -> Tuple[int, Dict]:
     if emails:
         raw_score += min(len(emails) * 2, 4)
         details["embedded_emails"] = len(emails)
+        
+    # Financial indicators — highly suspicious if present
+    upi_ids = iocs.get("upi_ids", [])
+    if upi_ids:
+        raw_score += min(len(upi_ids) * 10, 20)
+        details["upi_ids"] = len(upi_ids)
+        
+    ifsc_bank_pairs = iocs.get("ifsc_bank_pairs", [])
+    if ifsc_bank_pairs:
+        raw_score += min(len(ifsc_bank_pairs) * 15, 30)
+        details["ifsc_bank_pairs"] = len(ifsc_bank_pairs)
 
     score = min(raw_score, max_score)
 
@@ -346,6 +357,16 @@ def _score_misconfigurations(results: Dict[str, Any]) -> Tuple[int, Dict]:
     if flags.get("uses_cleartext_traffic") is True:
         raw_score += 4
         scored_issues.append({"issue": "cleartext_traffic", "severity": "high", "score": 4})
+        
+    # From remote access detector
+    remote_access = results.get("remote_access_abuse", {})
+    if remote_access.get("flagged") is True:
+        raw_score += 15
+        scored_issues.append({
+            "issue": f"remote_access_abuse_{remote_access.get('bundled_sdk', 'unknown')}", 
+            "severity": "critical", 
+            "score": 15
+        })
 
     score = min(raw_score, max_score)
 

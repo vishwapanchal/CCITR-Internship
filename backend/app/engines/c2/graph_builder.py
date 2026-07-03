@@ -69,8 +69,23 @@ def build_c2_graph(
     domains = set()
     ips = set()
     urls = set()
+    baas_projects = []
 
-    # From static analysis
+    # From static report (BaaS)
+    static_path = os.path.join(case_dir, "static_analysis", "static_report.json")
+    if os.path.exists(static_path):
+        try:
+            with open(static_path, "r") as f:
+                report = json.load(f)
+            baas_data = report.get("steps", {}).get("baas_detection", {}).get("data", {})
+            for p in baas_data.get("firebase_projects", []):
+                baas_projects.append({"id": p["project_id"], "type": p["type"]})
+            for p in baas_data.get("supabase_projects", []):
+                baas_projects.append({"id": p["project_id"], "type": p["type"]})
+        except Exception as e:
+            result["errors"].append(f"Failed to read static report for BaaS: {e}")
+
+    # From static analysis (IOCs)
     ioc_path = os.path.join(case_dir, "static_analysis", "ioc_list.json")
     if os.path.exists(ioc_path):
         try:
@@ -185,6 +200,23 @@ def build_c2_graph(
                     url=url,
                 )
                 result["nodes_created"] += 1
+                
+            # Create BaaS Project nodes + relationships
+            for bp in baas_projects:
+                session.run(
+                    "MERGE (b:BaaSProject {project_id: $pid}) "
+                    "SET b.type = $ptype",
+                    pid=bp["id"],
+                    ptype=bp["type"]
+                )
+                session.run(
+                    "MATCH (a:APK {hash: $hash}), (b:BaaSProject {project_id: $pid}) "
+                    "MERGE (a)-[:USES_BACKEND]->(b)",
+                    hash=apk_hash,
+                    pid=bp["id"]
+                )
+                result["nodes_created"] += 1
+                result["relationships_created"] += 1
 
             # Find related APKs (same domain/IP communication)
             related = session.run(

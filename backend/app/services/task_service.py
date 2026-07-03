@@ -1,8 +1,12 @@
 from celery import Celery
 from app.config import settings
 import time
+import os
+import json
+import hashlib
+from datetime import datetime, timezone
 from app.models.session import SessionLocal
-from app.models.database import Case
+from app.models.database import Case, PhaseResult
 
 celery_app = Celery(
     "apex_x_tasks",
@@ -75,6 +79,21 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
                 completed_at=static_result.get("completed_at")
             )
             db.add(phase_record)
+            
+            # Save fingerprint to DB
+            fp_data = static_result.get("steps", {}).get("fingerprint", {}).get("data", {})
+            if fp_data and fp_data.get("fingerprint_id"):
+                from app.models.database import ApkFingerprint
+                fp_record = ApkFingerprint(
+                    case_id=case_id,
+                    fingerprint_id=fp_data.get("fingerprint_id"),
+                    permission_set_hash=fp_data.get("permission_set_hash"),
+                    class_shape_hash=fp_data.get("class_shape_hash"),
+                    resource_hashes=fp_data.get("resource_hashes", {}),
+                    api_call_signature=fp_data.get("api_call_signature", [])
+                )
+                db.add(fp_record)
+
             db.commit()
             
             hash_and_log(os.path.join(case_dir, "static_analysis", "static_report.json"), "static_report.json")
@@ -112,6 +131,21 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
             result=c2_result,
             risk_score=c2_result.get("risk_score", 0),
             completed_at=c2_result.get("completed_at")
+        )
+        db.add(phase_record)
+        db.commit()
+        
+        # 3.5 Cross-Case Syndicate Correlation
+        from app.engines.c2 import correlation_engine
+        logger.info(f"Running Cross-Case Syndicate Correlation for {case_id}")
+        correlation_result = correlation_engine.find_correlated_cases(str(case_id), apk_hash)
+        
+        phase_record = PhaseResult(
+            case_id=case_id,
+            phase="correlation",
+            result=correlation_result,
+            risk_score=0,
+            completed_at=datetime.utcnow()
         )
         db.add(phase_record)
         db.commit()

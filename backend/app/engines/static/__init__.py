@@ -21,6 +21,11 @@ from app.engines.static import manifest_parser
 from app.engines.static import yara_scanner
 from app.engines.static import ioc_extractor
 from app.engines.static import risk_scorer
+from app.engines.static import remote_access_detector
+from app.engines.static import baas_detector
+from app.engines.static import fingerprint_engine
+from app.engines.static import mo_classifier
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +129,13 @@ def run_full_static_analysis(apk_path: str, case_dir: str) -> Dict[str, Any]:
     try:
         if manifest_path and os.path.exists(manifest_path):
             manifest_results = manifest_parser.parse_manifest(manifest_path)
+            
+            # Feature 6: Check for remote access abuse
+            remote_access_check = remote_access_detector.detect_remote_access_abuse(
+                manifest_results, apktool_dir
+            )
+            manifest_results["remote_access_abuse"] = remote_access_check
+            
             result["steps"]["manifest"] = {
                 "status": "success",
                 "data": manifest_results,
@@ -226,26 +238,42 @@ def run_full_static_analysis(apk_path: str, case_dir: str) -> Dict[str, Any]:
         result["steps"]["iocs"] = {"status": "error", "error": str(e)}
         result["errors"].append(f"IOC extraction error: {e}")
 
-    # ── Compute Risk Score ───────────────────────────────────
-    logger.info("Computing composite static risk score")
+    # ── Step 6.5: BaaS / C2 Detection ────────────────────────
+    logger.info("Step 6.5/7: BaaS / C2 Detection")
+    baas_results = {}
     try:
-        # Build combined data for risk scorer
-        scoring_input = {}
+        scan_targets = []
+        if apktool_dir and os.path.isdir(apktool_dir):
+            scan_targets.append(apktool_dir)
+        if jadx_dir and os.path.isdir(jadx_dir):
+            scan_targets.append(jadx_dir)
+            
+        baas_data = baas_detector.detect_baas_backends(scan_targets)
+        baas_results = baas_detector.enrich_baas_exposure(baas_data, allow_network=settings.ALLOW_BAAS_NETWORK_ENRICHMENT)
+        result["steps"]["baas_detection"] = {
+            "status": "success",
+            "data": baas_results
+        }
+    except Exception as e:
+        result["steps"]["baas_detection"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"BaaS detection error: {e}")
 
-        # Permissions — prefer manifest parser output, fallback to androguard
-        if manifest_results.get("permissions"):
-            scoring_input["permissions"] = manifest_results["permissions"]
-        elif result["steps"].get("androguard", {}).get("data", {}).get("permissions"):
-            scoring_input["permissions"] = result["steps"]["androguard"]["data"]["permissions"]
-
-        scoring_input["iocs"] = ioc_results
-        scoring_input["yara_results"] = yara_results
-
-        if result["steps"].get("androguard", {}).get("data", {}).get("api_calls"):
-            scoring_input["api_calls"] = result["steps"]["androguard"]["data"]["api_calls"]
-
-        scoring_input["misconfigurations"] = manifest_results.get("misconfigurations", [])
-        scoring_input["security_flags"] = manifest_results.get("security_flags", {})
+    # ── Step 7: Risk Scoring ─────────────────────────────────
+    logger.info("Step 7/7: Risk scoring")
+    try:
+        ag_step = result["steps"].get("androguard", {})
+        ag_data = ag_step.get("data", {}) if ag_step.get("status") == "success" else {}
+        
+        scoring_input = {
+            "permissions": manifest_results.get("permissions", {}),
+            "manifest_misconfigurations": manifest_results.get("misconfigurations", []),
+            "security_flags": manifest_results.get("security_flags", {}),
+            "remote_access_abuse": manifest_results.get("remote_access_abuse", {}),
+            "yara_results": yara_results,
+            "iocs": ioc_results,
+            "api_calls": ag_data.get("api_calls", {}),
+            "baas_results": baas_results,
+        }
 
         risk_breakdown = risk_scorer.compute_static_risk(scoring_input)
         result["risk_score"] = risk_breakdown["total_score"]
@@ -255,6 +283,37 @@ def run_full_static_analysis(apk_path: str, case_dir: str) -> Dict[str, Any]:
         logger.error(f"Risk scoring failed: {e}")
         result["errors"].append(f"Risk scoring error: {e}")
         result["risk_score"] = -1
+
+    # ── Step 7.5: MO Classification ──────────────────────────
+    logger.info("Step 7.5/8: MO Classification")
+    try:
+        mos = mo_classifier.classify_mo(manifest_results, ag_data)
+        result["steps"]["mo_classification"] = {
+            "status": "success",
+            "data": {"mos": mos}
+        }
+        # Inject MOs into risk breakdown for frontend summary
+        if "risk_breakdown" in result:
+            result["risk_breakdown"]["mos"] = mos
+    except Exception as e:
+        logger.error(f"MO Classification failed: {e}")
+        result["steps"]["mo_classification"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"MO Classification error: {e}")
+
+    # ── Step 8: Fingerprinting ───────────────────────────────
+    logger.info("Step 8/8: Structural Fingerprinting")
+    try:
+        fingerprint = fingerprint_engine.compute_structural_fingerprint(ag_data, apktool_dir)
+        result["steps"]["fingerprint"] = {
+            "status": "success",
+            "data": fingerprint
+        }
+        # Save to DB later in task_service? The DB table is ApkFingerprint. 
+        # We will save it to static_report for now.
+    except Exception as e:
+        logger.error(f"Fingerprinting failed: {e}")
+        result["steps"]["fingerprint"] = {"status": "error", "error": str(e)}
+        result["errors"].append(f"Fingerprint error: {e}")
 
     # ── Save Results & Hash Artifacts ────────────────────────
     end_time = datetime.now(timezone.utc)
