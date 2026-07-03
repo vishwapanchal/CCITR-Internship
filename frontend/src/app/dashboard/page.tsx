@@ -190,7 +190,7 @@ export default function Dashboard() {
               <div key={activity.id} className="relative pl-4 border-l border-border-subtle">
                 <div className="absolute w-2 h-2 bg-primary rounded-full -left-[4.5px] top-1" />
                 <div className="mb-1">
-                  <span className="text-xs font-mono text-primary/60 mr-2">
+                  <span className="text-xs font-mono text-primary/60 mr-2" suppressHydrationWarning>
                     {new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </span>
                   <span className="text-xs font-semibold">{activity.user}</span>

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { m, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import AnimatedLogo from "./AnimatedLogo";
+
+const TYPEWRITER_PHRASES = ["Analyze APKs securely...", "Discover hidden vulnerabilities...", "Protect your users..."];
 
 export default function Header() {
   const pathname = usePathname();
@@ -15,33 +17,41 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Typewriter effect state
-  const phrases = ["Analyze APKs securely...", "Discover hidden vulnerabilities...", "Protect your users..."];
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [charIndex, setCharIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const phraseIndex = useRef(0);
+  const charIndex = useRef(0);
+  const isDeleting = useRef(false);
   const [text, setText] = useState("");
 
   useEffect(() => {
-    const currentPhrase = phrases[phraseIndex];
-    const typingSpeed = isDeleting ? 30 : 80;
+    let timeout: NodeJS.Timeout;
 
-    const timeout = setTimeout(() => {
-      if (!isDeleting && charIndex === currentPhrase.length) {
+    const tick = () => {
+      const currentPhrase = TYPEWRITER_PHRASES[phraseIndex.current];
+      const typingSpeed = isDeleting.current ? 30 : 80;
+
+      if (!isDeleting.current && charIndex.current === currentPhrase.length) {
         // Pause before deleting
-        setTimeout(() => setIsDeleting(true), 2000);
-      } else if (isDeleting && charIndex === 0) {
+        timeout = setTimeout(() => {
+          isDeleting.current = true;
+          tick();
+        }, 2000);
+      } else if (isDeleting.current && charIndex.current === 0) {
         // Move to next phrase
-        setIsDeleting(false);
-        setPhraseIndex((prev) => (prev + 1) % phrases.length);
+        isDeleting.current = false;
+        phraseIndex.current = (phraseIndex.current + 1) % TYPEWRITER_PHRASES.length;
+        timeout = setTimeout(tick, typingSpeed);
       } else {
         // Type or delete character
-        setCharIndex((prev) => prev + (isDeleting ? -1 : 1));
-        setText(currentPhrase.substring(0, charIndex + (isDeleting ? -1 : 1)));
+        charIndex.current = charIndex.current + (isDeleting.current ? -1 : 1);
+        setText(currentPhrase.substring(0, charIndex.current));
+        timeout = setTimeout(tick, typingSpeed);
       }
-    }, typingSpeed);
+    };
+
+    timeout = setTimeout(tick, 80);
 
     return () => clearTimeout(timeout);
-  }, [charIndex, isDeleting, phraseIndex]);
+  }, []);
   
   // Scroll hide/show logic
   const { scrollY } = useScroll();
