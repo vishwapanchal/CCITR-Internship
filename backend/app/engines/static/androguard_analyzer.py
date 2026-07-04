@@ -129,8 +129,10 @@ def analyze_apk(apk_path: str) -> Dict[str, Any]:
         return {"error": "androguard library not installed"}
 
     try:
-        logger.info(f"Starting Androguard analysis of: {apk_path}")
-        apk_obj, dex_list, analysis_obj = AnalyzeAPK(apk_path)
+        logger.info(f"Starting Androguard fast analysis (APK only) of: {apk_path}")
+        # Only parse the APK manifest to avoid 10-minute DEX CFG generation overhead
+        apk_obj = APK(apk_path)
+        analysis_obj = None
 
         result = {
             "package_name": apk_obj.get_package() or "unknown",

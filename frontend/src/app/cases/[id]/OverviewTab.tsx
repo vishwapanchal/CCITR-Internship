@@ -36,19 +36,25 @@ export default function OverviewTab({ caseData, phaseStatus, analysisResults }: 
       // IOCs
       const iocs = steps.iocs?.data || {};
       if (iocs.total_indicators > 0) {
-        findings.push({ severity: "info", title: `${iocs.total_indicators} Network Indicators Found`, description: `${iocs.urls?.length || 0} URLs, ${iocs.ips?.length || 0} IPs, ${iocs.domains?.length || 0} domains` });
+        findings.push({ severity: "info", title: `${iocs.total_indicators} Network Indicators Detected`, description: `${iocs.urls?.length || 0} URLs, ${iocs.ips?.length || 0} IPs, ${iocs.domains?.length || 0} domains` });
       }
 
       // Misconfigurations
       const misconfigs = manifest.misconfigurations || [];
       if (misconfigs.length > 0) {
-        // Handle both string and object misconfigurations
-        const descriptions = misconfigs.slice(0, 3).map((m: any) => {
-          if (typeof m === "string") return m;
-          if (typeof m === "object" && m !== null) return m.title || m.description || m.name || JSON.stringify(m);
-          return String(m);
+        misconfigs.slice(0, 3).forEach((m: any) => {
+          let title = "Security Misconfiguration";
+          let desc = String(m);
+          let severity = "warning";
+          
+          if (typeof m === "object" && m !== null) {
+            title = m.issue || m.title || m.name || title;
+            desc = m.description || (m.owasp ? `OWASP: ${m.owasp}` : "N/A");
+            severity = m.severity === "critical" ? "critical" : (m.severity || "warning");
+          }
+          
+          findings.push({ severity, title, description: desc });
         });
-        findings.push({ severity: "warning", title: `${misconfigs.length} Security Misconfigurations`, description: descriptions.join("; ") });
       }
     }
 

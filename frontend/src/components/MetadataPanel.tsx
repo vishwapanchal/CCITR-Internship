@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "framer-motion";
-import { ShieldAlert, FileCode2, Key, Activity } from "lucide-react";
+import { ShieldAlert, FileCode2, Key, Activity, Clock, Cpu, Code2 } from "lucide-react";
 
 interface MetadataPanelProps {
   caseData?: {
@@ -9,15 +9,18 @@ interface MetadataPanelProps {
     package_name?: string;
     apk_hash?: string;
     status?: string;
+    analysis_time?: string;
+    engine_version?: string;
+    decompiler?: string;
   };
 }
 
 export default function MetadataPanel({ caseData }: MetadataPanelProps) {
   const metadata = [
-    { label: "File Name", value: caseData?.apk_name || "N/A", icon: FileCode2 },
-    { label: "Package", value: caseData?.package_name || "N/A", icon: Activity },
-    { label: "SHA-256", value: caseData?.apk_hash ? `${caseData.apk_hash.slice(0, 14)}...${caseData.apk_hash.slice(-4)}` : "N/A", icon: Key },
-    { label: "Status", value: caseData?.status?.toUpperCase() || "N/A", icon: ShieldAlert, critical: caseData?.status === "failed" },
+    { label: "Status", value: caseData?.status ? caseData.status.charAt(0).toUpperCase() + caseData.status.slice(1) : "N/A", icon: ShieldAlert, critical: caseData?.status === "failed" },
+    { label: "Analysis Time", value: caseData?.analysis_time || "N/A", icon: Clock },
+    { label: "Engine Version", value: caseData?.engine_version || "APEX-X v2.1", icon: Cpu },
+    { label: "Decompiler", value: caseData?.decompiler || "Androguard", icon: Code2 },
   ];
 
   return (

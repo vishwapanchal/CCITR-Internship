@@ -13,11 +13,9 @@ const MOCK_APIS = [
 ];
 
 const MOCK_NETWORK = [
-  { dest: "c2.malware-ops.ru", proto: "HTTPS", port: "443", size: "12 KB", dir: "OUTBOUND" },
-  { dest: "91.234.99.18", proto: "HTTPS", port: "443", size: "8 KB", dir: "OUTBOUND" },
-  { dest: "update-service.ddns.net", proto: "DNS", port: "53", size: "128 B", dir: "OUTBOUND" },
-  { dest: "cdn-payload.s3.amazonaws.com", proto: "HTTPS", port: "443", size: "45 KB", dir: "INBOUND" },
-  { dest: "185.220.101.42", proto: "HTTPS", port: "443", size: "256 B", dir: "OUTBOUND" },
+  { dest: "c2.malware-ops.ru", proto: "HTTPS", port: "443", size: "-", dir: "OUTBOUND" },
+  { dest: "91.234.99.18", proto: "HTTPS", port: "443", size: "-", dir: "OUTBOUND" },
+  { dest: "update-service.ddns.net", proto: "DNS", port: "53", size: "-", dir: "OUTBOUND" },
 ];
 
 interface DynamicTabProps {
@@ -27,23 +25,37 @@ interface DynamicTabProps {
 }
 
 export default function DynamicTab({ caseData, analysisResults, isMockCase }: DynamicTabProps) {
-  // Process Behavior Timeline
-  const dynamicEvents = analysisResults?.dynamic?.behavior_profile?.timeline?.map((evt: any, i: number) => {
-    const hook = evt.hook || "unknown";
+  // Find dynamic phase result
+  let dynamicResult = null;
+  if (analysisResults && Array.isArray(analysisResults)) {
+    const dynPhase = analysisResults.find((r: any) => r.phase === "dynamic");
+    if (dynPhase?.result) {
+      dynamicResult = dynPhase.result;
+    }
+  }
+
+  // Map to BehaviorTimeline events
+  const rawEvents = dynamicResult?.events || [];
+  
+  const dynamicEvents = rawEvents.map((evt: any) => {
     let type = "api_call";
+    if (evt.category === "network") type = "network";
+    if (evt.category === "file_io") type = "file_io";
+    if (evt.category === "crypto") type = "crypto";
+    if (evt.category === "sms") type = "sms";
+    if (evt.category === "data_exfil") type = "permission";
+    if (evt.category === "surveillance") type = "permission";
+
     let severity = "info";
-    if (hook === "network") { type = "network"; severity = "warning"; }
-    if (hook === "file") type = "file_io";
-    if (hook === "crypto") type = "crypto";
-    if (hook === "sms") { type = "sms"; severity = "critical"; }
-    if (hook === "device") type = "permission";
-    
+    if (evt.risk_level === "CRITICAL") severity = "critical";
+    else if (evt.risk_level === "HIGH" || evt.risk_level === "MEDIUM") severity = "warning";
+
     return {
-      id: `dyn-evt-${i}`,
-      timestamp: evt.timestamp || new Date().toISOString(),
+      id: evt.id,
+      timestamp: evt.timestamp,
       type: type,
-      title: evt.event || "Unknown Event",
-      description: Object.keys(evt.details || {}).length > 0 ? JSON.stringify(evt.details) : "No details",
+      title: evt.api_call,
+      description: evt.description + (evt.source === "heuristic_code_scan" ? " (Heuristic Scan)" : " (Logcat)"),
       severity: severity,
     };
   });
@@ -52,21 +64,15 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     ? dynamicEvents 
     : (isMockCase ? REAL_TIMELINE_EVENTS : []);
 
-  // Process Suspicious APIs
-  const timeline = analysisResults?.dynamic?.behavior_profile?.timeline || [];
-  const dynamicApis = timeline.reduce((acc: any[], evt: any) => {
-      let risk = "LOW";
-      if (evt.hook === "sms" || evt.event?.includes("exec")) risk = "CRITICAL";
-      else if (evt.hook === "device" || evt.hook === "crypto") risk = "HIGH";
-      else if (evt.hook === "network") risk = "MEDIUM";
-      
-      const apiName = evt.event || "Unknown";
-      
+  // Process Suspicious APIs (extract unique from events)
+  const dynamicApis = rawEvents.reduce((acc: any[], evt: any) => {
+      const apiName = evt.api_call || "Unknown";
       if (!acc.some((t: any) => t.api === apiName)) {
         acc.push({
             api: apiName,
-            cls: evt.hook || "unknown category",
-            risk
+            cls: evt.class_name || evt.category,
+            risk: evt.risk_level || "LOW",
+            source: evt.source
         });
       }
       return acc;
@@ -75,33 +81,50 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
   const apisToUse = (dynamicApis && dynamicApis.length > 0) ? dynamicApis : (isMockCase ? MOCK_APIS : []);
 
   // Process Network Connections
-  const dynamicConnections = analysisResults?.dynamic?.steps?.network?.connections?.map((conn: any) => ({
-      dest: conn.dst_ip || conn.pair,
+  const dynamicConnections = dynamicResult?.network_activity?.map((conn: any) => ({
+      dest: conn.destination,
       proto: conn.protocol || "TCP",
-      port: String(conn.dst_port || 443),
+      port: String(conn.port || 443),
       size: "-",
-      dir: "OUTBOUND"
-  }));
-  const dnsQueries = analysisResults?.dynamic?.steps?.network?.dns_queries?.map((query: string) => ({
-      dest: query,
-      proto: "DNS",
-      port: "53",
-      size: "-",
-      dir: "OUTBOUND"
+      dir: conn.direction || "OUTBOUND",
+      source: conn.source
   })) || [];
-  const allNetwork = [...(dynamicConnections || []), ...dnsQueries];
   
-  const networkToUse = (allNetwork && allNetwork.length > 0) ? allNetwork : (isMockCase ? MOCK_NETWORK : []);
+  const networkToUse = (dynamicConnections && dynamicConnections.length > 0) ? dynamicConnections : (isMockCase ? MOCK_NETWORK : []);
 
   return (
     <div className="space-y-4">
+      {/* Dynamic Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
+          <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Analysis Mode</span>
+          <span className="text-xl font-display font-bold text-primary">{dynamicResult?.mode === "emulator" ? "Real Emulator" : dynamicResult?.mode === "heuristic" ? "Heuristic (No VM)" : "Mock Data"}</span>
+        </div>
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
+          <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Total Events</span>
+          <span className="text-xl font-display font-bold text-blue-600">{timelineEventsToUse.length} Captured</span>
+        </div>
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
+          <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Critical APIs</span>
+          <span className="text-xl font-display font-bold text-red-600">{apisToUse.filter((a: any) => a.risk === "CRITICAL").length} Detected</span>
+        </div>
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
+          <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Network Activity</span>
+          <span className="text-xl font-display font-bold text-orange-600">{networkToUse.length} Endpoints</span>
+        </div>
+      </div>
+
       <div className="bg-panel border border-border-subtle p-4">
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
           Behavioral Event Timeline
         </h3>
-        <div className="h-[500px]">
-          <BehaviorTimeline events={timelineEventsToUse} />
-        </div>
+        {timelineEventsToUse.length === 0 ? (
+          <p className="text-xs text-primary/50 italic py-8 text-center">Waiting for dynamic analysis events...</p>
+        ) : (
+          <div className="h-[500px]">
+            <BehaviorTimeline events={timelineEventsToUse} />
+          </div>
+        )}
       </div>
 
       <div className="bg-panel border border-border-subtle p-4 overflow-hidden">
@@ -113,25 +136,30 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
             <thead>
               <tr className="border-b border-border-subtle text-left">
                 <th className="pb-2 font-mono text-xs text-primary/60">API</th>
-                <th className="pb-2 font-mono text-xs text-primary/60">Class</th>
+                <th className="pb-2 font-mono text-xs text-primary/60">Context</th>
                 <th className="pb-2 font-mono text-xs text-primary/60">Risk</th>
               </tr>
             </thead>
             <tbody>
-              {apisToUse.map((row: any) => (
-                <tr key={row.api} className="border-b border-border-subtle/50">
-                  <td className="py-2 font-mono text-xs">{row.api}</td>
+              {apisToUse.length === 0 ? (
+                <tr><td colSpan={3} className="text-xs text-center text-primary/50 py-4">No suspicious APIs detected</td></tr>
+              ) : apisToUse.map((row: any, idx: number) => (
+                <tr key={`${row.api}-${idx}`} className="border-b border-border-subtle/50 hover:bg-canvas/50">
+                  <td className="py-2 font-mono text-xs">
+                    <span className="font-semibold">{row.api}</span>
+                    <span className="block text-[10px] text-primary/40 mt-0.5">{row.source === "heuristic_code_scan" ? "Static Heuristic Scan" : "Runtime Execution"}</span>
+                  </td>
                   <td className="py-2 text-xs text-primary/60 font-mono break-all">{row.cls}</td>
                   <td className="py-2">
                     <span
-                      className={`text-xs font-mono font-semibold px-2 py-0.5 ${
+                      className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-sm ${
                         row.risk === "CRITICAL"
-                          ? "bg-red-100 text-red-700"
+                          ? "bg-red-100 text-red-700 border-red-200"
                           : row.risk === "HIGH"
-                          ? "bg-orange-100 text-orange-700"
+                          ? "bg-orange-100 text-orange-700 border-orange-200"
                           : row.risk === "MEDIUM"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-blue-100 text-blue-700"
+                          ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                          : "bg-blue-100 text-blue-700 border-blue-200"
                       }`}
                     >
                       {row.risk}
@@ -155,21 +183,24 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
                 <th className="pb-2 font-mono text-xs text-primary/60">Destination</th>
                 <th className="pb-2 font-mono text-xs text-primary/60">Protocol</th>
                 <th className="pb-2 font-mono text-xs text-primary/60">Port</th>
-                <th className="pb-2 font-mono text-xs text-primary/60">Data Size</th>
                 <th className="pb-2 font-mono text-xs text-primary/60">Direction</th>
               </tr>
             </thead>
             <tbody>
-              {networkToUse.map((row: any, index: number) => (
-                <tr key={`${row.dest}-${row.port}-${index}`} className="border-b border-border-subtle/50">
-                  <td className="py-2 font-mono text-xs">{row.dest}</td>
+              {networkToUse.length === 0 ? (
+                <tr><td colSpan={4} className="text-xs text-center text-primary/50 py-4">No network activity detected</td></tr>
+              ) : networkToUse.map((row: any, index: number) => (
+                <tr key={`${row.dest}-${row.port}-${index}`} className="border-b border-border-subtle/50 hover:bg-canvas/50">
+                  <td className="py-2 font-mono text-xs">
+                    {row.dest}
+                    {row.source && <span className="block text-[10px] text-primary/40 mt-0.5">{row.source}</span>}
+                  </td>
                   <td className="py-2 text-xs font-mono">{row.proto}</td>
                   <td className="py-2 text-xs font-mono">{row.port}</td>
-                  <td className="py-2 text-xs font-mono">{row.size}</td>
                   <td className="py-2">
                     <span
                       className={`text-xs font-mono font-semibold ${
-                        row.dir === "OUTBOUND" ? "text-red-600" : "text-blue-600"
+                        row.dir === "OUTBOUND" ? "text-orange-600" : "text-blue-600"
                       }`}
                     >
                       {row.dir}

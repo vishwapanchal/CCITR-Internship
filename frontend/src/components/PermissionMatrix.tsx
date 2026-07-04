@@ -6,12 +6,18 @@ interface PermissionMatrixProps {
   permissions: Permission[];
 }
 
-const riskColors: Record<string, { bg: string; text: string }> = {
-  low: { bg: "bg-green-100", text: "text-green-700" },
-  medium: { bg: "bg-yellow-100", text: "text-yellow-700" },
-  high: { bg: "bg-orange-100", text: "text-orange-700" },
-  critical: { bg: "bg-red-100", text: "text-red-700" },
+const riskColors: Record<string, { bg: string; text: string; icon: string }> = {
+  low: { bg: "bg-green-100", text: "text-green-700", icon: "🟢" },
+  medium: { bg: "bg-yellow-100", text: "text-yellow-700", icon: "🟠" },
+  high: { bg: "bg-orange-100", text: "text-orange-700", icon: "🔴" },
+  critical: { bg: "bg-red-100", text: "text-red-700", icon: "🚨" },
 };
+
+function formatPermName(perm: string) {
+  const parts = perm.split(".");
+  const last = parts[parts.length - 1];
+  return last.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+}
 
 const protectionColors: Record<string, string> = {
   normal: "text-green-600",
@@ -50,8 +56,7 @@ export default function PermissionMatrix({ permissions }: PermissionMatrixProps)
           <thead>
             <tr className="border-b border-border-subtle text-left">
               <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Permission</th>
-              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Protection</th>
-              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Risk</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Risk Level</th>
               <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Status</th>
             </tr>
           </thead>
@@ -65,18 +70,18 @@ export default function PermissionMatrix({ permissions }: PermissionMatrixProps)
                   title={perm.description}
                 >
                   <td className="py-2 pr-3">
-                    <span className="font-mono text-xs break-all">{perm.name}</span>
-                    <span className="block text-xs text-primary/50 mt-0.5">{perm.description}</span>
+                    <span className="font-semibold text-sm break-all">{formatPermName(perm.name)}</span>
+                    <span className="block text-xs font-mono text-primary/40 mt-0.5">{perm.name}</span>
                   </td>
                   <td className="py-2 pr-3">
-                    <span className={`text-xs font-mono font-semibold ${protectionColors[perm.protection_level] || ""}`}>
-                      {perm.protection_level}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-3">
-                    <span className={`text-xs font-mono font-semibold px-2 py-0.5 ${risk.bg} ${risk.text}`}>
-                      {perm.risk.toUpperCase()}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-mono font-semibold ${protectionColors[perm.protection_level] || ""}`}>
+                        {perm.protection_level}
+                      </span>
+                      <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${risk.bg} ${risk.text} flex items-center w-fit gap-1`}>
+                        <span>{risk.icon}</span> {perm.risk.charAt(0).toUpperCase() + perm.risk.slice(1).toLowerCase()}
+                      </span>
+                    </div>
                   </td>
                   <td className="py-2">
                     <span className={`text-xs font-mono ${perm.granted ? "text-red-600" : "text-green-600"}`}>

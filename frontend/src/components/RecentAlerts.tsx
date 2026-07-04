@@ -32,11 +32,11 @@ export default function RecentAlerts({ analysisResults }: RecentAlertsProps) {
       }
       if (steps.yara?.status === "success") {
         const matches = steps.yara.data?.total_matches || 0;
-        alerts.push({ id: ++alertId, type: matches > 0 ? "critical" : "info", message: `YARA scan: ${matches} rule matches`, icon: matches > 0 ? ShieldAlert : Info });
+        alerts.push({ id: ++alertId, type: matches > 0 ? "critical" : "info", message: matches > 0 ? `YARA scan: ${matches} rule matches` : "No YARA signatures detected", icon: matches > 0 ? ShieldAlert : Info });
       }
       if (steps.iocs?.status === "success") {
         const total = steps.iocs.data?.total_indicators || 0;
-        alerts.push({ id: ++alertId, type: total > 0 ? "warning" : "info", message: `IOC extraction: ${total} indicators found`, icon: total > 0 ? Eye : Info });
+        alerts.push({ id: ++alertId, type: total > 0 ? "warning" : "info", message: `Network Artifacts: ${total} endpoints found`, icon: total > 0 ? Eye : Info });
       }
     }
 

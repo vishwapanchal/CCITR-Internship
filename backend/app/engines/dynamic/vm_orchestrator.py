@@ -1,68 +1,58 @@
 """
-VM Orchestrator — ADB-Based Android Emulator/Device Management
-Manages the lifecycle of Android emulators/devices for dynamic APK analysis:
-start, install, launch, interact, capture, and stop.
+VM Orchestrator — ADB-Based Android Emulator Management (Simplified)
+Manages the lifecycle of Android emulators for dynamic APK analysis:
+install, launch, monkey, logcat capture, network dump, uninstall.
 """
 
 import os
 import subprocess
 import time
+import re
 import logging
 import shutil
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
 logger = logging.getLogger(__name__)
 
 # Timeouts (seconds)
-EMULATOR_BOOT_TIMEOUT = 120
 ADB_COMMAND_TIMEOUT = 30
 INSTALL_TIMEOUT = 60
 MONKEY_TIMEOUT = 120
+LOGCAT_PARSE_MAX = 5000
+
+# ADB path
+ADB_PATH = None
 
 
 def _find_adb() -> Optional[str]:
     """Find adb binary on the system."""
+    global ADB_PATH
+    if ADB_PATH:
+        return ADB_PATH
+
     result = shutil.which("adb")
     if result:
+        ADB_PATH = result
         return result
-    # Check common Android SDK locations including Windows
+
     sdk_paths = [
         os.path.expanduser("~/AppData/Local/Android/Sdk/platform-tools/adb.exe"),
         os.path.expanduser("~/Android/Sdk/platform-tools/adb"),
         os.path.expanduser("~/Library/Android/sdk/platform-tools/adb"),
-        "/usr/local/android-sdk/platform-tools/adb",
-        "/opt/android-sdk/platform-tools/adb",
     ]
     for path in sdk_paths:
-        if os.path.isfile(path) and os.access(path, os.X_OK):
-            return path
-    return None
-
-
-def _find_emulator() -> Optional[str]:
-    """Find Android emulator binary."""
-    result = shutil.which("emulator")
-    if result:
-        return result
-    sdk_paths = [
-        os.path.expanduser("~/AppData/Local/Android/Sdk/emulator/emulator.exe"),
-        os.path.expanduser("~/Android/Sdk/emulator/emulator"),
-        os.path.expanduser("~/Library/Android/sdk/emulator/emulator"),
-        "/usr/local/android-sdk/emulator/emulator",
-    ]
-    for path in sdk_paths:
-        if os.path.isfile(path) and os.access(path, os.X_OK):
+        if os.path.isfile(path):
+            ADB_PATH = path
             return path
     return None
 
 
 def _run_adb(args: List[str], device: Optional[str] = None, timeout: int = ADB_COMMAND_TIMEOUT) -> Dict[str, Any]:
-    """
-    Run an ADB command and return structured result.
-    """
+    """Run an ADB command and return structured result."""
     adb = _find_adb()
     if not adb:
-        return {"success": False, "error": "adb binary not found", "stdout": "", "stderr": ""}
+        return {"success": False, "error": "ADB not found", "stdout": "", "stderr": ""}
 
     cmd = [adb]
     if device:
@@ -70,296 +60,291 @@ def _run_adb(args: List[str], device: Optional[str] = None, timeout: int = ADB_C
     cmd.extend(args)
 
     try:
-        proc = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=timeout
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         return {
-            "success": proc.returncode == 0,
-            "returncode": proc.returncode,
-            "stdout": proc.stdout.strip(),
-            "stderr": proc.stderr.strip(),
-            "command": " ".join(cmd),
+            "success": result.returncode == 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "error": result.stderr if result.returncode != 0 else None,
         }
     except subprocess.TimeoutExpired:
-        return {"success": False, "error": f"Command timed out after {timeout}s", "stdout": "", "stderr": ""}
-    except Exception as e:
-        return {"success": False, "error": str(e), "stdout": "", "stderr": ""}
+        return {"success": False, "error": f"ADB timed out after {timeout}s", "stdout": "", "stderr": ""}
+    except FileNotFoundError:
+        return {"success": False, "error": "ADB binary not found", "stdout": "", "stderr": ""}
 
 
-def list_devices() -> List[Dict[str, str]]:
-    """List all connected ADB devices/emulators."""
-    result = _run_adb(["devices", "-l"])
-    devices = []
-
+def is_emulator_running() -> Optional[str]:
+    """Check if an emulator is running. Returns device serial or None."""
+    result = _run_adb(["devices"])
     if not result["success"]:
-        return devices
+        return None
 
-    for line in result["stdout"].split("\n")[1:]:  # Skip header
+    for line in result["stdout"].strip().split("\n"):
         line = line.strip()
-        if not line or "offline" in line:
-            continue
-
-        parts = line.split()
-        if len(parts) >= 2:
-            device = {"serial": parts[0], "state": parts[1]}
-            # Parse extra info
-            for part in parts[2:]:
-                if ":" in part:
-                    key, val = part.split(":", 1)
-                    device[key] = val
-            devices.append(device)
-
-    return devices
-
-
-def start_emulator(avd_name: str = "apex_x_sandbox", port: int = 5554) -> Dict[str, Any]:
-    """
-    Start an Android emulator with the specified AVD.
-
-    Args:
-        avd_name: Name of the Android Virtual Device to launch.
-        port: Console port for the emulator.
-
-    Returns:
-        Dict with status, emulator serial, and any errors.
-    """
-    emulator_bin = _find_emulator()
-    if not emulator_bin:
-        return {"success": False, "error": "emulator binary not found", "serial": None}
-
-    serial = f"emulator-{port}"
-
-    # Check if already running
-    devices = list_devices()
-    for d in devices:
-        if d["serial"] == serial and d["state"] == "device":
-            logger.info(f"Emulator {serial} already running.")
-            return {"success": True, "serial": serial, "already_running": True}
-
-    # Launch emulator in background
-    cmd = [
-        emulator_bin, "-avd", avd_name,
-        "-port", str(port),
-        "-no-window",           # Headless for server environments
-        "-no-audio",
-        "-no-boot-anim",
-        "-gpu", "swiftshader_indirect",
-        "-writable-system",     # Allow filesystem modifications
-    ]
-
-    logger.info(f"Starting emulator: {' '.join(cmd)}")
-
-    try:
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-    except Exception as e:
-        return {"success": False, "error": f"Failed to start emulator: {e}", "serial": None}
-
-    # Wait for device to become ready
-    success = wait_for_device(serial, timeout=EMULATOR_BOOT_TIMEOUT)
-
-    if success:
-        logger.info(f"Emulator {serial} is ready.")
-        return {"success": True, "serial": serial, "pid": proc.pid}
-    else:
-        logger.error(f"Emulator {serial} failed to boot within {EMULATOR_BOOT_TIMEOUT}s.")
-        try:
-            proc.terminate()
-        except Exception:
-            pass
-        return {"success": False, "error": "Emulator boot timeout", "serial": serial}
-
-
-def wait_for_device(serial: str, timeout: int = EMULATOR_BOOT_TIMEOUT) -> bool:
-    """Wait for an ADB device to be fully booted and ready."""
-    start = time.time()
-
-    while time.time() - start < timeout:
-        # Check device state
-        result = _run_adb(["get-state"], device=serial, timeout=5)
-        if result["success"] and result["stdout"] == "device":
-            # Verify boot completed
-            boot_result = _run_adb(
-                ["shell", "getprop", "sys.boot_completed"],
-                device=serial, timeout=5
-            )
-            if boot_result["success"] and boot_result["stdout"].strip() == "1":
-                return True
-
-        time.sleep(3)
-
-    return False
-
-
-def install_apk(apk_path: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Install an APK on the device/emulator.
-
-    Args:
-        apk_path: Path to the APK file.
-        device: Optional device serial. Uses default if None.
-
-    Returns:
-        Dict with installation result.
-    """
-    if not os.path.exists(apk_path):
-        return {"success": False, "error": f"APK not found: {apk_path}"}
-
-    result = _run_adb(["install", "-r", "-g", apk_path], device=device, timeout=INSTALL_TIMEOUT)
-
-    if result["success"] and "Success" in result["stdout"]:
-        logger.info(f"APK installed successfully on {device or 'default device'}")
-        return {"success": True, "output": result["stdout"]}
-    else:
-        error = result.get("stderr", result.get("error", "Unknown error"))
-        logger.error(f"APK installation failed: {error}")
-        return {"success": False, "error": error, "output": result.get("stdout", "")}
-
-
-def get_package_name(apk_path: str) -> Optional[str]:
-    """Extract package name from APK using aapt or aapt2."""
-    for tool in ["aapt2", "aapt"]:
-        bin_path = shutil.which(tool)
-        if not bin_path:
-            continue
-        try:
-            proc = subprocess.run(
-                [bin_path, "dump", "badging", apk_path],
-                capture_output=True, text=True, timeout=15
-            )
-            for line in proc.stdout.split("\n"):
-                if line.startswith("package:"):
-                    # Parse: package: name='com.example.app' ...
-                    for part in line.split(" "):
-                        if part.startswith("name='"):
-                            return part.split("'")[1]
-        except Exception:
-            continue
+        if "\tdevice" in line:
+            serial = line.split("\t")[0]
+            # Emulators are typically emulator-5554, emulator-5556, etc.
+            if serial.startswith("emulator-") or serial.startswith("127.0.0.1"):
+                return serial
 
     return None
 
 
-def launch_app(package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """Launch an installed app by its package name."""
-    result = _run_adb(
-        ["shell", "monkey", "-p", package_name, "-c",
-         "android.intent.category.LAUNCHER", "1"],
-        device=device
-    )
+def wait_for_boot(device: str, timeout: int = 90) -> bool:
+    """Wait for the device to finish booting."""
+    start = time.time()
+    while time.time() - start < timeout:
+        result = _run_adb(["shell", "getprop", "sys.boot_completed"], device=device)
+        if result["success"] and result["stdout"].strip() == "1":
+            logger.info(f"Device {device} booted successfully")
+            return True
+        time.sleep(3)
+    logger.error(f"Device {device} did not boot within {timeout}s")
+    return False
 
+
+def get_package_name(apk_path: str) -> Optional[str]:
+    """Extract package name from an APK using aapt2 or aapt."""
+    adb = _find_adb()
+    if not adb:
+        return None
+
+    # Try aapt2 first (in build-tools)
+    sdk_root = os.path.dirname(os.path.dirname(adb))
+    build_tools = os.path.join(sdk_root, "build-tools")
+
+    aapt_bin = None
+    if os.path.isdir(build_tools):
+        for ver_dir in sorted(os.listdir(build_tools), reverse=True):
+            candidate = os.path.join(build_tools, ver_dir, "aapt2.exe")
+            if not os.path.isfile(candidate):
+                candidate = os.path.join(build_tools, ver_dir, "aapt2")
+            if os.path.isfile(candidate):
+                aapt_bin = candidate
+                break
+
+    if aapt_bin:
+        try:
+            result = subprocess.run(
+                [aapt_bin, "dump", "packagename", apk_path],
+                capture_output=True, text=True, timeout=10
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return result.stdout.strip()
+        except Exception:
+            pass
+
+    # Fallback: try androguard
+    try:
+        from androguard.core.apk import APK
+        apk = APK(apk_path)
+        return apk.get_package()
+    except Exception:
+        pass
+
+    return None
+
+
+def install_apk(apk_path: str, device: Optional[str] = None) -> Dict[str, Any]:
+    """Install APK on device."""
+    logger.info(f"Installing APK: {apk_path}")
+    result = _run_adb(["install", "-r", "-t", apk_path], device=device, timeout=INSTALL_TIMEOUT)
     if result["success"]:
-        logger.info(f"Launched app: {package_name}")
-        return {"success": True}
+        logger.info("APK installed successfully")
     else:
-        return {"success": False, "error": result.get("stderr", result.get("error", ""))}
-
-
-def run_monkey(
-    package_name: str,
-    events: int = 500,
-    device: Optional[str] = None,
-    throttle_ms: int = 300,
-) -> Dict[str, Any]:
-    """
-    Run Android Monkey tool for automated UI interaction / stress testing.
-
-    Args:
-        package_name: Target app package name.
-        events: Number of random events to generate.
-        device: Device serial.
-        throttle_ms: Delay between events in milliseconds.
-    """
-    result = _run_adb(
-        ["shell", "monkey", "-p", package_name,
-         "--throttle", str(throttle_ms),
-         "-v", str(events)],
-        device=device,
-        timeout=MONKEY_TIMEOUT,
-    )
-
-    return {
-        "success": result["success"],
-        "events_sent": events,
-        "output": result["stdout"][:2000] if result["stdout"] else "",
-        "error": result.get("error", result.get("stderr", ""))[:500],
-    }
-
-
-def shell(command: str, device: Optional[str] = None, timeout: int = ADB_COMMAND_TIMEOUT) -> Dict[str, Any]:
-    """Execute a shell command on the device."""
-    return _run_adb(["shell"] + command.split(), device=device, timeout=timeout)
-
-
-def pull_file(remote_path: str, local_path: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """Pull a file from the device to the host."""
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-    return _run_adb(["pull", remote_path, local_path], device=device, timeout=60)
-
-
-def push_file(local_path: str, remote_path: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """Push a file from the host to the device."""
-    return _run_adb(["push", local_path, remote_path], device=device, timeout=60)
-
-
-def uninstall_apk(package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """Uninstall an app from the device."""
-    return _run_adb(["uninstall", package_name], device=device)
-
-
-def stop_emulator(device: Optional[str] = None) -> Dict[str, Any]:
-    """Stop the emulator by sending emu kill."""
-    result = _run_adb(["emu", "kill"], device=device)
-    if result["success"]:
-        logger.info("Emulator stopped successfully.")
+        logger.error(f"APK install failed: {result['error']}")
     return result
 
 
-def take_screenshot(output_path: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """Capture a screenshot from the device."""
-    remote_path = "/sdcard/screenshot.png"
-    shell("screencap -p " + remote_path, device=device)
-    return pull_file(remote_path, output_path, device=device)
+def uninstall_apk(package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
+    """Uninstall an APK by package name."""
+    logger.info(f"Uninstalling: {package_name}")
+    return _run_adb(["uninstall", package_name], device=device)
 
 
-def get_device_info(device: Optional[str] = None) -> Dict[str, Any]:
-    """Get device properties for forensic metadata."""
-    props = {}
-    prop_keys = [
-        "ro.build.version.release",
-        "ro.build.version.sdk",
-        "ro.product.model",
-        "ro.product.manufacturer",
-        "ro.product.name",
-        "ro.build.fingerprint",
-        "ro.hardware",
+def launch_app(package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
+    """Launch an app's main activity."""
+    # First try to find the launcher activity
+    result = _run_adb(
+        ["shell", "cmd", "package", "resolve-activity", "--brief", package_name],
+        device=device
+    )
+
+    activity = None
+    if result["success"]:
+        for line in result["stdout"].strip().split("\n"):
+            if "/" in line and package_name in line:
+                activity = line.strip()
+                break
+
+    if activity:
+        return _run_adb(["shell", "am", "start", "-n", activity], device=device)
+    else:
+        # Fallback: monkey launch
+        return _run_adb(
+            ["shell", "monkey", "-p", package_name, "-c", "android.intent.category.LAUNCHER", "1"],
+            device=device
+        )
+
+
+def run_monkey(package_name: str, events: int = 500, device: Optional[str] = None) -> Dict[str, Any]:
+    """Run Android Monkey for random UI interactions."""
+    logger.info(f"Running Monkey: {events} events on {package_name}")
+    return _run_adb(
+        ["shell", "monkey", "-p", package_name, "--throttle", "300",
+         "--ignore-crashes", "--ignore-timeouts", "--ignore-security-exceptions",
+         "-v", str(events)],
+        device=device,
+        timeout=MONKEY_TIMEOUT
+    )
+
+
+def capture_logcat(device: Optional[str] = None, duration: int = 5) -> str:
+    """Capture logcat output. Clear first, then capture for duration."""
+    # Clear existing logcat
+    _run_adb(["logcat", "-c"], device=device)
+
+    time.sleep(duration)
+
+    # Dump logcat
+    result = _run_adb(["logcat", "-d", "-v", "time"], device=device, timeout=30)
+    if result["success"]:
+        return result["stdout"]
+    return ""
+
+
+def start_logcat_capture(device: Optional[str] = None) -> None:
+    """Clear logcat buffer to start fresh capture."""
+    _run_adb(["logcat", "-c"], device=device)
+
+
+def collect_logcat(device: Optional[str] = None) -> str:
+    """Collect all logcat since last clear."""
+    result = _run_adb(["logcat", "-d", "-v", "threadtime"], device=device, timeout=30)
+    return result["stdout"] if result["success"] else ""
+
+
+def dump_network_stats(device: Optional[str] = None) -> Dict[str, Any]:
+    """Get network statistics from device."""
+    stats: Dict[str, Any] = {"connections": [], "dns_queries": []}
+
+    # Get active connections
+    result = _run_adb(["shell", "cat", "/proc/net/tcp"], device=device)
+    if result["success"]:
+        for line in result["stdout"].strip().split("\n")[1:]:  # skip header
+            parts = line.split()
+            if len(parts) >= 4:
+                # Parse hex IP:port
+                try:
+                    remote = parts[2]
+                    hex_ip, hex_port = remote.split(":")
+                    port = int(hex_port, 16)
+                    # Convert hex IP to dotted
+                    ip_int = int(hex_ip, 16)
+                    ip = f"{ip_int & 0xFF}.{(ip_int >> 8) & 0xFF}.{(ip_int >> 16) & 0xFF}.{(ip_int >> 24) & 0xFF}"
+                    if ip != "0.0.0.0" and port != 0:
+                        stats["connections"].append({
+                            "remote_ip": ip,
+                            "remote_port": port,
+                            "protocol": "TCP",
+                        })
+                except Exception:
+                    continue
+
+    # Get dumpsys connectivity info
+    result = _run_adb(["shell", "dumpsys", "connectivity"], device=device)
+    if result["success"]:
+        stats["connectivity_dump"] = result["stdout"][:2000]  # Cap size
+
+    return stats
+
+
+def parse_logcat_events(logcat_output: str, package_name: str) -> List[Dict[str, Any]]:
+    """
+    Parse logcat output into structured behavioral events.
+    Looks for API calls, network activity, exceptions, intents.
+    """
+    events: List[Dict[str, Any]] = []
+    event_id = 0
+    seen: set = set()
+
+    # Patterns to detect in logcat
+    patterns = [
+        # Network
+        (r"(https?://[^\s\"']+)", "network", "HTTP Request", "MEDIUM"),
+        (r"Connecting to\s+([\w\.\-]+)", "network", "Connection Attempt", "MEDIUM"),
+        (r"dns_query.*?(\S+\.\S+)", "network", "DNS Query", "MEDIUM"),
+
+        # Security exceptions
+        (r"SecurityException:\s*(.+)", "security", "Security Exception", "HIGH"),
+        (r"Permission denied.*?(\S+)", "security", "Permission Denied", "MEDIUM"),
+
+        # Crypto
+        (r"Cipher.*?(AES|DES|RSA|CBC|GCM)", "crypto", "Cipher Operation", "MEDIUM"),
+
+        # File I/O
+        (r"(\/sdcard\/[^\s]+|\/storage\/[^\s]+)", "file_io", "File Access", "MEDIUM"),
+        (r"SharedPreferences.*?(put|get|edit)", "file_io", "SharedPreferences Access", "LOW"),
+
+        # Dynamic loading
+        (r"DexClassLoader|InMemoryDexClassLoader", "dynamic_loading", "Dynamic Code Loading", "CRITICAL"),
+        (r"dlopen\((.+?)\)", "dynamic_loading", "Native Library Load", "HIGH"),
+
+        # SMS
+        (r"SmsManager|sendTextMessage", "sms", "SMS Operation", "CRITICAL"),
+
+        # Device info
+        (r"getDeviceId|getImei|getSubscriberId", "data_exfil", "Device ID Access", "HIGH"),
     ]
 
-    for key in prop_keys:
-        result = _run_adb(["shell", "getprop", key], device=device, timeout=5)
-        if result["success"]:
-            short_key = key.split(".")[-1]
-            props[short_key] = result["stdout"]
+    lines = logcat_output.split("\n")
+    for line in lines[:LOGCAT_PARSE_MAX]:
+        # Only look at lines from our package or system events
+        if package_name not in line and "AndroidRuntime" not in line:
+            continue
 
-    return props
+        for pattern, category, title, risk in patterns:
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match:
+                detail = match.group(1) if match.lastindex else match.group(0)
+                dedup = (category, title, detail[:50])
+                if dedup in seen:
+                    continue
+                seen.add(dedup)
 
+                # Extract timestamp from logcat line
+                ts_match = re.match(r"(\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d+)", line)
+                timestamp = ts_match.group(1) if ts_match else datetime.now(timezone.utc).isoformat()
 
-def get_running_processes(device: Optional[str] = None) -> List[str]:
-    """Get list of running processes on the device."""
-    result = _run_adb(["shell", "ps", "-A"], device=device)
-    if result["success"]:
-        return result["stdout"].split("\n")
-    return []
+                event_id += 1
+                events.append({
+                    "id": f"logcat-{event_id}",
+                    "timestamp": str(timestamp),
+                    "category": category,
+                    "api_call": title,
+                    "class_name": package_name,
+                    "risk_level": risk,
+                    "description": detail[:200],
+                    "source": "logcat_runtime",
+                    "raw_line": line[:300],
+                })
 
+    # Also look for crashes/ANRs
+    crash_pattern = re.compile(
+        rf"FATAL EXCEPTION.*?{re.escape(package_name)}.*?$\n(.*?)$",
+        re.MULTILINE
+    )
+    for match in crash_pattern.finditer(logcat_output):
+        event_id += 1
+        events.append({
+            "id": f"logcat-{event_id}",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "category": "crash",
+            "api_call": "FATAL EXCEPTION",
+            "class_name": package_name,
+            "risk_level": "HIGH",
+            "description": match.group(0)[:300],
+            "source": "logcat_runtime",
+        })
 
-def list_installed_packages(device: Optional[str] = None) -> List[str]:
-    """List all installed packages on the device."""
-    result = _run_adb(["shell", "pm", "list", "packages"], device=device)
-    packages = []
-    if result["success"]:
-        for line in result["stdout"].split("\n"):
-            if line.startswith("package:"):
-                packages.append(line.replace("package:", "").strip())
-    return packages
+    return events

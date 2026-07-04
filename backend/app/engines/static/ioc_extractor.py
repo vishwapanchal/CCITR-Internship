@@ -100,6 +100,10 @@ WHITELISTED_DOMAINS = {
     "jitpack.io", "bintray.com", "gradle.org",
     "jetbrains.com", "kotlinlang.org",
     "pexels.com", "images.pexels.com",
+    # Developer references
+    "issuetracker.google.com", "source.android.com",
+    # Other internal namespaces
+    "libcore.io", "dalvik.system",
 }
 
 # Patterns that look like domains but are actually Java/Kotlin identifiers
@@ -122,6 +126,7 @@ JAVA_PACKAGE_PREFIXES = [
     "android.", "androidx.", "java.", "javax.", "kotlin.", "kotlinx.",
     "com.google.android.", "com.android.", "org.apache.", "org.xml.",
     "dalvik.", "sun.", "org.json.", "junit.", "org.junit.",
+    "libcore.", "bouncycastle.",
 ]
 
 # File extensions to scan for IOCs
@@ -157,7 +162,9 @@ def extract_iocs_from_file(file_path: str) -> Dict[str, Any]:
     # URLs
     for url in URL_REGEX.findall(content):
         if not _is_whitelisted_url(url):
-            result["urls"].add(url.rstrip(".,;:)]}"))
+            # Normalize URL by removing trailing slash
+            normalized = url.rstrip(".,;:)]}/")
+            result["urls"].add(normalized)
 
     # IP addresses
     for ip in IP_REGEX.findall(content):

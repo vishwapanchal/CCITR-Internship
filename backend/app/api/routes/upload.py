@@ -63,6 +63,11 @@ def _run_analysis_sync(case_id: str, apk_name: str, apk_hash: str):
                 except Exception:
                     return datetime.utcnow()
             return val
+        
+        # Update case metadata with results
+        manifest_data = static_result.get("steps", {}).get("manifest", {}).get("data", {})
+        if manifest_data.get("package_name"):
+            case.package_name = manifest_data["package_name"]
 
         # Save static phase result to DB
         phase_record = PhaseResult(
@@ -73,6 +78,24 @@ def _run_analysis_sync(case_id: str, apk_name: str, apk_hash: str):
             completed_at=_parse_dt(static_result.get("completed_at"))
         )
         db.add(phase_record)
+        
+        # Run dynamic analysis (two-layer: emulator or heuristic)
+        try:
+            from app.engines.dynamic import run_full_dynamic_analysis
+            logger.info(f"Starting dynamic analysis for case {case_id}")
+            # We pass a shorter duration so it doesn't block the UI too long
+            dynamic_result = run_full_dynamic_analysis(apk_path, case_dir, duration=45)
+            
+            dynamic_phase = PhaseResult(
+                case_id=case_uuid,
+                phase="dynamic",
+                result=dynamic_result,
+                risk_score=dynamic_result.get("risk_score", 0),
+                completed_at=_parse_dt(dynamic_result.get("completed_at"))
+            )
+            db.add(dynamic_phase)
+        except Exception as e:
+            logger.error(f"Dynamic analysis failed: {e}")
 
         # Try C2 intelligence
         try:

@@ -25,7 +25,18 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
     const manifestPerms = steps.manifest?.data?.permissions || {};
     const agPerms = steps.androguard?.data?.permissions || {};
 
-    if (Object.keys(manifestPerms).length > 0) {
+    // Determine format
+    if (manifestPerms && Array.isArray(manifestPerms.all)) {
+      // It's in Androguard fallback format
+      permissionsToUse = manifestPerms.all.map((p: string) => ({
+        name: p,
+        protection_level: manifestPerms.dangerous?.includes(p) ? "dangerous" : "normal",
+        description: p.split(".").pop(),
+        risk: manifestPerms.dangerous?.includes(p) ? "high" : "low",
+        granted: true,
+      }));
+    } else if (Object.keys(manifestPerms).length > 0 && !manifestPerms.all) {
+      // It's in standard APKTool format
       permissionsToUse = Object.entries(manifestPerms).map(([name, info]: any) => ({
         name,
         protection_level: info.protection_level || "normal",
@@ -33,7 +44,8 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
         risk: info.protection_level === "dangerous" ? "high" : "low",
         granted: true,
       }));
-    } else if (agPerms.all?.length > 0) {
+    } else if (agPerms && Array.isArray(agPerms.all)) {
+      // Fallback to strict Androguard phase output
       permissionsToUse = agPerms.all.map((p: string) => ({
         name: p,
         protection_level: agPerms.dangerous?.includes(p) ? "dangerous" : "normal",
@@ -65,17 +77,18 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
   } else if (staticResult?.steps?.iocs?.data) {
     const iocData = staticResult.steps.iocs.data;
     const allIocs: any[] = [];
+    let iocId = 1;
     for (const url of iocData.urls || []) {
-      allIocs.push({ type: "url", value: url, context: "Extracted from decompiled source", confidence: 80 });
+      allIocs.push({ id: iocId++, type: "url", value: url, context: "Java String Constant", confidence: 95 });
     }
     for (const ip of iocData.ips || []) {
-      allIocs.push({ type: "ip", value: ip, context: "IP address found in code", confidence: 70 });
+      allIocs.push({ id: iocId++, type: "ip", value: ip, context: "Decompiled Source", confidence: 85 });
     }
     for (const domain of iocData.domains || []) {
-      allIocs.push({ type: "domain", value: domain, context: "Domain reference found", confidence: 75 });
+      allIocs.push({ id: iocId++, type: "domain", value: domain, context: "Decompiled Source", confidence: 75 });
     }
     for (const email of iocData.emails || []) {
-      allIocs.push({ type: "email", value: email, context: "Email address found", confidence: 60 });
+      allIocs.push({ id: iocId++, type: "email", value: email, context: "Manifest / Source", confidence: 60 });
     }
     iocsToUse = allIocs;
   }
@@ -85,6 +98,26 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
 
   return (
     <div className="space-y-4">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col items-center">
+          <span className="text-xs font-mono text-primary/60 uppercase">Permissions</span>
+          <span className="text-2xl font-bold">{permissionsToUse.length}</span>
+        </div>
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col items-center">
+          <span className="text-xs font-mono text-red-600/80 uppercase">Dangerous</span>
+          <span className="text-2xl font-bold text-red-600">{dangerousCount}</span>
+        </div>
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col items-center">
+          <span className="text-xs font-mono text-orange-600/80 uppercase">Network Artifacts</span>
+          <span className="text-2xl font-bold text-orange-600">{iocsToUse.length}</span>
+        </div>
+        <div className="bg-panel border border-border-subtle p-4 flex flex-col items-center">
+          <span className="text-xs font-mono text-purple-600/80 uppercase">YARA Hits</span>
+          <span className="text-2xl font-bold text-purple-600">{yaraMatchesToUse.length}</span>
+        </div>
+      </div>
+
       <div className="bg-panel border border-border-subtle p-4">
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
           Android Permissions
@@ -103,7 +136,9 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
         </h3>
         <div className="space-y-2">
           {yaraMatchesToUse.length === 0 ? (
-            <p className="text-xs text-primary/60 italic">No YARA rules matched.</p>
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm flex items-center gap-2 font-medium shadow-sm">
+              <span className="text-green-600 font-bold text-lg">✓</span> No malicious YARA signatures detected.
+            </div>
           ) : (
             yaraMatchesToUse.map((match: any) => (
               <div
@@ -138,7 +173,7 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
 
       <div className="bg-panel border border-border-subtle p-4">
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
-          Indicators of Compromise (IOCs)
+          Network Artifacts
         </h3>
         {iocsToUse.length === 0 ? (
           <p className="text-xs text-primary/60 italic">No IOCs detected in static analysis.</p>

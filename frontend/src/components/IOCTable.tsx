@@ -115,27 +115,43 @@ export default function IOCTable({ iocs }: IOCTableProps) {
             );
           })}
         </select>
+        
+        {/* Statistics Cards */}
+        <div className="flex gap-4 ml-4">
+          <div className="flex flex-col items-center bg-canvas px-3 py-1 border border-border-subtle shadow-sm rounded">
+            <span className="text-[10px] text-primary/50 uppercase tracking-widest">URLs</span>
+            <span className="font-mono text-sm font-semibold">{iocs.filter(i => i.type === 'url').length}</span>
+          </div>
+          <div className="flex flex-col items-center bg-canvas px-3 py-1 border border-border-subtle shadow-sm rounded">
+            <span className="text-[10px] text-primary/50 uppercase tracking-widest">Domains</span>
+            <span className="font-mono text-sm font-semibold">{iocs.filter(i => i.type === 'domain').length}</span>
+          </div>
+          <div className="flex flex-col items-center bg-canvas px-3 py-1 border border-border-subtle shadow-sm rounded">
+            <span className="text-[10px] text-primary/50 uppercase tracking-widest">IPs</span>
+            <span className="font-mono text-sm font-semibold">{iocs.filter(i => i.type === 'ip').length}</span>
+          </div>
+        </div>
 
         {/* Export buttons */}
-        <div className="flex gap-1">
+        <div className="flex gap-2 ml-auto">
           <button
             type="button"
             onClick={() => exportIOCsAsCSV(exportData)}
-            className="px-2 py-1.5 text-xs font-mono border border-border-subtle hover:bg-canvas transition-colors"
+            className="px-3 py-1.5 text-xs font-mono font-medium border border-primary/30 rounded text-primary hover:bg-primary hover:text-white transition-colors"
           >
             CSV
           </button>
           <button
             type="button"
             onClick={() => exportIOCsAsJSON(exportData)}
-            className="px-2 py-1.5 text-xs font-mono border border-border-subtle hover:bg-canvas transition-colors"
+            className="px-3 py-1.5 text-xs font-mono font-medium border border-primary/30 rounded text-primary hover:bg-primary hover:text-white transition-colors"
           >
             JSON
           </button>
           <button
             type="button"
             onClick={() => exportIOCsAsSTIX(exportData)}
-            className="px-2 py-1.5 text-xs font-mono border border-border-subtle hover:bg-canvas transition-colors"
+            className="px-3 py-1.5 text-xs font-mono font-medium border border-primary/30 rounded text-primary hover:bg-primary hover:text-white transition-colors"
           >
             STIX
           </button>
@@ -198,14 +214,16 @@ export default function IOCTable({ iocs }: IOCTableProps) {
                     </button>
                   )}
                 </td>
-                <td className="py-2 pr-3 text-xs text-primary/70 max-w-[250px]">{ioc.context}</td>
+                <td className="py-2 pr-3 text-xs text-primary/70 max-w-[250px]">
+                  {ioc.type === 'url' ? 'Java String Constant' : (ioc.type === 'domain' || ioc.type === 'ip') ? 'Decompiled Source' : ioc.context}
+                </td>
                 <td className="py-2 pr-3 text-right">
                   <span
                     className={`text-xs font-mono font-semibold ${
-                      ioc.confidence >= 80 ? "text-red-600" : ioc.confidence >= 60 ? "text-orange-600" : "text-primary/60"
+                      ioc.confidence >= 80 ? "text-red-600" : ioc.confidence >= 60 ? "text-orange-600" : "text-green-600"
                     }`}
                   >
-                    {ioc.confidence}%
+                    {ioc.confidence >= 80 ? "🔴 High" : ioc.confidence >= 60 ? "🟡 Medium" : "🟢 Low"}
                   </span>
                 </td>
                 <td className="py-2 text-xs font-mono text-primary/60 whitespace-nowrap">
