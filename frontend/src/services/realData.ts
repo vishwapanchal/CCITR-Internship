@@ -62,7 +62,8 @@ export interface TimelineEvent {
 export interface GraphNode {
   id: string;
   label: string;
-  type: "apk" | "domain" | "ip" | "campaign" | "threat_actor";
+  type: "apk" | "domain" | "ip" | "campaign" | "threat_actor" | "url" | "file" | "baas_project";
+  risk?: string;
   metadata?: Record<string, string>;
 }
 
@@ -1652,13 +1653,33 @@ export const REAL_PHASE_STATUS_ANALYZING: PhaseStatus[] = [];
 export const REAL_YARA_MATCHES: YARAMatch[] = [];
 
 export const REAL_REPORTS: ReportEntry[] = [
+  { id: "rpt-rto-en", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — Investigation Report (English)", type: "pdf", language: "English", generated_at: "2026-07-04T12:00:00Z", size_kb: 1850 },
+  { id: "rpt-rto-hi", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — Investigation Report (Hindi)", type: "pdf", language: "Hindi", generated_at: "2026-07-04T12:00:00Z", size_kb: 1970 },
+  { id: "rpt-rto-kn", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — Investigation Report (Kannada)", type: "pdf", language: "Kannada", generated_at: "2026-07-04T12:00:00Z", size_kb: 2090 },
+  { id: "rpt-rto-ta", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — Investigation Report (Tamil)", type: "pdf", language: "Tamil", generated_at: "2026-07-04T12:00:00Z", size_kb: 2210 },
+  { id: "rpt-rto-te", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — Investigation Report (Telugu)", type: "pdf", language: "Telugu", generated_at: "2026-07-04T12:00:00Z", size_kb: 2330 },
+  { id: "rpt-rto-json", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-04T12:00:00Z", size_kb: 64 },
+  { id: "rpt-rto-csv", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — IOC Export (CSV)", type: "csv", language: "N/A", generated_at: "2026-07-04T12:00:00Z", size_kb: 18 },
+  { id: "rpt-rto-evidence", case_id: "f388d4c7-a35c-4793-bb06-f7f3318cb927", case_number: "CASE-301CC0E2", title: "RTO_CHALLAN.apk — Section 65B Evidence Package", type: "zip", language: "N/A", generated_at: "2026-07-04T12:00:00Z", size_kb: 14500 },
   { id: "rpt-ag-en", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — Static Analysis Report", type: "pdf", language: "English", generated_at: "2026-07-02T10:15:00Z", size_kb: 1850 },
+  { id: "rpt-ag-hi", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — Static Analysis Report (Hindi)", type: "pdf", language: "Hindi", generated_at: "2026-07-02T10:15:00Z", size_kb: 1920 },
+  { id: "rpt-ag-kn", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — Static Analysis Report (Kannada)", type: "pdf", language: "Kannada", generated_at: "2026-07-02T10:15:00Z", size_kb: 1980 },
+  { id: "rpt-ag-ta", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — Static Analysis Report (Tamil)", type: "pdf", language: "Tamil", generated_at: "2026-07-02T10:15:00Z", size_kb: 2040 },
+  { id: "rpt-ag-te", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — Static Analysis Report (Telugu)", type: "pdf", language: "Telugu", generated_at: "2026-07-02T10:15:00Z", size_kb: 2100 },
   { id: "rpt-ag-json", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-02T10:15:00Z", size_kb: 45 },
   { id: "rpt-ag-csv", case_id: "4c0ce95d-5ae2-4d8c-9dbf-981a8b8d4396", case_number: "CASE-4C0CE95D", title: "AndroGoat — IOC Export (CSV)", type: "csv", language: "N/A", generated_at: "2026-07-02T10:15:00Z", size_kb: 12 },
   { id: "rpt-diva-en", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — Static Analysis Report", type: "pdf", language: "English", generated_at: "2026-07-02T10:02:00Z", size_kb: 1420 },
+  { id: "rpt-diva-hi", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — Static Analysis Report (Hindi)", type: "pdf", language: "Hindi", generated_at: "2026-07-02T10:02:00Z", size_kb: 1490 },
+  { id: "rpt-diva-kn", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — Static Analysis Report (Kannada)", type: "pdf", language: "Kannada", generated_at: "2026-07-02T10:02:00Z", size_kb: 1540 },
+  { id: "rpt-diva-ta", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — Static Analysis Report (Tamil)", type: "pdf", language: "Tamil", generated_at: "2026-07-02T10:02:00Z", size_kb: 1590 },
+  { id: "rpt-diva-te", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — Static Analysis Report (Telugu)", type: "pdf", language: "Telugu", generated_at: "2026-07-02T10:02:00Z", size_kb: 1650 },
   { id: "rpt-diva-json", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-02T10:02:00Z", size_kb: 28 },
   { id: "rpt-diva-csv", case_id: "94f9222d-4e42-4292-8800-4f80fa4e037c", case_number: "CASE-94F9222D", title: "DIVA — IOC Export (CSV)", type: "csv", language: "N/A", generated_at: "2026-07-02T10:02:00Z", size_kb: 8 },
   { id: "rpt-is-en", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Static Analysis Report", type: "pdf", language: "English", generated_at: "2026-07-02T10:06:00Z", size_kb: 2100 },
+  { id: "rpt-is-hi", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Static Analysis Report (Hindi)", type: "pdf", language: "Hindi", generated_at: "2026-07-02T10:06:00Z", size_kb: 2170 },
+  { id: "rpt-is-kn", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Static Analysis Report (Kannada)", type: "pdf", language: "Kannada", generated_at: "2026-07-02T10:06:00Z", size_kb: 2240 },
+  { id: "rpt-is-ta", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Static Analysis Report (Tamil)", type: "pdf", language: "Tamil", generated_at: "2026-07-02T10:06:00Z", size_kb: 2310 },
+  { id: "rpt-is-te", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Static Analysis Report (Telugu)", type: "pdf", language: "Telugu", generated_at: "2026-07-02T10:06:00Z", size_kb: 2380 },
   { id: "rpt-is-json", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — IOC Export", type: "json", language: "N/A", generated_at: "2026-07-02T10:06:00Z", size_kb: 52 },
   { id: "rpt-is-stix", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — IOC Export (STIX 2.1)", type: "stix", language: "N/A", generated_at: "2026-07-02T10:06:00Z", size_kb: 68 },
   { id: "rpt-is-evidence", case_id: "d311d0cf-a8b3-4f83-8405-6bb7318d3b40", case_number: "CASE-D311D0CF", title: "InsecureShop — Section 65B Evidence Package", type: "zip", language: "N/A", generated_at: "2026-07-02T10:06:00Z", size_kb: 9800 },

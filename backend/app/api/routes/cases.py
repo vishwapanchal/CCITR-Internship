@@ -91,7 +91,26 @@ def run_dynamic_analysis_on_demand(case_id: UUID, db: Session = Depends(get_db))
             )
             db_bg.add(dynamic_phase)
             db_bg.commit()
-            logger.info("On-demand dynamic analysis complete!")
+            
+            # Re-run C2 Intelligence with new dynamic network data
+            from app.engines.c2 import run_full_c2_intelligence
+            logger.info("Updating C2 Intelligence with dynamic findings...")
+            c2_result = run_full_c2_intelligence(apk_path, case_dir, cid)
+            old_c2 = db_bg.query(PhaseResult).filter(PhaseResult.case_id == case_uuid, PhaseResult.phase == "c2_intelligence").first()
+            if old_c2: db_bg.delete(old_c2)
+            db_bg.add(PhaseResult(case_id=case_uuid, phase="c2_intelligence", result=c2_result, risk_score=c2_result.get("risk_score", 0), completed_at=_parse_dt(c2_result.get("completed_at"))))
+            db_bg.commit()
+            
+            # Re-run Vulnerability scan with all 3 reports (static, dynamic, c2)
+            from app.engines.vulnerability import run_vulnerability_scan
+            logger.info("Updating Vulnerabilities with full intelligence...")
+            vuln_result = run_vulnerability_scan(case_dir, cid)
+            old_vuln = db_bg.query(PhaseResult).filter(PhaseResult.case_id == case_uuid, PhaseResult.phase == "vulnerability").first()
+            if old_vuln: db_bg.delete(old_vuln)
+            db_bg.add(PhaseResult(case_id=case_uuid, phase="vulnerability", result=vuln_result, risk_score=vuln_result.get("risk_score", 0), completed_at=_parse_dt(vuln_result.get("completed_at"))))
+            db_bg.commit()
+            
+            logger.info("On-demand dynamic analysis and intelligence correlation complete!")
         except Exception as e:
             logger.error(f"On-demand dynamic analysis failed: {e}")
         finally:

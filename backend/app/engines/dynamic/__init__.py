@@ -15,7 +15,6 @@ from typing import Dict, Any
 
 from app.engines.dynamic import vm_orchestrator
 from app.engines.dynamic import heuristic_analyzer
-from app.engines.dynamic import behavior_aggregator
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +123,41 @@ def run_full_dynamic_analysis(
         result["errors"].append(str(e))
         result["status"] = "failed"
 
+    # Deep scan enrichment for heuristic path
+    try:
+        from app.engines import virustotal_client
+        if virustotal_client._has_key():
+            case_dir_path = os.path.dirname(dynamic_dir)
+            apk_files = [f for f in os.listdir(case_dir_path) if f.endswith(".apk")]
+            if apk_files:
+                apk_full = os.path.join(case_dir_path, apk_files[0])
+                file_hash = virustotal_client.sha256_of_file(apk_full)
+                behaviours = virustotal_client.get_behaviours(file_hash)
+                if behaviours:
+                    deep_events = virustotal_client.extract_sandbox_events(behaviours)
+                    existing_apis = {e["api_call"] for e in result["events"]}
+                    for de in deep_events:
+                        if de["api_call"] not in existing_apis:
+                            result["events"].append(de)
+                            existing_apis.add(de["api_call"])
+
+                    deep_network = virustotal_client.extract_network_from_behaviours(behaviours)
+                    existing_dests = {n["destination"] for n in result["network_activity"]}
+                    for dn in deep_network:
+                        if dn["destination"] not in existing_dests:
+                            result["network_activity"].append(dn)
+                            existing_dests.add(dn["destination"])
+
+                    result["total_events"] = len(result["events"])
+                    # Recompute risk with enriched events
+                    risk_data = heuristic_analyzer.compute_heuristic_risk(result["events"])
+                    result["risk_score"] = risk_data["risk_score"]
+                    result["risk_level"] = risk_data["risk_level"]
+                    result["risk_breakdown"] = risk_data["risk_breakdown"]
+                    result["behaviors"] = risk_data["behaviors"]
+    except Exception as e:
+        logger.debug(f"Deep scan enrichment skipped in heuristic path: {e}")
+
     end_time = datetime.now(timezone.utc)
     result["completed_at"] = end_time.isoformat()
     result["duration_seconds"] = (end_time - start_time).total_seconds()
@@ -168,8 +202,10 @@ def _run_emulator_analysis(
         # Step 2: Grant Accessibility Permissions based on Static Analysis
         import json
         static_report_path = os.path.join(case_dir, "static_analysis", "static_report.json")
+        with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Dynamic Step 2: Accessibility check\n")
         try:
             if os.path.exists(static_report_path):
+                with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Found static report\n")
                 with open(static_report_path, "r") as sr_file:
                     static_data = json.load(sr_file)
                     services = static_data.get("services", [])
@@ -185,27 +221,49 @@ def _run_emulator_analysis(
                             srv_string = ":".join(srv_list)
                             vm_orchestrator._run_adb(["shell", "settings", "put", "secure", "enabled_accessibility_services", srv_string], device=device_serial)
                             vm_orchestrator._run_adb(["shell", "settings", "put", "secure", "accessibility_enabled", "1"], device=device_serial)
+            else:
+                with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Static report not found at {static_report_path}\n")
         except Exception as e:
+            with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Exception in Step 2: {e}\n")
             logger.error(f"Failed to auto-grant accessibility services: {e}")
 
         # Step 3: Clear logcat and start fresh capture
+        with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Dynamic Step 3: Starting logcat capture\n")
         logger.info("Dynamic Step 3: Starting logcat capture")
-        vm_orchestrator.start_logcat_capture(device=device_serial)
+        try:
+            vm_orchestrator.start_logcat_capture(device=device_serial)
+        except Exception as e:
+            with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Exception in start_logcat_capture: {e}\n")
+            raise
 
         # Step 4: Launch the app
+        with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Dynamic Step 4: Launching app\n")
         logger.info("Dynamic Step 4: Launching app")
-        vm_orchestrator.launch_app(package_name, device=device_serial)
+        try:
+            vm_orchestrator.launch_app(package_name, device=device_serial)
+        except Exception as e:
+            with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Exception in launch_app: {e}\n")
+            raise
         time.sleep(3)  # Let it initialize
 
         # Step 4: Run Monkey for random UI automation (fully automated)
+        with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Dynamic Step 4 (Monkey): Running monkey\n")
         logger.info(f"Dynamic Step 4: Running Monkey ({duration}s worth of events)")
-        monkey_events = max(200, int(duration * 8))
+        
+        # Monkey clicks 10 times a second (100ms throttle). 
+        # Run monkey for most of the duration, leaving ~10 seconds at the end.
+        monkey_duration = max(10, duration - 10)
+        monkey_events = int(monkey_duration * 10)
+        
         vm_orchestrator.run_monkey(package_name, events=monkey_events, device=device_serial)
 
         # Step 5: Wait for behavioral data to accumulate
-        logger.info(f"Dynamic Step 5: Collecting runtime data for {duration}s")
-        time.sleep(max(10, duration - 30))  # Monkey already takes some time
+        with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Dynamic Step 5: Waiting for behaviors\n")
+        logger.info(f"Dynamic Step 5: Collecting runtime data")
+        time.sleep(10)  # Quick wait since we already waited for monkey
+
         # Step 6: Collect logcat
+        with open(debug_log, "a") as f: f.write(f"[{datetime.now()}] Dynamic Step 6: Collecting logcat\n")
         logger.info("Dynamic Step 6: Collecting logcat")
         logcat_output = vm_orchestrator.collect_logcat(device=device_serial)
 
@@ -239,17 +297,39 @@ def _run_emulator_analysis(
     # NOTE: We do NOT uninstall the app — the user may want to keep browsing
 
     # Also run heuristic scan to enrich with code-level findings
+    # REMOVED: Heuristic scan takes several minutes on large APKs, blocking the thread.
+    # The static pipeline already handles heuristic scanning.
+    # -----------------------------------------------------------------
+
+    # Deep scan enrichment — merge sandbox behavioral data
     try:
-        heuristic_result = heuristic_analyzer.run_heuristic_analysis(case_dir)
-        heuristic_events = heuristic_result.get("events", [])
-        # Merge heuristic events that aren't already found in logcat
-        logcat_apis = {e["api_call"] for e in events}
-        for he in heuristic_events:
-            if he["api_call"] not in logcat_apis:
-                he["source"] = "heuristic_enrichment"
-                events.append(he)
-    except Exception:
-        pass
+        from app.engines import virustotal_client
+        if virustotal_client._has_key():
+            apk_files = [f for f in os.listdir(case_dir) if f.endswith(".apk")]
+            if apk_files:
+                apk_full = os.path.join(case_dir, apk_files[0])
+                file_hash = virustotal_client.sha256_of_file(apk_full)
+
+                # Get sandbox behavioral reports
+                behaviours = virustotal_client.get_behaviours(file_hash)
+                if behaviours:
+                    # Extract and merge events
+                    deep_events = virustotal_client.extract_sandbox_events(behaviours)
+                    existing_apis = {e["api_call"] for e in events}
+                    for de in deep_events:
+                        if de["api_call"] not in existing_apis:
+                            events.append(de)
+                            existing_apis.add(de["api_call"])
+
+                    # Extract and merge network activity
+                    deep_network = virustotal_client.extract_network_from_behaviours(behaviours)
+                    existing_dests = {n["destination"] for n in network_activity}
+                    for dn in deep_network:
+                        if dn["destination"] not in existing_dests:
+                            network_activity.append(dn)
+                            existing_dests.add(dn["destination"])
+    except Exception as e:
+        logger.debug(f"Deep scan enrichment skipped: {e}")
 
     # Compute risk
     risk_data = heuristic_analyzer.compute_heuristic_risk(events)

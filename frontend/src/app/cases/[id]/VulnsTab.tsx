@@ -9,7 +9,14 @@ interface VulnsTabProps {
 }
 
 export default function VulnsTab({ caseData, analysisResults, isMockCase }: VulnsTabProps) {
-  const vulnsToUse = isMockCase ? REAL_VULNERABILITIES.filter((v: any) => v.case_id === caseData?.id) : (analysisResults?.vulnerabilities || []);
+  // Find vulnerability phase result from the array structure
+  const vulnResult = Array.isArray(analysisResults) 
+    ? analysisResults.find((r: any) => r.phase === "vulnerability")?.result 
+    : null;
+    
+  const vulnsToUse = isMockCase 
+    ? REAL_VULNERABILITIES.filter((v: any) => v.case_id === caseData?.id) 
+    : (vulnResult?.findings || []);
   
   return (
     <div className="space-y-4">

@@ -15,6 +15,7 @@ import {
   REAL_PHASE_STATUS,
   REAL_ACTIVITY,
 } from "@/services/realData";
+import { getCases, CaseResponse } from "@/services/api";
 import { buildCaseContext } from "./utils";
 
 interface Message {
@@ -29,13 +30,28 @@ export default function CoPilotPage() {
       id: "system-init",
       role: "system",
       content:
-        "APEX-X Co-Pilot initialized — powered by DeepSeek R1. Select a case and ask me anything about its security analysis.",
+        "APEX-X Co-Pilot initialized — powered by Qwen 2.5 (Local LLM). Select a case and ask me anything about its security analysis.",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [selectedCase, setSelectedCase] = useState(REAL_CASES[0]?.id || "");
+  
+  const [cases, setCases] = useState<CaseResponse[]>([]);
+  const [selectedCase, setSelectedCase] = useState("");
+
+  useEffect(() => {
+    async function loadCases() {
+      const res = await getCases();
+      if (res.data) {
+        setCases(res.data);
+        if (res.data.length > 0 && !selectedCase) {
+          setSelectedCase(res.data[0].id);
+        }
+      }
+    }
+    loadCases();
+  }, [selectedCase]);
 
   // Build context for the selected case
   // Builds COMPLETE context for the selected case — zero truncation.
@@ -60,12 +76,13 @@ export default function CoPilotPage() {
           content: m.content,
         }));
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://apex-x.onrender.com";
-      const res = await fetch(`${apiUrl}/api/v1/copilot`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://apex-x.onrender.com/api/v1";
+      const res = await fetch(`${apiUrl}/copilot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage,
+          case_id: selectedCase,
           context: buildCaseContext(selectedCase),
           history,
         }),
@@ -84,7 +101,7 @@ export default function CoPilotPage() {
           {
             id: crypto.randomUUID(),
             role: "ai",
-            content: `⚠️ Error: ${data.error || "Failed to get AI response"}. The Co-Pilot requires the OPENROUTER_API_KEY environment variable to be set.`,
+            content: `⚠️ Error: ${data.detail || data.error || "Failed to get AI response"}. Make sure Ollama is running with: ollama serve`,
           },
         ]);
       }
@@ -116,6 +133,7 @@ export default function CoPilotPage() {
         selectedCase={selectedCase}
         setSelectedCase={setSelectedCase}
         setInput={setInput}
+        cases={cases}
       />
 
       {/* Main Chat Area */}
@@ -169,7 +187,7 @@ export default function CoPilotPage() {
                 <div className="flex items-center gap-2 text-primary/60">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="font-mono text-xs">
-                    DeepSeek R1 is reasoning...
+                    Qwen 2.5 is reasoning...
                   </span>
                 </div>
               </div>
@@ -201,7 +219,7 @@ export default function CoPilotPage() {
           </form>
           <div className="text-center mt-2">
             <span className="text-[10px] font-mono text-primary/40 uppercase">
-              Powered by DeepSeek R1 · AI analysis may be incomplete — always verify with primary evidence.
+              Powered by Qwen 2.5 (Local) · All inference runs locally via Ollama — zero cloud API calls.
             </span>
           </div>
         </div>

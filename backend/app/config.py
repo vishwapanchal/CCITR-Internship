@@ -28,8 +28,8 @@ class Settings(BaseSettings):
 
     # Ollama (Local LLM)
     OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    OLLAMA_MODEL_CODER: str = "qwen2.5-coder:7b-instruct-q4_K_M"
-    OLLAMA_MODEL_SECURITY: str = "whiterabbitneo"
+    OLLAMA_MODEL_CODER: str = os.getenv("OLLAMA_MODEL_CODER", "qwen2.5-coder:7b")
+    OLLAMA_MODEL_SECURITY: str = os.getenv("OLLAMA_MODEL_SECURITY", "qwen2.5-coder:7b")
     OLLAMA_TIMEOUT: int = 300  # 5 min for slow machines
 
     # Neo4j
@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     
     # Feature Toggles
     ALLOW_BAAS_NETWORK_ENRICHMENT: bool = os.getenv("ALLOW_BAAS_NETWORK_ENRICHMENT", "False").lower() in ("true", "1", "t")
+
+    # Threat Intelligence
+    VIRUSTOTAL_API_KEY: str = os.getenv("VIRUSTOTAL_API_KEY", "")
     
     @property
     def CELERY_BROKER_URL(self) -> str:

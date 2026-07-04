@@ -30,6 +30,8 @@ const nodeTypeColors: Record<string, { bg: string; border: string; text: string 
   campaign: { bg: "#fff7ed", border: "#f97316", text: "#ea580c" },
   threat_actor: { bg: "#f5f3ff", border: "#8b5cf6", text: "#7c3aed" },
   baas_project: { bg: "#fdf4ff", border: "#d946ef", text: "#c026d3" },
+  url: { bg: "#fefce8", border: "#eab308", text: "#ca8a04" },
+  file: { bg: "#fef2f2", border: "#f43f5e", text: "#e11d48" },
 };
 
 function buildReactFlowNodes(graphNodes: GraphNode[]): Node[] {

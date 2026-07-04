@@ -1,91 +1,60 @@
 """
-C2 Graph Builder — Neo4j Integration
-Reads IOCs from static and dynamic analysis outputs, constructs a threat
-intelligence graph in Neo4j with APK, Domain, IP, URL, and Case nodes.
+C2 Graph Builder — Threat Infrastructure Visualization
+Constructs interactive network graphs from analysis data showing
+APK → Domain/IP/URL communication paths for C2 attribution.
 """
 
 import json
 import os
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
-from app.config import settings
+from app.engines import virustotal_client
 
 logger = logging.getLogger(__name__)
 
-try:
-    from neo4j import GraphDatabase
-    NEO4J_AVAILABLE = True
-except ImportError:
-    NEO4J_AVAILABLE = False
-    logger.warning("neo4j driver not installed. Install: pip install neo4j")
-
-
-def _get_driver():
-    """Create a Neo4j driver instance."""
-    if not NEO4J_AVAILABLE:
-        return None
-    try:
-        driver = GraphDatabase.driver(
-            settings.NEO4J_URI,
-            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
-        )
-        driver.verify_connectivity()
-        return driver
-    except Exception as e:
-        logger.error(f"Failed to connect to Neo4j: {e}")
-        return None
-
 
 def build_c2_graph(
-    case_id: str,
     case_dir: str,
     apk_hash: str,
     package_name: str = "unknown",
 ) -> Dict[str, Any]:
     """
-    Build the C2 intelligence graph from analysis outputs.
-
-    Reads:
-    - static_analysis/ioc_list.json  (domains, IPs, URLs from static IOC extractor)
-    - dynamic_analysis/dynamic_report.json  (DNS queries, HTTP requests from Frida/PCAP)
-
-    Creates Neo4j nodes and relationships.
-
-    Returns:
-        Graph construction summary with node/edge counts.
+    Build a frontend-compatible graph (nodes + edges) for the C2 tab.
+    Sources: static IOCs + dynamic report + deep scan intelligence.
     """
-    result = {
-        "status": "success",
-        "nodes_created": 0,
-        "relationships_created": 0,
-        "domains": [],
-        "ips": [],
-        "urls": [],
-        "errors": [],
-    }
+    nodes = []
+    edges = []
+    node_ids = set()
+    edge_counter = [0]
 
-    # ── Collect IOCs from all phases ─────────────────────────
+    def add_edge(source, target, label, etype="communication"):
+        edge_counter[0] += 1
+        edges.append({
+            "id": f"e{edge_counter[0]}",
+            "source": source,
+            "target": target,
+            "label": label,
+            "type": etype,
+        })
+
+    # ── Central APK node ──
+    apk_id = f"apk-{package_name}"
+    nodes.append({
+        "id": apk_id,
+        "label": package_name,
+        "type": "apk",
+        "risk": "high",
+        "metadata": {"hash": apk_hash},
+    })
+    node_ids.add(apk_id)
+
+    # ── Collect IOCs from local analysis ──
     domains = set()
     ips = set()
     urls = set()
-    baas_projects = []
 
-    # From static report (BaaS)
-    static_path = os.path.join(case_dir, "static_analysis", "static_report.json")
-    if os.path.exists(static_path):
-        try:
-            with open(static_path, "r") as f:
-                report = json.load(f)
-            baas_data = report.get("steps", {}).get("baas_detection", {}).get("data", {})
-            for p in baas_data.get("firebase_projects", []):
-                baas_projects.append({"id": p["project_id"], "type": p["type"]})
-            for p in baas_data.get("supabase_projects", []):
-                baas_projects.append({"id": p["project_id"], "type": p["type"]})
-        except Exception as e:
-            result["errors"].append(f"Failed to read static report for BaaS: {e}")
-
-    # From static analysis (IOCs)
+    # From static IOC list
     ioc_path = os.path.join(case_dir, "static_analysis", "ioc_list.json")
     if os.path.exists(ioc_path):
         try:
@@ -95,225 +64,211 @@ def build_c2_graph(
             ips.update(iocs.get("ips", []))
             urls.update(iocs.get("urls", []))
         except Exception as e:
-            result["errors"].append(f"Failed to read static IOCs: {e}")
+            logger.debug(f"Could not read IOC list: {e}")
 
-    # From dynamic analysis
+    # From dynamic report (network_activity)
     dynamic_path = os.path.join(case_dir, "dynamic_analysis", "dynamic_report.json")
     if os.path.exists(dynamic_path):
         try:
             with open(dynamic_path, "r") as f:
-                dynamic = json.load(f)
+                dyn = json.load(f)
+            for net in dyn.get("network_activity", []):
+                dest = net.get("destination", "")
+                ip = net.get("ip", "")
+                if dest:
+                    domains.add(dest)
+                if ip:
+                    ips.add(ip)
+        except Exception as e:
+            logger.debug(f"Could not read dynamic report: {e}")
 
-            # Network step may contain DNS queries and HTTP requests
-            network = dynamic.get("steps", {}).get("network", {})
-            for dns in network.get("dns_queries", []):
-                domains.add(dns)
+    # ── Deep scan intelligence (enrichment) ──
+    contacted_ips_data = []
+    contacted_domains_data = []
+    contacted_urls_data = []
+    dropped_files_data = []
+    detection_summary = {}
 
-            for req in network.get("http_requests", []):
-                host = req.get("host", "")
-                url = req.get("url", "")
-                if host:
-                    domains.add(host)
-                if url:
-                    urls.add(url)
+    if virustotal_client._has_key():
+        try:
+            file_hash = virustotal_client.sha256_of_file(
+                _find_apk_path(case_dir)
+            ) if _find_apk_path(case_dir) else apk_hash
 
-            for ip in network.get("unique_ips", []):
-                ips.add(ip)
+            report = virustotal_client.get_file_report(file_hash)
+            if report:
+                detection_summary = virustotal_client.extract_detection_summary(report)
+
+            contacted_ips_data = virustotal_client.get_contacted_ips(file_hash)
+            contacted_domains_data = virustotal_client.get_contacted_domains(file_hash)
+            contacted_urls_data = virustotal_client.get_contacted_urls(file_hash)
+            dropped_files_data = virustotal_client.get_dropped_files(file_hash)
+
+            # Add deep scan data to our IOC sets
+            for ip_obj in contacted_ips_data:
+                ip_addr = ip_obj.get("id", "")
+                if ip_addr:
+                    ips.add(ip_addr)
+
+            for dom_obj in contacted_domains_data:
+                dom_name = dom_obj.get("id", "")
+                if dom_name:
+                    domains.add(dom_name)
+
+            for url_obj in contacted_urls_data:
+                ctx = url_obj.get("context_attributes", {})
+                url_val = ctx.get("url", url_obj.get("id", ""))
+                if url_val:
+                    urls.add(url_val)
 
         except Exception as e:
-            result["errors"].append(f"Failed to read dynamic report: {e}")
+            logger.debug(f"Deep scan intelligence enrichment error: {e}")
 
-    result["domains"] = sorted(domains)
-    result["ips"] = sorted(ips)
-    result["urls"] = sorted(urls)
+    # ── Build graph nodes and edges ──
 
-    # ── Build Neo4j Graph ────────────────────────────────────
-    driver = _get_driver()
-    if not driver:
-        result["status"] = "failed"
-        result["errors"].append("Could not connect to Neo4j")
-        return result
+    # Filter out noise domains (Google Play, system services)
+    noise_patterns = [
+        "googleapis.com", "google.com", "gstatic.com", "android.com",
+        "play.google", "1e100.net", "googleusercontent.com",
+        "crashlytics", "firebase", "gvt1.com", "gvt2.com",
+    ]
 
-    try:
-        with driver.session() as session:
-            # Create Case node
-            session.run(
-                "MERGE (c:Case {case_id: $case_id}) "
-                "SET c.status = 'analyzed'",
-                case_id=str(case_id),
-            )
-            result["nodes_created"] += 1
+    def is_noise(name: str) -> bool:
+        return any(p in name.lower() for p in noise_patterns)
 
-            # Create APK node
-            session.run(
-                "MERGE (a:APK {hash: $hash}) "
-                "SET a.package_name = $package, a.case_id = $case_id",
-                hash=apk_hash,
-                package=package_name,
-                case_id=str(case_id),
-            )
-            result["nodes_created"] += 1
+    # Domain nodes
+    for domain in sorted(domains):
+        if is_noise(domain):
+            continue
+        did = f"domain-{domain}"
+        if did not in node_ids:
+            # Check if domain is in contacted_domains_data for risk
+            risk = "medium"
+            country = ""
+            for dd in contacted_domains_data:
+                if dd.get("id") == domain:
+                    attrs = dd.get("attributes", {})
+                    mal = attrs.get("last_analysis_stats", {}).get("malicious", 0)
+                    if mal > 5:
+                        risk = "critical"
+                    elif mal > 0:
+                        risk = "high"
+                    country = attrs.get("country", "")
+                    break
 
-            # Link Case -> APK
-            session.run(
-                "MATCH (c:Case {case_id: $case_id}), (a:APK {hash: $hash}) "
-                "MERGE (c)-[:CONTAINS]->(a)",
-                case_id=str(case_id),
-                hash=apk_hash,
-            )
-            result["relationships_created"] += 1
+            nodes.append({
+                "id": did,
+                "label": domain,
+                "type": "domain",
+                "risk": risk,
+                "metadata": {"country": country},
+            })
+            node_ids.add(did)
+            add_edge(apk_id, did, "CONTACTS")
 
-            # Create Domain nodes + relationships
-            for domain in domains:
-                session.run(
-                    "MERGE (d:Domain {name: $name})",
-                    name=domain,
-                )
-                session.run(
-                    "MATCH (a:APK {hash: $hash}), (d:Domain {name: $name}) "
-                    "MERGE (a)-[:COMMUNICATES_WITH]->(d)",
-                    hash=apk_hash,
-                    name=domain,
-                )
-                result["nodes_created"] += 1
-                result["relationships_created"] += 1
+    # IP nodes
+    for ip in sorted(ips):
+        if ip.startswith("10.") or ip.startswith("127.") or ip.startswith("192.168."):
+            continue
+        iid = f"ip-{ip}"
+        if iid not in node_ids:
+            risk = "medium"
+            country = ""
+            asn_owner = ""
+            for ip_obj in contacted_ips_data:
+                if ip_obj.get("id") == ip:
+                    attrs = ip_obj.get("attributes", {})
+                    mal = attrs.get("last_analysis_stats", {}).get("malicious", 0)
+                    if mal > 5:
+                        risk = "critical"
+                    elif mal > 0:
+                        risk = "high"
+                    country = attrs.get("country", "")
+                    asn_owner = attrs.get("as_owner", "")
+                    break
 
-            # Create IP nodes + relationships
-            for ip in ips:
-                session.run(
-                    "MERGE (i:IPAddress {address: $addr})",
-                    addr=ip,
-                )
-                session.run(
-                    "MATCH (a:APK {hash: $hash}), (i:IPAddress {address: $addr}) "
-                    "MERGE (a)-[:COMMUNICATES_WITH]->(i)",
-                    hash=apk_hash,
-                    addr=ip,
-                )
-                result["nodes_created"] += 1
-                result["relationships_created"] += 1
+            nodes.append({
+                "id": iid,
+                "label": ip,
+                "type": "ip",
+                "risk": risk,
+                "metadata": {"country": country, "asn": asn_owner},
+            })
+            node_ids.add(iid)
+            add_edge(apk_id, iid, "CONNECTS_TO")
 
-            # Create URL nodes + link to domains
-            for url in urls:
-                session.run(
-                    "MERGE (u:URL {full_url: $url})",
-                    url=url,
-                )
-                result["nodes_created"] += 1
-                
-            # Create BaaS Project nodes + relationships
-            for bp in baas_projects:
-                session.run(
-                    "MERGE (b:BaaSProject {project_id: $pid}) "
-                    "SET b.type = $ptype",
-                    pid=bp["id"],
-                    ptype=bp["type"]
-                )
-                session.run(
-                    "MATCH (a:APK {hash: $hash}), (b:BaaSProject {project_id: $pid}) "
-                    "MERGE (a)-[:USES_BACKEND]->(b)",
-                    hash=apk_hash,
-                    pid=bp["id"]
-                )
-                result["nodes_created"] += 1
-                result["relationships_created"] += 1
+    # Domain → IP resolution edges (from contacted data)
+    for dom_obj in contacted_domains_data:
+        dom_name = dom_obj.get("id", "")
+        did = f"domain-{dom_name}"
+        if did not in node_ids:
+            continue
+        # Try to find resolved IPs
+        attrs = dom_obj.get("attributes", {})
+        last_dns = attrs.get("last_dns_records", [])
+        for record in last_dns:
+            if record.get("type") in ("A", "AAAA"):
+                resolved_ip = record.get("value", "")
+                iid = f"ip-{resolved_ip}"
+                if iid in node_ids:
+                    add_edge(did, iid, "RESOLVES_TO", "dns")
 
-            # Find related APKs (same domain/IP communication)
-            related = session.run(
-                "MATCH (a1:APK {hash: $hash})-[:COMMUNICATES_WITH]->(target)"
-                "<-[:COMMUNICATES_WITH]-(a2:APK) "
-                "WHERE a2.hash <> $hash "
-                "RETURN DISTINCT a2.hash AS related_hash, "
-                "a2.package_name AS related_pkg, "
-                "count(target) AS shared_infra "
-                "ORDER BY shared_infra DESC LIMIT 10",
-                hash=apk_hash,
-            )
-            result["related_apks"] = [
-                {
-                    "hash": r["related_hash"],
-                    "package": r["related_pkg"],
-                    "shared_infrastructure": r["shared_infra"],
-                }
-                for r in related
-            ]
+    # URL nodes (limit to suspicious ones)
+    url_count = 0
+    for url in sorted(urls):
+        if url_count >= 10:
+            break
+        if is_noise(url):
+            continue
+        uid = f"url-{hash(url) & 0xFFFF}"
+        if uid not in node_ids:
+            # Truncate for display
+            label = url if len(url) < 50 else url[:47] + "..."
+            nodes.append({
+                "id": uid,
+                "label": label,
+                "type": "url",
+                "risk": "high",
+                "metadata": {"full_url": url},
+            })
+            node_ids.add(uid)
+            add_edge(apk_id, uid, "REQUESTS", "http")
+            url_count += 1
 
-            # Find campaigns that use the same domains
-            campaigns = session.run(
-                "MATCH (a:APK {hash: $hash})-[:COMMUNICATES_WITH]->(d:Domain)"
-                "<-[:USES]-(c:Campaign) "
-                "RETURN DISTINCT c.name AS campaign, d.name AS domain",
-                hash=apk_hash,
-            )
-            result["campaign_links"] = [
-                {"campaign": r["campaign"], "domain": r["domain"]}
-                for r in campaigns
-            ]
+    # Dropped file nodes
+    for df in dropped_files_data[:5]:
+        df_hash = df.get("id", "")[:12]
+        df_attrs = df.get("attributes", {})
+        df_name = df_attrs.get("meaningful_name", df_attrs.get("type_description", df_hash))
+        dfid = f"dropped-{df_hash}"
+        if dfid not in node_ids:
+            nodes.append({
+                "id": dfid,
+                "label": df_name if len(df_name) < 30 else df_name[:27] + "...",
+                "type": "file",
+                "risk": "critical",
+                "metadata": {"sha256": df.get("id", "")},
+            })
+            node_ids.add(dfid)
+            add_edge(apk_id, dfid, "DROPS", "payload")
 
-    except Exception as e:
-        logger.error(f"Neo4j graph construction error: {e}")
-        result["errors"].append(str(e))
-        result["status"] = "error"
-    finally:
-        driver.close()
-
-    logger.info(
-        f"C2 graph built: {result['nodes_created']} nodes, "
-        f"{result['relationships_created']} relationships"
-    )
-    return result
+    return {
+        "status": "success",
+        "nodes": nodes,
+        "edges": edges,
+        "total_nodes": len(nodes),
+        "total_edges": len(edges),
+        "domains": sorted(domains - {d for d in domains if is_noise(d)}),
+        "ips": sorted(ips - {ip for ip in ips if ip.startswith(("10.", "127.", "192.168."))}),
+        "urls": sorted(urls),
+        "detection_summary": detection_summary,
+        "dropped_files_count": len(dropped_files_data),
+    }
 
 
-def query_infrastructure(ioc_list: List[str]) -> Dict[str, Any]:
-    """
-    Query Neo4j for existing infrastructure matching the given IOCs.
-    Used by the attribution engine.
-    """
-    driver = _get_driver()
-    if not driver:
-        return {"status": "unavailable", "matches": []}
-
-    matches = []
-    try:
-        with driver.session() as session:
-            for ioc in ioc_list:
-                # Check domains
-                r = session.run(
-                    "MATCH (d:Domain {name: $name})<-[:COMMUNICATES_WITH]-(a:APK) "
-                    "RETURN a.hash AS apk_hash, a.package_name AS pkg, "
-                    "a.case_id AS case_id",
-                    name=ioc,
-                )
-                for record in r:
-                    matches.append({
-                        "ioc": ioc,
-                        "type": "domain",
-                        "related_apk": record["apk_hash"],
-                        "package": record["pkg"],
-                        "case_id": record["case_id"],
-                    })
-
-                # Check IPs
-                r = session.run(
-                    "MATCH (i:IPAddress {address: $addr})"
-                    "<-[:COMMUNICATES_WITH]-(a:APK) "
-                    "RETURN a.hash AS apk_hash, a.package_name AS pkg, "
-                    "a.case_id AS case_id",
-                    addr=ioc,
-                )
-                for record in r:
-                    matches.append({
-                        "ioc": ioc,
-                        "type": "ip",
-                        "related_apk": record["apk_hash"],
-                        "package": record["pkg"],
-                        "case_id": record["case_id"],
-                    })
-
-    except Exception as e:
-        logger.error(f"Neo4j query error: {e}")
-        return {"status": "error", "error": str(e), "matches": []}
-    finally:
-        driver.close()
-
-    return {"status": "success", "matches": matches, "total": len(matches)}
+def _find_apk_path(case_dir: str) -> str:
+    """Find the APK file in the case directory."""
+    for f in os.listdir(case_dir):
+        if f.endswith(".apk"):
+            return os.path.join(case_dir, f)
+    return ""

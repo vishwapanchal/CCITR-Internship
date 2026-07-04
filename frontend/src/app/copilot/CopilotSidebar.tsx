@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { ArrowLeft, Zap } from "lucide-react";
-import { REAL_CASES, REAL_COPILOT_SUGGESTIONS } from "@/services/realData";
+import { REAL_COPILOT_SUGGESTIONS } from "@/services/realData";
+import { CaseResponse } from "@/services/api";
 
 export default function CopilotSidebar({
   selectedCase,
   setSelectedCase,
   setInput,
+  cases = [],
 }: {
   selectedCase: string;
   setSelectedCase: (id: string) => void;
   setInput: (text: string) => void;
+  cases: CaseResponse[];
 }) {
-  const currentCase = REAL_CASES.find((c) => c.id === selectedCase);
+  const currentCase = cases.find((c) => c.id === selectedCase);
 
   return (
     <div className="w-full md:w-80 flex md:flex-col gap-4 shrink-0">
@@ -31,7 +34,7 @@ export default function CopilotSidebar({
           onChange={(e) => setSelectedCase(e.target.value)}
           className="w-full bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary/50"
         >
-          {REAL_CASES.map((c) => (
+          {cases.map((c) => (
             <option key={c.id} value={c.id}>
               {c.case_number} - {c.apk_name}
             </option>
@@ -43,20 +46,20 @@ export default function CopilotSidebar({
               <span className="text-primary/60">Risk Score</span>
               <span
                 className={`font-bold ${
-                  currentCase.threat_score > 40
+                  (currentCase.threat_score || 0) > 40
                     ? "text-red-600"
-                    : currentCase.threat_score > 20
+                    : (currentCase.threat_score || 0) > 20
                     ? "text-orange-500"
                     : "text-green-600"
                 }`}
               >
-                {currentCase.threat_score}/100
+                {currentCase.threat_score || 0}/100
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs font-mono">
               <Zap className="w-3 h-3 text-emerald-500" />
               <span className="text-primary/60">
-                DeepSeek R1 via OpenRouter
+                Qwen 2.5 (Local)
               </span>
             </div>
           </div>

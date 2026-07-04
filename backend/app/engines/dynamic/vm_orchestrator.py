@@ -230,13 +230,31 @@ def launch_app(package_name: str, device: Optional[str] = None) -> Dict[str, Any
 def run_monkey(package_name: str, events: int = 500, device: Optional[str] = None) -> Dict[str, Any]:
     """Run Android Monkey for random UI interactions."""
     logger.info(f"Running Monkey: {events} events on {package_name}")
-    return _run_adb(
-        ["shell", "monkey", "-p", package_name, "--throttle", "300",
+    
+    # Try package-specific monkey first
+    result = _run_adb(
+        ["shell", "monkey", "-p", package_name, "--throttle", "100",
          "--ignore-crashes", "--ignore-timeouts", "--ignore-security-exceptions",
          "-v", str(events)],
         device=device,
         timeout=MONKEY_TIMEOUT
     )
+    
+    # Many malwares don't export standard launcher categories to evade Monkey.
+    # If monkey aborts, run system-wide monkey which will click around whatever is currently 
+    # on screen (which is our app, since we just launched it in step 4).
+    stdout = result.get("stdout", "")
+    if "monkey aborted" in stdout:
+        logger.warning(f"Package monkey aborted. Falling back to system-wide screen monkey.")
+        result = _run_adb(
+            ["shell", "monkey", "--throttle", "100",
+             "--ignore-crashes", "--ignore-timeouts", "--ignore-security-exceptions",
+             "-v", str(events)],
+            device=device,
+            timeout=MONKEY_TIMEOUT
+        )
+        
+    return result
 
 
 def capture_logcat(device: Optional[str] = None, duration: int = 5) -> str:
