@@ -32,6 +32,7 @@ async function apiFetch<T>(
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers,
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -260,6 +261,19 @@ export function exportIOCsAsJSON(iocs: { type: string; value: string; context: s
   a.click();
   a.remove();
   window.URL.revokeObjectURL(url);
+}
+
+export async function runDynamicAnalysis(caseId: string): Promise<any> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/dynamic/run`, {
+    method: "POST",
+    headers,
+  });
+  if (!response.ok) throw new Error("Failed to start dynamic analysis");
+  return response.json();
 }
 
 export function exportIOCsAsSTIX(iocs: { type: string; value: string; context: string; confidence: number }[]): void {

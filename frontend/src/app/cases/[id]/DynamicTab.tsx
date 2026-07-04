@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import BehaviorTimeline from "@/components/BehaviorTimeline";
 import { REAL_TIMELINE_EVENTS } from "@/services/realData";
+import { runDynamicAnalysis } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
 
 const MOCK_APIS = [
   { api: "DexClassLoader()", cls: "dalvik.system", risk: "CRITICAL" },
@@ -25,6 +27,50 @@ interface DynamicTabProps {
 }
 
 export default function DynamicTab({ caseData, analysisResults, isMockCase }: DynamicTabProps) {
+  const { token } = useAuth();
+  const [isStarting, setIsStarting] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown === null) return;
+    
+    if (countdown <= 0) {
+      setCountdown(null);
+      window.location.reload(); // Auto-refresh when done
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  const handleRunEmulator = async () => {
+    const confirmed = window.confirm(
+      "📱 Before clicking OK:\n\n" +
+      "1. Double-click 'launch_emulator.bat' in the Apex-X folder\n" +
+      "2. Wait for the Android phone screen to appear\n" +
+      "3. Click OK here to install the APK on the phone\n\n" +
+      "The system will automatically launch the app and run automated UI exploration (Monkey) in the background.\n" +
+      "Data collection runs for 90 seconds. You can watch the emulator to see what it's doing!"
+    );
+    if (!confirmed) return;
+    
+    try {
+      setIsStarting(true);
+      await runDynamicAnalysis(caseData.id);
+      // Backend takes 90 seconds to collect data, start a 90s countdown in UI
+      setCountdown(90);
+    } catch (e) {
+      alert("Failed to start dynamic analysis: " + e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
   // Find dynamic phase result
   let dynamicResult = null;
   if (analysisResults && Array.isArray(analysisResults)) {
@@ -95,6 +141,49 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
   return (
     <div className="space-y-4">
       {/* Dynamic Summary Cards */}
+      <div className="flex justify-between items-center mb-6 border-b border-gray-700/50 pb-4">
+        <div>
+          <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
+            Dynamic Analysis
+          </h2>
+          <p className="text-sm text-gray-400 mt-1">Runtime behavior and network activity monitoring</p>
+        </div>
+        
+        {!isMockCase && (
+          <button
+            onClick={handleRunEmulator}
+            disabled={isStarting || countdown !== null}
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-lg shadow-lg shadow-indigo-500/25 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {countdown !== null ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Collecting Data ({countdown}s)</span>
+              </>
+            ) : isStarting ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Initializing...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Run Emulator Analysis (Visual VM)</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
           <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Analysis Mode</span>
@@ -147,7 +236,9 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
                 <tr key={`${row.api}-${idx}`} className="border-b border-border-subtle/50 hover:bg-canvas/50">
                   <td className="py-2 font-mono text-xs">
                     <span className="font-semibold">{row.api}</span>
-                    <span className="block text-[10px] text-primary/40 mt-0.5">{row.source === "heuristic_code_scan" ? "Static Heuristic Scan" : "Runtime Execution"}</span>
+                    <span className="block text-[10px] text-primary/40 mt-0.5">
+                      {row.source === "heuristic_code_scan" ? "Inferred (Heuristic Scan)" : "Observed (Runtime)"}
+                    </span>
                   </td>
                   <td className="py-2 text-xs text-primary/60 font-mono break-all">{row.cls}</td>
                   <td className="py-2">
@@ -193,7 +284,11 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
                 <tr key={`${row.dest}-${row.port}-${index}`} className="border-b border-border-subtle/50 hover:bg-canvas/50">
                   <td className="py-2 font-mono text-xs">
                     {row.dest}
-                    {row.source && <span className="block text-[10px] text-primary/40 mt-0.5">{row.source}</span>}
+                    {row.source && (
+                      <span className="block text-[10px] text-primary/40 mt-0.5">
+                        {row.source === "Static IOC cross-reference" ? "Inferred (Static IOC)" : "Observed (Runtime)"}
+                      </span>
+                    )}
                   </td>
                   <td className="py-2 text-xs font-mono">{row.proto}</td>
                   <td className="py-2 text-xs font-mono">{row.port}</td>

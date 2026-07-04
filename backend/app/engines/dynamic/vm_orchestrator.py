@@ -60,7 +60,7 @@ def _run_adb(args: List[str], device: Optional[str] = None, timeout: int = ADB_C
     cmd.extend(args)
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
         return {
             "success": result.returncode == 0,
             "stdout": result.stdout,
@@ -73,7 +73,7 @@ def _run_adb(args: List[str], device: Optional[str] = None, timeout: int = ADB_C
         return {"success": False, "error": "ADB binary not found", "stdout": "", "stderr": ""}
 
 
-def is_emulator_running() -> Optional[str]:
+def is_emulator_running(include_offline: bool = False) -> Optional[str]:
     """Check if an emulator is running. Returns device serial or None."""
     result = _run_adb(["devices"])
     if not result["success"]:
@@ -81,7 +81,7 @@ def is_emulator_running() -> Optional[str]:
 
     for line in result["stdout"].strip().split("\n"):
         line = line.strip()
-        if "\tdevice" in line:
+        if "\tdevice" in line or (include_offline and "\toffline" in line):
             serial = line.split("\t")[0]
             # Emulators are typically emulator-5554, emulator-5556, etc.
             if serial.startswith("emulator-") or serial.startswith("127.0.0.1"):
@@ -127,7 +127,7 @@ def get_package_name(apk_path: str) -> Optional[str]:
         try:
             result = subprocess.run(
                 [aapt_bin, "dump", "packagename", apk_path],
-                capture_output=True, text=True, timeout=10
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
             )
             if result.returncode == 0 and result.stdout.strip():
                 return result.stdout.strip()
@@ -145,16 +145,22 @@ def get_package_name(apk_path: str) -> Optional[str]:
     return None
 
 
-def install_apk(apk_path: str, device: Optional[str] = None) -> Dict[str, Any]:
+def install_apk(apk_path: str, package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
     """Install APK on device."""
     logger.info(f"Installing APK: {apk_path}")
-    result = _run_adb(["install", "-r", "-t", apk_path], device=device, timeout=INSTALL_TIMEOUT)
+    # -g grants all runtime permissions automatically
+    result = _run_adb(["install", "-g", "-r", "-t", apk_path], device=device, timeout=INSTALL_TIMEOUT)
     if result["success"]:
         logger.info("APK installed successfully")
+        
+        # Manually grant critical AppOps permissions that -g misses (e.g. Draw Overlays)
+        # Banking trojans crash if this is missing!
+        _run_adb(["shell", "appops", "set", package_name, "SYSTEM_ALERT_WINDOW", "allow"], device=device)
+        # Try to grant accessibility if requested
+        _run_adb(["shell", "appops", "set", package_name, "PROJECT_MEDIA", "allow"], device=device)
     else:
         logger.error(f"APK install failed: {result['error']}")
     return result
-
 
 def uninstall_apk(package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
     """Uninstall an APK by package name."""
@@ -163,24 +169,58 @@ def uninstall_apk(package_name: str, device: Optional[str] = None) -> Dict[str, 
 
 
 def launch_app(package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
-    """Launch an app's main activity."""
-    # First try to find the launcher activity
+    """Launch an app bypassing anti-analysis activity crashers."""
+    
+    # Try launching via standard Monkey intents (bypasses decoy activities)
+    categories = ["LAUNCHER", "INFO", "DEFAULT", "MONKEY"]
+    for cat in categories:
+        logger.info(f"Trying to launch {package_name} via category {cat}")
+        res = _run_adb(["shell", "monkey", "-p", package_name, "-c", f"android.intent.category.{cat}", "1"], device=device)
+        if "No activities found to run" not in res.get("stderr", "") + res.get("stdout", "") and res["success"]:
+            logger.info(f"Successfully launched {package_name} via {cat}")
+            
+            # Forcefully trigger BOOT_COMPLETED to wake up background services
+            _run_adb(["shell", "am", "broadcast", "-a", "android.intent.action.BOOT_COMPLETED", "-p", package_name], device=device)
+            return res
+
+    # Fallback to manual am start if Monkey fails completely
+    activity = None
     result = _run_adb(
         ["shell", "cmd", "package", "resolve-activity", "--brief", package_name],
         device=device
     )
-
-    activity = None
     if result["success"]:
         for line in result["stdout"].strip().split("\n"):
             if "/" in line and package_name in line:
                 activity = line.strip()
                 break
 
+    if not activity:
+        dump = _run_adb(["shell", "dumpsys", "package", package_name], device=device)
+        if dump["success"]:
+            lines = dump["stdout"].split("\n")
+            in_main = False
+            for line in lines:
+                if "android.intent.action.MAIN:" in line:
+                    in_main = True
+                elif in_main and package_name in line and "filter" in line:
+                    parts = line.strip().split()
+                    if len(parts) >= 2 and "/" in parts[1]:
+                        activity = parts[1]
+                        break
+                elif in_main and "Action:" not in line and "Category:" not in line:
+                    in_main = False
+
+    # Forcefully trigger BOOT_COMPLETED (many malwares rely on this to start services)
+    logger.info(f"Triggering BOOT_COMPLETED for {package_name}")
+    _run_adb(["shell", "am", "broadcast", "-a", "android.intent.action.BOOT_COMPLETED", "-p", package_name], device=device)
+
     if activity:
+        logger.info(f"Launching activity: {activity}")
         return _run_adb(["shell", "am", "start", "-n", activity], device=device)
     else:
-        # Fallback: monkey launch
+        # Final fallback: monkey launch
+        logger.info("No main activity found, falling back to monkey")
         return _run_adb(
             ["shell", "monkey", "-p", package_name, "-c", "android.intent.category.LAUNCHER", "1"],
             device=device
@@ -243,10 +283,31 @@ def dump_network_stats(device: Optional[str] = None) -> Dict[str, Any]:
                     ip_int = int(hex_ip, 16)
                     ip = f"{ip_int & 0xFF}.{(ip_int >> 8) & 0xFF}.{(ip_int >> 16) & 0xFF}.{(ip_int >> 24) & 0xFF}"
                     if ip != "0.0.0.0" and port != 0:
+                        # Filter out common Google/system IP ranges
+                        is_system = False
+                        if ip.startswith("10.") or ip.startswith("127.") or ip.startswith("192.168."):
+                            is_system = True
+                        elif ip.startswith("216.239.") or ip.startswith("216.58.") or ip.startswith("142.250.") or ip.startswith("142.251."):
+                            is_system = True
+                        elif ip.startswith("172.217.") or ip.startswith("8.8."):
+                            is_system = True
+                            
+                        # Try reverse DNS lookup
+                        domain = ip
+                        try:
+                            import socket
+                            domain_info = socket.gethostbyaddr(ip)
+                            if domain_info and domain_info[0]:
+                                domain = domain_info[0]
+                        except Exception:
+                            domain = f"Unresolved ({ip})"
+                            
                         stats["connections"].append({
                             "remote_ip": ip,
                             "remote_port": port,
                             "protocol": "TCP",
+                            "is_system": is_system,
+                            "domain": domain
                         })
                 except Exception:
                     continue
@@ -299,9 +360,6 @@ def parse_logcat_events(logcat_output: str, package_name: str) -> List[Dict[str,
 
     lines = logcat_output.split("\n")
     for line in lines[:LOGCAT_PARSE_MAX]:
-        # Only look at lines from our package or system events
-        if package_name not in line and "AndroidRuntime" not in line:
-            continue
 
         for pattern, category, title, risk in patterns:
             match = re.search(pattern, line, re.IGNORECASE)
@@ -329,6 +387,31 @@ def parse_logcat_events(logcat_output: str, package_name: str) -> List[Dict[str,
                     "raw_line": line[:300],
                 })
 
+    # Add Application Started and Analysis Complete events for sequence logic
+    base_ts = datetime.now(timezone.utc)
+    if events:
+        try:
+            # Try to get the earliest timestamp, else use now
+            # logcat timestamp format: "07-04 12:34:56.789"
+            first_event = min(events, key=lambda x: x["timestamp"])
+            if "-" in first_event["timestamp"] and ":" in first_event["timestamp"]:
+                # Just mock an ISO for sorting in UI if it's raw logcat
+                events_sorted = True
+        except Exception:
+            pass
+
+    events.insert(0, {
+        "id": "logcat-0-start",
+        "timestamp": base_ts.isoformat(),
+        "category": "system",
+        "api_call": "Application Started",
+        "class_name": package_name,
+        "risk_level": "LOW",
+        "description": "App launched by orchestrator",
+        "source": "orchestrator",
+        "raw_line": "",
+    })
+
     # Also look for crashes/ANRs
     crash_pattern = re.compile(
         rf"FATAL EXCEPTION.*?{re.escape(package_name)}.*?$\n(.*?)$",
@@ -343,8 +426,20 @@ def parse_logcat_events(logcat_output: str, package_name: str) -> List[Dict[str,
             "api_call": "FATAL EXCEPTION",
             "class_name": package_name,
             "risk_level": "HIGH",
-            "description": match.group(0)[:300],
+            "description": match.group(1)[:300],
             "source": "logcat_runtime",
         })
+        
+    events.append({
+        "id": f"logcat-999-end",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "category": "system",
+        "api_call": "Analysis Complete",
+        "class_name": package_name,
+        "risk_level": "LOW",
+        "description": "Automated execution finished",
+        "source": "orchestrator",
+        "raw_line": "",
+    })
 
     return events

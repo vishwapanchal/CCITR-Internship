@@ -19,14 +19,25 @@ export default function SyndicateAlert({ caseId }: { caseId: string }) {
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/v1/cases/${caseId}/correlations`)
-      .then(res => res.json())
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://apex-x-backend.onrender.com/api/v1";
+    fetch(`${API_BASE_URL}/cases/${caseId}/correlations`)
+      .then(async res => {
+        if (!res.ok) throw new Error("API error");
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          throw new Error("Invalid JSON response");
+        }
+      })
       .then(data => {
-        if (data.correlations) {
+        if (data && data.correlations) {
           setCorrelations(data.correlations);
         }
       })
-      .catch(console.error)
+      .catch(err => {
+        console.warn("Failed to fetch correlations:", err.message);
+      })
       .finally(() => setLoading(false));
   }, [caseId]);
 

@@ -21,8 +21,8 @@ API_PATTERNS = [
      "Dynamic DEX class loading — can load malicious code at runtime"),
     (r"PathClassLoader\s*\(", "dynamic_loading", "PathClassLoader()", "HIGH",
      "Custom class loader — potential dynamic code loading"),
-    (r"Class\.forName\s*\(", "dynamic_loading", "Class.forName()", "HIGH",
-     "Reflection-based class loading"),
+    (r"Class\.forName\s*\(", "dynamic_loading", "Class.forName()", "MEDIUM",
+     "Reflection-based class loading — very common, could be obfuscation"),
     (r"loadLibrary\s*\(", "dynamic_loading", "System.loadLibrary()", "HIGH",
      "Native library loading — potential native payload"),
     (r"Runtime\.getRuntime\(\)\.exec", "command_exec", "Runtime.exec()", "CRITICAL",
@@ -31,8 +31,8 @@ API_PATTERNS = [
      "Process creation — can execute arbitrary programs"),
 
     # Network Activity
-    (r"HttpURLConnection|openConnection\s*\(", "network", "HttpURLConnection.openConnection()", "MEDIUM",
-     "HTTP connection — network communication"),
+    (r"HttpURLConnection|openConnection\s*\(", "network", "HttpURLConnection.openConnection()", "LOW",
+     "HTTP connection — standard network communication"),
     (r"OkHttpClient|OkHttp", "network", "OkHttpClient()", "MEDIUM",
      "OkHttp HTTP client — network communication"),
     (r"Retrofit\.Builder", "network", "Retrofit.Builder()", "MEDIUM",
