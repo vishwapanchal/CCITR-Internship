@@ -34,9 +34,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       return false;
     }
 
-    // Store token securely in cookies
-    document.cookie = `apex_token=${data.access_token}; path=/; Secure; SameSite=Strict`;
-    document.cookie = `apex_username=${username}; path=/; Secure; SameSite=Strict`;
+    // Store token in cookies
+    document.cookie = `apex_token=${data.access_token}; path=/; SameSite=Lax`;
+    document.cookie = `apex_username=${username}; path=/; SameSite=Lax`;
 
     set({
       token: data.access_token,
@@ -59,9 +59,9 @@ export const useAuth = create<AuthState>((set, get) => ({
       return false;
     }
 
-    // Store token securely in cookies
-    document.cookie = `apex_token=${data.access_token}; path=/; Secure; SameSite=Strict`;
-    document.cookie = `apex_username=${username}; path=/; Secure; SameSite=Strict`;
+    // Store token in cookies
+    document.cookie = `apex_token=${data.access_token}; path=/; SameSite=Lax`;
+    document.cookie = `apex_username=${username}; path=/; SameSite=Lax`;
 
     set({
       token: data.access_token,

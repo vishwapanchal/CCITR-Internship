@@ -17,10 +17,18 @@ JADX_TIMEOUT = 180
 
 
 def _find_jadx() -> Optional[str]:
-    """Check if jadx is available on the system PATH."""
+    """Check if jadx is available on the system PATH or in local tools dir."""
     result = shutil.which("jadx")
     if result:
         return result
+    # Check local tools directory (backend/tools/jadx/bin/)
+    tools_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "tools")
+    local_bat = os.path.join(tools_dir, "jadx", "bin", "jadx.bat")
+    if os.path.isfile(local_bat):
+        return local_bat
+    local_bin = os.path.join(tools_dir, "jadx", "bin", "jadx")
+    if os.path.isfile(local_bin):
+        return local_bin
     # Common installation paths
     for path in [
         "/usr/local/bin/jadx",

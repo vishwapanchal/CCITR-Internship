@@ -141,10 +141,40 @@ def run_full_static_analysis(apk_path: str, case_dir: str) -> Dict[str, Any]:
                 "data": manifest_results,
             }
         else:
-            result["steps"]["manifest"] = {
-                "status": "skipped",
-                "reason": "No AndroidManifest.xml found in APKTool output",
-            }
+            # FALLBACK: Use androguard data when APKTool is unavailable
+            ag_step = result["steps"].get("androguard", {})
+            ag_data = ag_step.get("data", {}) if ag_step.get("status") == "success" else {}
+            if ag_data:
+                ag_perms = ag_data.get("permissions", {})
+                # Build manifest_results from androguard data
+                perm_dict = {}
+                for p in ag_perms.get("all", []):
+                    is_dangerous = p in ag_perms.get("dangerous", [])
+                    perm_dict[p] = {
+                        "protection_level": "dangerous" if is_dangerous else "normal",
+                        "description": p.split(".")[-1],
+                    }
+                manifest_results = {
+                    "permissions": perm_dict,
+                    "package_name": ag_data.get("package_name", "unknown"),
+                    "activities": ag_data.get("activities", []),
+                    "services": ag_data.get("services", []),
+                    "receivers": ag_data.get("receivers", []),
+                    "providers": ag_data.get("providers", []),
+                    "misconfigurations": [],
+                    "security_flags": {},
+                }
+                result["steps"]["manifest"] = {
+                    "status": "success",
+                    "data": manifest_results,
+                    "source": "androguard_fallback",
+                }
+                logger.info("Using androguard fallback for manifest data")
+            else:
+                result["steps"]["manifest"] = {
+                    "status": "skipped",
+                    "reason": "No AndroidManifest.xml found and no androguard data available",
+                }
     except Exception as e:
         result["steps"]["manifest"] = {"status": "error", "error": str(e)}
         result["errors"].append(f"Manifest parser error: {e}")

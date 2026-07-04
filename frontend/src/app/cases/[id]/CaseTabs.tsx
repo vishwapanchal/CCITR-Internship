@@ -26,7 +26,7 @@ export default function CaseTabs({
   return (
     <div className="flex-1 min-h-0">
       {activeTab === "overview" && (
-        <OverviewTab caseData={caseData} phaseStatus={phaseStatus} />
+        <OverviewTab caseData={caseData} phaseStatus={phaseStatus} analysisResults={analysisResults} />
       )}
 
       {activeTab === "static" && (

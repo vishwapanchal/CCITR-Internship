@@ -61,7 +61,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
     result.sort((a, b) => {
       let cmp = 0;
       if (sortField === "confidence") cmp = a.confidence - b.confidence;
-      else if (sortField === "first_seen") cmp = a.first_seen.localeCompare(b.first_seen);
+      else if (sortField === "first_seen") cmp = (a.first_seen || "").localeCompare(b.first_seen || "");
       else cmp = String(a[sortField]).localeCompare(String(b[sortField]));
       return sortAsc ? cmp : -cmp;
     });
@@ -209,7 +209,7 @@ export default function IOCTable({ iocs }: IOCTableProps) {
                   </span>
                 </td>
                 <td className="py-2 text-xs font-mono text-primary/60 whitespace-nowrap">
-                  {new Date(ioc.first_seen).toLocaleString()}
+                  {ioc.first_seen ? new Date(ioc.first_seen).toLocaleString() : "N/A"}
                 </td>
               </tr>
             ))}

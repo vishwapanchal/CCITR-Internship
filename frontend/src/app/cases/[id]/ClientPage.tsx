@@ -37,12 +37,110 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-function OverviewTab({ caseData, phaseStatus }: { caseData: any; phaseStatus: any }) {
+function OverviewTab({ caseData, phaseStatus, analysisResults }: { caseData: any; phaseStatus: any; analysisResults: any }) {
+  // Build findings dynamically from real analysis results
+  const findings: { severity: string; title: string; description: string }[] = [];
+
+  if (analysisResults) {
+    // Check static analysis results
+    const staticResult = analysisResults.find?.((r: any) => r.phase === "static");
+    if (staticResult?.result) {
+      const steps = staticResult.result.steps || {};
+      
+      // Permissions findings
+      const manifest = steps.manifest?.data || {};
+      const perms = manifest.permissions || {};
+      const dangerousPerms = Object.entries(perms).filter(([_, v]: any) => v?.protection_level === "dangerous");
+      if (dangerousPerms.length > 0) {
+        findings.push({
+          severity: dangerousPerms.length > 10 ? "critical" : "warning",
+          title: `${dangerousPerms.length} Dangerous Permissions`,
+          description: `Including ${dangerousPerms.slice(0, 3).map(([k]) => k.split(".").pop()).join(", ")}${dangerousPerms.length > 3 ? ` and ${dangerousPerms.length - 3} more` : ""}`
+        });
+      }
+
+      // YARA matches
+      const yara = steps.yara?.data || {};
+      if (yara.total_matches > 0) {
+        findings.push({
+          severity: "critical",
+          title: `${yara.total_matches} YARA Rule Matches`,
+          description: `Rules matched: ${(yara.rules_matched || []).join(", ")}`
+        });
+      }
+
+      // IOC findings
+      const iocs = steps.iocs?.data || {};
+      if (iocs.total_indicators > 0) {
+        findings.push({
+          severity: "warning",
+          title: `${iocs.total_indicators} Indicators of Compromise`,
+          description: `Found ${(iocs.urls?.length || 0)} URLs, ${(iocs.ips?.length || 0)} IPs, ${(iocs.domains?.length || 0)} domains`
+        });
+      }
+
+      // Misconfigurations
+      const misconfigs = manifest.misconfigurations || [];
+      if (misconfigs.length > 0) {
+        findings.push({
+          severity: "warning",
+          title: `${misconfigs.length} Security Misconfigurations`,
+          description: misconfigs.slice(0, 2).join("; ")
+        });
+      }
+
+      // Risk score
+      if (staticResult.result.risk_score != null && staticResult.result.risk_score >= 0) {
+        const score = staticResult.result.risk_score;
+        findings.push({
+          severity: score >= 70 ? "critical" : score >= 40 ? "warning" : "info",
+          title: `Risk Score: ${score}/100`,
+          description: `Static analysis risk assessment: ${score >= 70 ? "High Risk" : score >= 40 ? "Medium Risk" : "Low Risk"}`
+        });
+      }
+    }
+
+    // Check C2 results
+    const c2Result = analysisResults.find?.((r: any) => r.phase === "c2_intelligence");
+    if (c2Result?.result) {
+      const c2Data = c2Result.result;
+      if (c2Data.c2_indicators?.length > 0) {
+        findings.push({
+          severity: "critical",
+          title: "C2 Communication Indicators",
+          description: `Found ${c2Data.c2_indicators.length} potential C2 indicators`
+        });
+      }
+    }
+
+    // Check vulnerability results
+    const vulnResult = analysisResults.find?.((r: any) => r.phase === "vulnerability");
+    if (vulnResult?.result?.vulnerabilities?.length > 0) {
+      const vulns = vulnResult.result.vulnerabilities;
+      findings.push({
+        severity: "critical",
+        title: `${vulns.length} Vulnerabilities Discovered`,
+        description: `Including ${vulns.filter((v: any) => v.severity === "critical" || v.severity === "high").length} high/critical severity`
+      });
+    }
+  }
+
+  // If no real findings, show a status message
+  if (findings.length === 0) {
+    if (caseData.status === "analyzing") {
+      findings.push({ severity: "info", title: "Analysis In Progress", description: "Results will appear here once analysis completes. This page auto-refreshes." });
+    } else if (caseData.status === "pending" || caseData.status === "pending_manual") {
+      findings.push({ severity: "info", title: "Analysis Pending", description: "Analysis has not started yet." });
+    } else {
+      findings.push({ severity: "info", title: "No Findings", description: "No significant findings detected in this APK." });
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-panel border border-border-subtle p-6 flex flex-col items-center justify-center">
-        <ThreatScore score={caseData.threat_score} size="lg" />
-        <p className="mt-4 text-sm font-semibold text-center">{caseData.verdict}</p>
+        <ThreatScore score={caseData.threat_score || 0} size="lg" />
+        <p className="mt-4 text-sm font-semibold text-center">{caseData.verdict || caseData.status}</p>
       </div>
 
       <div className="bg-panel border border-border-subtle p-4 md:col-span-2">
@@ -50,34 +148,31 @@ function OverviewTab({ caseData, phaseStatus }: { caseData: any; phaseStatus: an
           Key Findings Summary
         </h3>
         <div className="space-y-2">
-          <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200">
-            <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
-            <div>
-              <span className="text-xs font-semibold text-red-700">C2 Communication Detected</span>
-              <p className="text-xs text-red-600 mt-0.5">Active beacon to c2.malware-ops.ru every 30 seconds</p>
+          {findings.map((finding, i) => (
+            <div key={i} className={`flex items-start gap-2 p-2 ${
+              finding.severity === "critical" ? "bg-red-50 border border-red-200" :
+              finding.severity === "warning" ? "bg-orange-50 border border-orange-200" :
+              "bg-blue-50 border border-blue-200"
+            }`}>
+              <AlertTriangle className={`w-4 h-4 mt-0.5 shrink-0 ${
+                finding.severity === "critical" ? "text-red-600" :
+                finding.severity === "warning" ? "text-orange-600" :
+                "text-blue-600"
+              }`} />
+              <div>
+                <span className={`text-xs font-semibold ${
+                  finding.severity === "critical" ? "text-red-700" :
+                  finding.severity === "warning" ? "text-orange-700" :
+                  "text-blue-700"
+                }`}>{finding.title}</span>
+                <p className={`text-xs mt-0.5 ${
+                  finding.severity === "critical" ? "text-red-600" :
+                  finding.severity === "warning" ? "text-orange-600" :
+                  "text-blue-600"
+                }`}>{finding.description}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-start gap-2 p-2 bg-red-50 border border-red-200">
-            <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
-            <div>
-              <span className="text-xs font-semibold text-red-700">Data Exfiltration</span>
-              <p className="text-xs text-red-600 mt-0.5">SMS messages and contacts exfiltrated to external server</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 p-2 bg-orange-50 border border-orange-200">
-            <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 shrink-0" />
-            <div>
-              <span className="text-xs font-semibold text-orange-700">Dynamic Code Loading</span>
-              <p className="text-xs text-orange-600 mt-0.5">Loads encrypted DEX payload at runtime via DexClassLoader</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 p-2 bg-orange-50 border border-orange-200">
-            <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 shrink-0" />
-            <div>
-              <span className="text-xs font-semibold text-orange-700">14 Dangerous Permissions</span>
-              <p className="text-xs text-orange-600 mt-0.5">Including READ_SMS, CAMERA, RECORD_AUDIO, ACCESSIBILITY</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -112,7 +207,9 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
       // Fetch analysis results
       const { data: resultsData } = await getCaseResults(caseId);
       if (resultsData?.results) {
-        setAnalysisResults(resultsData.results);
+        // Convert dict {static: {...}, c2_intelligence: {...}} to array [{phase, result}]
+        const resultsArray = Object.entries(resultsData.results).map(([phase, result]) => ({ phase, result }));
+        setAnalysisResults(resultsArray);
       }
       
       // Load mock reports for now, since we haven't implemented backend reports endpoint yet

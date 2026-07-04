@@ -5,7 +5,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://apex-x-backend.
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("apex_token");
+  const cookies = document.cookie.split("; ");
+  const tokenCookie = cookies.find(row => row.startsWith("apex_token="));
+  return tokenCookie ? tokenCookie.split("=")[1] : null;
 }
 
 async function apiFetch<T>(

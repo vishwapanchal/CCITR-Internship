@@ -4,18 +4,116 @@ from app.api import dependencies
 from app.api.middleware.rbac import get_current_user
 from app.services.hash_service import calculate_sha256, append_to_manifest
 from app.utils.file_utils import is_valid_apk, save_upload_file
-from app.services.task_service import analyze_apk_task
 from app.services.audit_service import log_action
-from app.models.database import Case, User
+from app.models.database import Case, PhaseResult, User
 from app.models.schemas import Case as CaseSchema
 import uuid
 import os
 import shutil
+import logging
+import threading
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
 # Data directory for local storage
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "cases")
+
+
+def _run_analysis_sync(case_id: str, apk_name: str, apk_hash: str):
+    """Run static analysis synchronously in a background thread (no Redis/Celery needed)."""
+    from app.models.session import SessionLocal
+    from app.engines.static import run_full_static_analysis
+    from datetime import datetime
+    import uuid as _uuid
+
+    case_uuid = _uuid.UUID(case_id) if isinstance(case_id, str) else case_id
+
+    db = SessionLocal()
+    try:
+        case = db.query(Case).filter(Case.id == case_uuid).first()
+        if not case:
+            logger.error(f"Case {case_id} not found for analysis")
+            return
+
+        case.status = "analyzing"
+        db.commit()
+
+        case_dir = os.path.join(DATA_DIR, str(case_id))
+        apk_path = os.path.join(case_dir, apk_name)
+
+        if not os.path.exists(apk_path):
+            logger.error(f"APK not found: {apk_path}")
+            case.status = "failed"
+            db.commit()
+            return
+
+        # Run static analysis
+        logger.info(f"Starting static analysis for case {case_id}")
+        static_result = run_full_static_analysis(apk_path, case_dir)
+
+        def _parse_dt(val):
+            """Convert ISO string to datetime object for SQLite."""
+            if val is None:
+                return datetime.utcnow()
+            if isinstance(val, str):
+                try:
+                    return datetime.fromisoformat(val.replace("Z", "+00:00")).replace(tzinfo=None)
+                except Exception:
+                    return datetime.utcnow()
+            return val
+
+        # Save static phase result to DB
+        phase_record = PhaseResult(
+            case_id=case_uuid,
+            phase="static",
+            result=static_result,
+            risk_score=static_result.get("risk_score", 0),
+            completed_at=_parse_dt(static_result.get("completed_at"))
+        )
+        db.add(phase_record)
+
+        # Try C2 intelligence
+        try:
+            from app.engines.c2 import run_full_c2_intelligence
+            c2_result = run_full_c2_intelligence(apk_path, case_dir, str(case_id))
+            c2_phase = PhaseResult(
+                case_id=case_uuid, phase="c2_intelligence",
+                result=c2_result, risk_score=c2_result.get("risk_score", 0),
+                completed_at=_parse_dt(c2_result.get("completed_at"))
+            )
+            db.add(c2_phase)
+        except Exception as e:
+            logger.warning(f"C2 intelligence skipped: {e}")
+
+        # Try vulnerability scan
+        try:
+            from app.engines.vulnerability import run_vulnerability_scan
+            vuln_result = run_vulnerability_scan(case_dir, str(case_id))
+            vuln_phase = PhaseResult(
+                case_id=case_uuid, phase="vulnerability",
+                result=vuln_result, risk_score=vuln_result.get("risk_score", 0),
+                completed_at=_parse_dt(vuln_result.get("completed_at"))
+            )
+            db.add(vuln_phase)
+        except Exception as e:
+            logger.warning(f"Vulnerability scan skipped: {e}")
+
+        case.status = "completed"
+        db.commit()
+        logger.info(f"Analysis completed for case {case_id}, risk_score={static_result.get('risk_score')}")
+
+    except Exception as e:
+        logger.error(f"Analysis failed for case {case_id}: {e}")
+        db.rollback()
+        case = db.query(Case).filter(Case.id == case_uuid).first()
+        if case:
+            case.status = "failed"
+            db.commit()
+    finally:
+        db.close()
+
 
 @router.post("/upload/", response_model=CaseSchema, status_code=status.HTTP_201_CREATED)
 async def upload_apk(
@@ -37,6 +135,14 @@ async def upload_apk(
     # Check if a case with this hash already exists
     existing_case = db.query(Case).filter(Case.apk_hash == apk_hash).first()
     if existing_case:
+        # If case exists but analysis hasn't run, trigger it now
+        if existing_case.status not in ("completed", "analyzing"):
+            thread = threading.Thread(
+                target=_run_analysis_sync,
+                args=(str(existing_case.id), existing_case.apk_name, apk_hash),
+                daemon=True
+            )
+            thread.start()
         return existing_case
 
     # 2. Store temporarily to validate ZIP structure
@@ -54,7 +160,7 @@ async def upload_apk(
         case_number=case_number,
         apk_hash=apk_hash,
         apk_name=file.filename,
-        status="pending",
+        status="analyzing",
         created_by=current_user.id
     )
     
@@ -80,8 +186,12 @@ async def upload_apk(
         details={"filename": file.filename, "hash": apk_hash}
     )
     
-    # 7. Trigger Background Task
-    analyze_apk_task.delay(new_case.id)
+    # 7. Run analysis in a background thread (no Redis/Celery needed)
+    thread = threading.Thread(
+        target=_run_analysis_sync,
+        args=(str(new_case.id), file.filename, apk_hash),
+        daemon=True
+    )
+    thread.start()
     
     return new_case
-

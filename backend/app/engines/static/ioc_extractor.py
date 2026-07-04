@@ -89,7 +89,40 @@ WHITELISTED_DOMAINS = {
     "apache.org", "www.apache.org",
     "example.com", "www.example.com", "localhost",
     "127.0.0.1", "0.0.0.0", "10.0.0.1",
+    # Android/Java SDK domains that are package names, not network indicators
+    "android.net", "java.net", "java.io", "javax.net",
+    "androidx.core.net", "android.os", "android.app",
+    "android.content", "android.widget", "android.view",
+    "android.graphics", "android.util", "android.text",
+    "kotlin.io", "kotlinx.coroutines",
+    # Common dev domains
+    "stackoverflow.com", "maven.org", "mvnrepository.com",
+    "jitpack.io", "bintray.com", "gradle.org",
+    "jetbrains.com", "kotlinlang.org",
+    "pexels.com", "images.pexels.com",
 }
+
+# Patterns that look like domains but are actually Java/Kotlin identifiers
+# e.g. rect.top, padding.top, logger.info, view.info, loglevel.info
+JAVA_FALSE_POSITIVE_SUFFIXES = {
+    ".top", ".bottom", ".left", ".right", ".start", ".end",
+    ".width", ".height", ".size", ".length", ".count",
+    ".info", ".warn", ".error", ".debug", ".trace", ".verbose",
+    ".class", ".name", ".type", ".value", ".key", ".data",
+    ".text", ".title", ".label", ".message",
+    ".get", ".set", ".put", ".add", ".remove", ".clear",
+    ".run", ".call", ".apply", ".bind", ".exec",
+    ".init", ".create", ".build", ".make", ".parse",
+    ".open", ".close", ".read", ".write", ".flush",
+    ".show", ".hide", ".enable", ".disable",
+}
+
+# Java/Android package prefixes that should never be treated as domains
+JAVA_PACKAGE_PREFIXES = [
+    "android.", "androidx.", "java.", "javax.", "kotlin.", "kotlinx.",
+    "com.google.android.", "com.android.", "org.apache.", "org.xml.",
+    "dalvik.", "sun.", "org.json.", "junit.", "org.junit.",
+]
 
 # File extensions to scan for IOCs
 SCANNABLE_EXTENSIONS = {
@@ -131,10 +164,25 @@ def extract_iocs_from_file(file_path: str) -> Dict[str, Any]:
         if not _is_whitelisted_ip(ip):
             result["ips"].add(ip)
 
-    # Domains
+    # Domains — with heavy false positive filtering
     for domain in DOMAIN_REGEX.findall(content):
-        if domain.lower() not in WHITELISTED_DOMAINS:
-            result["domains"].add(domain.lower())
+        d = domain.lower()
+        if d in WHITELISTED_DOMAINS:
+            continue
+        # Filter Java/Kotlin identifiers (rect.top, logger.info, etc.)
+        if any(d.endswith(suffix) for suffix in JAVA_FALSE_POSITIVE_SUFFIXES):
+            continue
+        # Filter Java/Android package names
+        if any(d.startswith(prefix) for prefix in JAVA_PACKAGE_PREFIXES):
+            continue
+        # Must have at least 2 parts and the first part should be > 1 char
+        parts = d.split(".")
+        if len(parts) < 2 or len(parts[0]) <= 1:
+            continue
+        # Filter single-word identifiers that look like code (camelCase, underscore)
+        if "_" in parts[0] or (parts[0] != parts[0].lower() and not parts[0].startswith("www")):
+            continue
+        result["domains"].add(d)
 
     # Emails
     for email in EMAIL_REGEX.findall(content):

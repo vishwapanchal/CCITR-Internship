@@ -17,10 +17,18 @@ APKTOOL_TIMEOUT = 120
 
 
 def _find_apktool() -> Optional[str]:
-    """Check if apktool is available on the system PATH."""
+    """Check if apktool is available on the system PATH or in local tools dir."""
     result = shutil.which("apktool")
     if result:
         return result
+    # Check local tools directory (backend/tools/)
+    tools_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "tools")
+    local_jar = os.path.join(tools_dir, "apktool.jar")
+    if os.path.isfile(local_jar):
+        return local_jar
+    local_bat = os.path.join(tools_dir, "apktool.bat")
+    if os.path.isfile(local_bat):
+        return local_bat
     # Common installation paths
     for path in ["/usr/local/bin/apktool", "/usr/bin/apktool", "/opt/homebrew/bin/apktool"]:
         if os.path.isfile(path) and os.access(path, os.X_OK):
@@ -52,8 +60,11 @@ def decompile_apk(apk_path: str, output_dir: str, force: bool = True) -> Optiona
         )
         return None
 
-    # Build command
-    cmd = [apktool_bin, "d", apk_path, "-o", output_dir]
+    # Build command — use java -jar for .jar files
+    if apktool_bin.endswith(".jar"):
+        cmd = ["java", "-jar", apktool_bin, "d", apk_path, "-o", output_dir]
+    else:
+        cmd = [apktool_bin, "d", apk_path, "-o", output_dir]
     if force:
         cmd.append("-f")
 

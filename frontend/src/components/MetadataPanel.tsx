@@ -3,14 +3,22 @@
 import { m } from "framer-motion";
 import { ShieldAlert, FileCode2, Key, Activity } from "lucide-react";
 
-const metadata = [
-  { label: "File Name", value: "com.whatsapp.update.apk", icon: FileCode2 },
-  { label: "Package", value: "com.hidden.spyware.v2", icon: Activity },
-  { label: "SHA-256", value: "8f4e9a0c2b5d...e3f1", icon: Key },
-  { label: "Signature", value: "Untrusted (Debug)", icon: ShieldAlert, critical: true },
-];
+interface MetadataPanelProps {
+  caseData?: {
+    apk_name?: string;
+    package_name?: string;
+    apk_hash?: string;
+    status?: string;
+  };
+}
 
-export default function MetadataPanel() {
+export default function MetadataPanel({ caseData }: MetadataPanelProps) {
+  const metadata = [
+    { label: "File Name", value: caseData?.apk_name || "N/A", icon: FileCode2 },
+    { label: "Package", value: caseData?.package_name || "N/A", icon: Activity },
+    { label: "SHA-256", value: caseData?.apk_hash ? `${caseData.apk_hash.slice(0, 14)}...${caseData.apk_hash.slice(-4)}` : "N/A", icon: Key },
+    { label: "Status", value: caseData?.status?.toUpperCase() || "N/A", icon: ShieldAlert, critical: caseData?.status === "failed" },
+  ];
 
   return (
     <div className="flex flex-col justify-center h-full space-y-4">

@@ -43,3 +43,8 @@ test_cases/
 # Temporary
 *.log
 *.tmp
+
+# Data and Tools
+backend/app/data/
+backend/tools/
+backend/check_results.py
