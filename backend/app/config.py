@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     REDIS_PORT: str = os.getenv("REDIS_PORT", "6379")
 
     # Ollama (Local LLM)
-    OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+    OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://172.16.128.57:11434")
     OLLAMA_MODEL_CODER: str = os.getenv("OLLAMA_MODEL_CODER", "qwen2.5-coder:7b")
     OLLAMA_MODEL_SECURITY: str = os.getenv("OLLAMA_MODEL_SECURITY", "qwen2.5-coder:7b")
     OLLAMA_TIMEOUT: int = 300  # 5 min for slow machines
@@ -46,6 +46,7 @@ class Settings(BaseSettings):
 
     # Threat Intelligence
     VIRUSTOTAL_API_KEY: str = os.getenv("VIRUSTOTAL_API_KEY", "")
+    IPINFO_API_TOKEN: str = os.getenv("IPINFO_API_TOKEN", "60de8ffcfa26a3")
     
     @property
     def CELERY_BROKER_URL(self) -> str:

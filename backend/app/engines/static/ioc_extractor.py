@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 # --- Regex Patterns ---
 
 URL_REGEX = re.compile(
-    r'https?://(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)'
-    r'+[a-zA-Z]{2,}(?:/[^\s"\'<>\)\]]*)?',
+    r'https?://[a-zA-Z0-9.\-]{1,255}\.[a-zA-Z]{2,}(?:/[^\s"\'<>\)\]]*)?',
     re.IGNORECASE,
 )
 
@@ -27,8 +26,7 @@ IP_REGEX = re.compile(
 )
 
 DOMAIN_REGEX = re.compile(
-    r'\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)'
-    r'+(?:com|net|org|io|xyz|tk|ml|ga|cf|ru|cn|top|info|biz|cc|ws|pw|live|online|site|club)\b',
+    r'\b[a-zA-Z0-9.\-]{1,255}\.(?:com|net|org|io|xyz|tk|ml|ga|cf|ru|cn|top|info|biz|cc|ws|pw|live|online|site|club)\b',
     re.IGNORECASE,
 )
 

@@ -213,6 +213,22 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         logger.info(f"Indexing artifacts for Officer Co-Pilot: Case {case_id}")
         copilot_rag.index_case_artifacts(str(case_id), case_dir)
 
+        # 8. Pre-generate English Report
+        from app.api.routes.reports import _load_case_data, _generate_report_narrative
+        logger.info(f"Pre-generating English forensic report for {case_id}")
+        case_data_report = _load_case_data(str(case_id), db)
+        english_report = _generate_report_narrative(case_data_report)
+        
+        report_record = PhaseResult(
+            case_id=case_id,
+            phase="report_english",
+            result={"narrative": english_report},
+            risk_score=0,
+            completed_at=None
+        )
+        db.add(report_record)
+        db.commit()
+
         # ---------------------------------------------------------------------
 
         # Complete Case

@@ -44,6 +44,27 @@ export default function RecentAlerts({ analysisResults }: RecentAlertsProps) {
     if (c2Result?.result) {
       alerts.push({ id: ++alertId, type: "info", message: "C2 intelligence analysis completed", icon: Info });
     }
+
+    const vulnResult = analysisResults.find((r: any) => r.phase === "vulnerability");
+    if (vulnResult?.result?.findings?.length > 0) {
+      const critCount = vulnResult.result.findings.filter((f: any) => f.severity === "critical" || f.severity === "high").length;
+      alerts.push({
+        id: ++alertId,
+        type: critCount > 0 ? "critical" : "warning",
+        message: `Vulnerability Assessment: Found ${vulnResult.result.findings.length} security risks (${critCount} critical/high)`,
+        icon: ShieldAlert
+      });
+    }
+
+    const dynResult = analysisResults.find((r: any) => r.phase === "dynamic");
+    if (dynResult?.result?.events?.length > 0) {
+      alerts.push({
+        id: ++alertId,
+        type: "warning",
+        message: `Dynamic Behavior Analysis: Captured ${dynResult.result.events.length} runtime execution events`,
+        icon: Eye
+      });
+    }
   }
 
   if (alerts.length === 0) {

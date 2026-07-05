@@ -9,6 +9,7 @@ class CaseBase(BaseModel):
     apk_hash: str
     apk_name: Optional[str] = None
     status: Optional[str] = "pending"
+    threat_score: Optional[int] = 0
 
 # Properties to receive on case creation
 class CaseCreate(CaseBase):

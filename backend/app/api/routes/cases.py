@@ -4,17 +4,93 @@ from typing import List
 from uuid import UUID
 
 from app.api.dependencies import get_db
-from app.models.database import Case
+from app.models.database import Case, PhaseResult
 from app.models.schemas import Case as CaseSchema
 
 router = APIRouter()
 
+
+@router.get("/threat-map")
+def get_threat_map(db: Session = Depends(get_db)):
+    """
+    Aggregate IP geolocation data from all analyzed C2 results
+    for the interactive world threat map visualization.
+    """
+    markers = []
+    arcs = []
+    seen_ips = set()
+
+    # Get all C2 intelligence phase results
+    c2_phases = db.query(PhaseResult).filter(PhaseResult.phase == "c2_intelligence").all()
+
+    for phase in c2_phases:
+        if not phase.result:
+            continue
+
+        result = phase.result
+        nodes = result.get("nodes", [])
+        attribution = result.get("attribution", {})
+        case = db.query(Case).filter(Case.id == phase.case_id).first()
+        case_name = case.apk_name if case else "Unknown"
+        target_region = attribution.get("target_region", "India")
+
+        # Default origin coordinates (India)
+        origin_coords = {"lat": 20.5937, "lng": 78.9629}
+        region_coords = {
+            "India": {"lat": 20.5937, "lng": 78.9629},
+            "China": {"lat": 35.8617, "lng": 104.1954},
+            "Russia": {"lat": 61.524, "lng": 105.3188},
+            "Brazil": {"lat": -14.235, "lng": -51.9253},
+            "Global": {"lat": 20.5937, "lng": 78.9629},
+        }
+        origin = region_coords.get(target_region, origin_coords)
+
+        for node in nodes:
+            if node.get("type") != "ip":
+                continue
+
+            meta = node.get("metadata", {})
+            lat = meta.get("lat", 0)
+            lng = meta.get("lng", 0)
+            ip = node.get("label", "")
+
+            if not lat and not lng:
+                continue
+            if ip in seen_ips:
+                continue
+            seen_ips.add(ip)
+
+            markers.append({
+                "ip": ip,
+                "lat": lat,
+                "lng": lng,
+                "country": meta.get("country", ""),
+                "city": meta.get("city", ""),
+                "org": meta.get("asn", ""),
+                "classification": meta.get("classification", "unknown"),
+                "risk": node.get("risk", "medium"),
+                "case_name": case_name,
+            })
+
+            arcs.append({
+                "from": origin,
+                "to": {"lat": lat, "lng": lng},
+                "case_name": case_name,
+                "classification": meta.get("classification", "unknown"),
+            })
+
+    return {"markers": markers, "arcs": arcs}
+
 @router.get("/", response_model=List[CaseSchema])
 def get_cases(db: Session = Depends(get_db)):
     """
-    Retrieve all cases.
+    Retrieve all cases and compute their threat_score from phase results.
     """
     cases = db.query(Case).all()
+    for case in cases:
+        # Calculate max risk score across all phases
+        risk_scores = [p.risk_score for p in case.phase_results if p.risk_score is not None]
+        case.threat_score = max(risk_scores) if risk_scores else 0
     return cases
 
 @router.get("/{case_id}", response_model=CaseSchema)
@@ -28,6 +104,9 @@ def get_case(case_id: UUID, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Case not found"
         )
+        
+    risk_scores = [p.risk_score for p in case.phase_results if p.risk_score is not None]
+    case.threat_score = max(risk_scores) if risk_scores else 0
     return case
 
 @router.post("/{case_id}/dynamic/run")

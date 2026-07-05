@@ -41,6 +41,17 @@ export function buildCaseContext(selectedCase: string) {
     : [];
   // Activity log
   const activity = REAL_ACTIVITY.filter((a) => a.case_id === c.id);
+  if (activity.length === 0) {
+    activity.push({
+      id: `act-${c.id}`,
+      action: c.status === "completed" ? "STATIC_DYNAMIC_ANALYSIS_COMPLETED" : "ANALYSIS_PROCESSING",
+      case_id: c.id,
+      case_number: c.case_number || `CASE-${c.id.slice(0, 8).toUpperCase()}`,
+      user: "APEX-X Engine",
+      timestamp: c.updated_at || c.created_at || new Date().toISOString(),
+      details: `Automated analysis for ${c.apk_name} — Threat Score: ${c.threat_score || 0}/100`,
+    });
+  }
 
   // All other cases for cross-referencing
   const otherCases = REAL_CASES.reduce((acc, x) => {

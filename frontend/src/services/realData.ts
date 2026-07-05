@@ -30,7 +30,7 @@ export interface Permission {
 export interface IOCEntry {
   case_id?: string;
   id: string;
-  type: "domain" | "ip" | "url" | "hash" | "email" | "phone";
+  type: "domain" | "ip" | "url" | "hash" | "email" | "phone" | "upi" | "bank_account" | string;
   value: string;
   context: string;
   confidence: number;

@@ -71,46 +71,16 @@ def translate_text(text: str, target_lang: str) -> str:
 # ── LLM Report Generation ────────────────────────────────────
 
 def _generate_report_narrative(case_data: Dict[str, Any]) -> str:
-    """Use local Qwen 2.5 LLM to generate a detailed forensic report in English."""
+    """
+    Builds the report instantly using deterministic analysis results
+    and appends the LLM-generated conclusion/prevention from the DB.
+    """
     try:
-        from app.engines.intelligence import llm_client
-        
-        health = llm_client.check_health()
-        if health.get("status") != "healthy" or not health.get("coder_ready", False):
-            return _fallback_narrative(case_data)
-        
-        system_prompt = """You are a senior forensic analyst writing an official investigation report for the APEX-X Android Malware Forensic Platform.
-Write a professional, court-admissible forensic report covering all analysis findings.
-Structure your report with these sections:
-1. EXECUTIVE SUMMARY — verdict, threat score, risk classification
-2. APK PROFILE — file name, package name, SHA256, target SDK
-3. PERMISSION ANALYSIS — dangerous permissions, their implications
-4. STATIC ANALYSIS — manifest flags, exported components, misconfigurations
-5. DYNAMIC ANALYSIS — runtime behavior, network traffic, API hooks (if available)
-6. C2 & ATTRIBUTION — contacted infrastructure, campaign attribution (if available)
-7. VULNERABILITY ASSESSMENT — OWASP findings with CVSS scores and CWE IDs
-8. CONCLUSION & RECOMMENDATION
-
-Use bullet points. Be precise. Reference exact data values. Keep total length under 1500 words."""
-
-        prompt = f"Generate the forensic investigation report for this case:\n\n{json.dumps(case_data, indent=2, default=str)}"
-        
-        narrative = llm_client.generate(
-            prompt=prompt,
-            model=llm_client.MODEL_CODER,
-            system=system_prompt,
-            temperature=0.2,
-            max_tokens=3000
-        )
-        
-        if narrative.startswith("[ERROR"):
-            return _fallback_narrative(case_data)
-        
-        return narrative.strip()
-        
+        report = _fallback_narrative(case_data)
+        return report
     except Exception as e:
-        logger.error(f"LLM report generation error: {e}")
-        return _fallback_narrative(case_data)
+        logger.error(f"Report formatting error: {e}")
+        return "Error generating report."
 
 
 def _fallback_narrative(case_data: Dict[str, Any]) -> str:
@@ -163,10 +133,18 @@ def _fallback_narrative(case_data: Dict[str, Any]) -> str:
     
     if vulns:
         sections.append("")
-        sections.append("5. VULNERABILITY ASSESSMENT")
+        sections.append("5. VULNERABILITY ASSESSMENT & PROOF OF CONCEPT")
         sections.append(f"Total: {len(vulns)} | Critical: {len(critical_vulns)} | High: {len(high_vulns)}")
-        for v in vulns[:6]:
+        for v in vulns:
             sections.append(f"  - [{v.get('severity','').upper()}] {v.get('title','')} (CVSS {v.get('cvss_score',0)})")
+            if v.get('cwe_id') or v.get('owasp_category'):
+                sections.append(f"    CWE: {v.get('cwe_id', 'N/A')} | OWASP: {v.get('owasp_category', 'N/A')}")
+            if v.get('poc_narrative'):
+                sections.append("    --- PROOF OF CONCEPT (LLM GENERATED) ---")
+                for line in str(v.get('poc_narrative')).split('\n'):
+                    sections.append(f"    {line}")
+                sections.append("    ----------------------------------------")
+            sections.append("")
     
     c2 = case_data.get("c2_intelligence", {})
     if c2:
@@ -179,9 +157,27 @@ def _fallback_narrative(case_data: Dict[str, Any]) -> str:
         attr = c2.get("attribution", {})
         if attr.get("campaign"):
             sections.append(f"Attributed Campaign: {attr.get('campaign')}")
+            
+    threat_narrative = case_data.get("threat_narrative")
+    if threat_narrative:
+        sections.append("")
+        sections.append("7. THREAT REASONING & MITIGATION")
+        if isinstance(threat_narrative, dict):
+            if threat_narrative.get("behavioral_intent"):
+                sections.append(f"Behavioral Intent: {threat_narrative.get('behavioral_intent')}")
+            if threat_narrative.get("chain_of_evidence"):
+                sections.append("Chain of Evidence:")
+                for item in threat_narrative.get("chain_of_evidence", []):
+                    sections.append(f"  - {item}")
+            if threat_narrative.get("mitigation_recommendations"):
+                sections.append("Prevention & Recommendations:")
+                for item in threat_narrative.get("mitigation_recommendations", []):
+                    sections.append(f"  - {item}")
+        elif isinstance(threat_narrative, str):
+            sections.append(threat_narrative)
     
     sections.append("")
-    sections.append("7. SECTION 65B COMPLIANCE")
+    sections.append("8. SECTION 65B COMPLIANCE")
     sections.append("This forensic document is certified under Section 65B of the Indian Evidence Act.")
     sections.append(f"Generated: {datetime.datetime.utcnow().isoformat()}Z")
     
@@ -265,10 +261,20 @@ def _load_case_data(case_id: str, db: Session) -> Dict[str, Any]:
                 "title": f.get("title", f.get("name", "")),
                 "severity": f.get("severity", ""),
                 "cvss_score": f.get("cvss_score", 0),
-                "cwe_id": f.get("cwe_id", ""),
-                "owasp_category": f.get("owasp_category", ""),
+                "cwe_id": f.get("cwe_id", f.get("cwe", "")),
+                "owasp_category": f.get("owasp_category", f.get("owasp", "")),
                 "description": f.get("description", ""),
+                "poc_narrative": f.get("poc_narrative", f.get("poc", "")),
             } for f in result.get("findings", [])]
+            
+        elif pr.phase == "threat_reasoning" and pr.result:
+            data["threat_narrative"] = pr.result
+
+    risk_scores = [pr.risk_score for pr in phase_results if pr.risk_score is not None]
+    if risk_scores:
+        data["threat_score"] = max(risk_scores)
+    elif "threat_score" not in data:
+        data["threat_score"] = 0
 
     return data
 
@@ -325,12 +331,24 @@ class PDFGenerator:
         margin_left = 45
         max_width = width - 90
         
+        import re
         lines = narrative.split("\n")
-        for line in lines:
+        for raw_line in lines:
+            line = raw_line.strip()
+            # Clean markdown formatting like ### or **
+            line = re.sub(r'^\s*#+\s*', '', line)
+            line = re.sub(r'\*\*([^*]+)\*\*', r'\1', line)
+            line = re.sub(r'\*([^*]+)\*', r'\1', line)
+            line = re.sub(r'__([^_]+)__', r'\1', line)
+            line = re.sub(r'_([^_]+)_', r'\1', line)
+            line = re.sub(r'`([^`]+)`', r'\1', line)
+            if line.startswith(("* ", "- ")):
+                line = "• " + line[2:]
+
             # Detect section headers
             is_header = (
-                line.strip().startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.")) or
-                line.strip().upper() == line.strip() and len(line.strip()) > 3 and len(line.strip()) < 80
+                line.startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.")) or
+                (line.upper() == line and len(line) > 3 and len(line) < 80 and not line.startswith("•"))
             )
             
             if is_header:
@@ -413,8 +431,20 @@ async def download_report(case_id: str, language: str = "en", db: Session = Depe
         case_data = _load_case_data(case_id, db)
         case_number = case_data.get("case_number", f"CASE-{case_id[:8].upper()}")
         
-        # Generate detailed English narrative via LLM
-        narrative = _generate_report_narrative(case_data)
+        import uuid
+        case_uuid = uuid.UUID(case_id)
+        
+        # First check if there's a cached English report
+        report_record = db.query(PhaseResult).filter(
+            PhaseResult.case_id == case_uuid,
+            PhaseResult.phase == "report_english"
+        ).first()
+
+        if report_record and report_record.result and "narrative" in report_record.result:
+            narrative = report_record.result["narrative"]
+        else:
+            # Fallback for old cases: generate on-the-fly
+            narrative = _generate_report_narrative(case_data)
         
         # Generate the PDF (translation happens inside if language != English)
         generator = PDFGenerator(REPORTS_DIR)

@@ -10,6 +10,7 @@ import logging
 from typing import Dict, Any, List
 
 from app.engines import virustotal_client
+from app.engines import ipinfo_client
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ def build_c2_graph(
             node_ids.add(did)
             add_edge(apk_id, did, "CONTACTS")
 
-    # IP nodes
+    # IP nodes — enriched with ipinfo geolocation
     for ip in sorted(ips):
         if ip.startswith("10.") or ip.startswith("127.") or ip.startswith("192.168."):
             continue
@@ -175,6 +176,12 @@ def build_c2_graph(
             risk = "medium"
             country = ""
             asn_owner = ""
+            city = ""
+            lat = 0.0
+            lng = 0.0
+            classification = "unknown"
+
+            # Try VirusTotal data first for maliciousness
             for ip_obj in contacted_ips_data:
                 if ip_obj.get("id") == ip:
                     attrs = ip_obj.get("attributes", {})
@@ -187,12 +194,38 @@ def build_c2_graph(
                     asn_owner = attrs.get("as_owner", "")
                     break
 
+            # Enrich with ipinfo for geolocation, ISP, and classification
+            try:
+                geo = ipinfo_client.enrich_ip(ip)
+                if geo.get("country"):
+                    country = geo["country"]
+                if geo.get("city"):
+                    city = geo["city"]
+                if geo.get("org"):
+                    asn_owner = geo["org"]
+                lat = geo.get("lat", 0.0)
+                lng = geo.get("lng", 0.0)
+                classification = geo.get("classification", "unknown")
+
+                # Upgrade risk if VT didn't flag it but ipinfo says suspicious
+                if risk == "medium" and classification == "suspicious":
+                    risk = "high"
+            except Exception as e:
+                logger.debug(f"IPInfo enrichment failed for {ip}: {e}")
+
             nodes.append({
                 "id": iid,
                 "label": ip,
                 "type": "ip",
                 "risk": risk,
-                "metadata": {"country": country, "asn": asn_owner},
+                "metadata": {
+                    "country": country,
+                    "city": city,
+                    "asn": asn_owner,
+                    "lat": lat,
+                    "lng": lng,
+                    "classification": classification,
+                },
             })
             node_ids.add(iid)
             add_edge(apk_id, iid, "CONNECTS_TO")

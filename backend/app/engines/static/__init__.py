@@ -201,7 +201,9 @@ def run_full_static_analysis(apk_path: str, case_dir: str) -> Dict[str, Any]:
                 total_files += dir_result.get("total_files_scanned", 0)
 
             # Also scan raw APK binary
+            logger.info(f"Scanning raw APK bytes for {apk_path}...")
             apk_result = yara_scanner.scan_apk_bytes(apk_path, rules=compiled_rules)
+            logger.info("Finished scanning raw APK bytes.")
             all_yara_matches.extend(apk_result.get("matches", []))
 
             # Deduplicate by rule name

@@ -46,7 +46,7 @@ export default function CaseTabs({
       )}
 
       {activeTab === "reports" && (
-        <ReportsTab caseData={caseData} caseReports={caseReports} />
+        <ReportsTab caseData={caseData} caseReports={caseReports} analysisResults={analysisResults} />
       )}
     </div>
   );

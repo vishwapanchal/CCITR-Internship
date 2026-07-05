@@ -1,9 +1,44 @@
-import { FileText, Download } from "lucide-react";
+import { useState } from "react";
+import { FileText, Download, Loader2 } from "lucide-react";
 import IOCTable from "@/components/IOCTable";
 import { REAL_IOCS } from "@/services/realData";
 import { downloadReport, downloadEvidencePackage } from "@/services/api";
 
-export default function ReportsTab({ caseData, caseReports }: { caseData: any; caseReports: any[] }) {
+export default function ReportsTab({ caseData, caseReports, analysisResults }: { caseData: any; caseReports: any[]; analysisResults?: any }) {
+  const [downloadingLang, setDownloadingLang] = useState<string | null>(null);
+
+  const staticResult = analysisResults && Array.isArray(analysisResults)
+    ? analysisResults.find((r: any) => r.phase === "static")?.result
+    : null;
+
+  let iocsToUse: any[] = [];
+  if (staticResult?.steps?.iocs?.data) {
+    const iocData = staticResult.steps.iocs.data;
+    const allIocs: any[] = [];
+    let iocId = 1;
+    (iocData.urls || []).forEach((url: string) => {
+      allIocs.push({ id: `ioc-${iocId++}`, type: "url", val: url, desc: "Extracted URL from code", risk: "medium" });
+    });
+    (iocData.ips || []).forEach((ip: string) => {
+      allIocs.push({ id: `ioc-${iocId++}`, type: "ip", val: ip, desc: "Hardcoded IP address", risk: "high" });
+    });
+    (iocData.domains || []).forEach((dom: string) => {
+      allIocs.push({ id: `ioc-${iocId++}`, type: "domain", val: dom, desc: "Connected domain", risk: "medium" });
+    });
+    iocsToUse = allIocs;
+  } else {
+    iocsToUse = REAL_IOCS.filter((i: any) => i.case_id === caseData?.id);
+  }
+
+  const handleDownload = async (lang: string) => {
+    setDownloadingLang(lang);
+    try {
+      await downloadReport(caseData.id, lang.toLowerCase());
+    } finally {
+      setDownloadingLang(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="bg-panel border border-border-subtle p-4">
@@ -26,12 +61,21 @@ export default function ReportsTab({ caseData, caseReports }: { caseData: any; c
                 </div>
                 <button
                   type="button"
-                  onClick={() => downloadReport(caseData.id, lang.toLowerCase())}
-                  disabled={!report}
-                  className="flex items-center gap-1 text-xs font-mono px-2 py-1 border border-border-subtle hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  onClick={() => handleDownload(lang)}
+                  disabled={!report || downloadingLang === lang}
+                  className="flex items-center gap-1 text-xs font-mono px-2 py-1 border border-border-subtle hover:bg-canvas disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-[70px] justify-center"
                 >
-                  <Download className="w-3 h-3" />
-                  PDF
+                  {downloadingLang === lang ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Generating
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3 h-3" />
+                      PDF
+                    </>
+                  )}
                 </button>
               </div>
             );
@@ -65,7 +109,7 @@ export default function ReportsTab({ caseData, caseReports }: { caseData: any; c
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
           IOC Exports
         </h3>
-        <IOCTable iocs={REAL_IOCS} />
+        <IOCTable iocs={iocsToUse} />
       </div>
     </div>
   );

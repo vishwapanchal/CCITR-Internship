@@ -201,7 +201,7 @@ def _infer_target_region(case_dir: str) -> str:
 
         # Check for India-specific indicators
         all_text = json.dumps(report).lower()
-        if any(w in all_text for w in ["india", "inr", "rupee", "aadhaar", "upi", "rto", "challan", "paytm", "phonepe"]):
+        if any(w in all_text for w in ["india", "inr", "rupee", "aadhaar", "upi", "rto", "challan", "paytm", "phonepe", "yojana", "awas", "awash", "pradhan", "sarkari", "parivahan", "pm"]):
             return "India"
         if any(w in all_text for w in ["china", "cny", "wechat", "alipay"]):
             return "China"

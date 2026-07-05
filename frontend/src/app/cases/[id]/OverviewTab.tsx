@@ -9,11 +9,48 @@ import { AlertTriangle, Info } from "lucide-react";
 export default function OverviewTab({ caseData, phaseStatus, analysisResults }: { caseData: any; phaseStatus: any; analysisResults?: any }) {
   // Build findings dynamically from real analysis results
   const findings: { severity: string; title: string; description: string }[] = [];
+  
+  // Compute Radar Points: Network, Storage, Crypto, Permissions, Execution
+  let netScore = 0.1, storageScore = 0.1, cryptoScore = 0.1, permScore = 0.1, execScore = 0.1;
 
   if (analysisResults && Array.isArray(analysisResults)) {
-    const staticResult = analysisResults.find((r: any) => r.phase === "static");
-    if (staticResult?.result) {
-      const steps = staticResult.result.steps || {};
+    const staticResultObj = analysisResults.find((r: any) => r.phase === "static");
+    const dynamicResultObj = analysisResults.find((r: any) => r.phase === "dynamic");
+    const staticResult = staticResultObj?.result;
+    const dynamicResult = dynamicResultObj?.result;
+
+    if (staticResult) {
+      // Permissions Score
+      const perms = staticResult.steps?.manifest?.data?.permissions || {};
+      const dangerousCount = Object.values(perms).filter((p: any) => p?.protection_level === "dangerous").length;
+      permScore = Math.min(0.1 + (dangerousCount * 0.1), 1.0);
+
+      // Network Score
+      const urlsCount = staticResult.steps?.iocs?.data?.urls?.length || 0;
+      netScore = Math.min(0.1 + (urlsCount * 0.05), 1.0);
+
+      // Storage & Crypto Score (derived from misconfigs)
+      const misconfigs = staticResult.steps?.manifest?.data?.misconfigurations || [];
+      if (misconfigs.length > 0) {
+        storageScore = Math.min(0.1 + (misconfigs.length * 0.1), 0.9);
+        cryptoScore = Math.min(0.1 + (misconfigs.length * 0.08), 0.8);
+      }
+
+      // Execution Score
+      if (staticResult.steps?.yara?.data?.total_matches > 0) {
+        execScore = 0.85;
+      }
+    }
+
+    if (dynamicResult) {
+      execScore = Math.max(execScore, 0.9);
+      if (dynamicResult.network_activity?.length > 0) {
+        netScore = Math.max(netScore, 0.8);
+      }
+    }
+
+    if (staticResultObj?.result) {
+      const steps = staticResultObj.result.steps || {};
 
       // Permissions
       const manifest = steps.manifest?.data || {};
@@ -99,8 +136,8 @@ export default function OverviewTab({ caseData, phaseStatus, analysisResults }: 
       </div>
 
       {/* Vulnerability Radar */}
-      <div className="bg-panel border border-border-subtle p-6 md:col-span-4 flex flex-col items-center justify-center">
-        <VulnerabilityRadar />
+      <div className="bg-panel border border-border-subtle p-6 flex flex-col items-center justify-center md:col-span-4">
+        <VulnerabilityRadar dataPoints={[netScore, storageScore, cryptoScore, permScore, execScore]} />
       </div>
 
       {/* Key Findings Summary — DYNAMIC from real analysis */}

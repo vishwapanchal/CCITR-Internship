@@ -41,6 +41,27 @@ export default function Dashboard() {
     completed: cases.filter((c) => c.status === "completed").length,
   };
 
+  const recentActivities = cases.length > 0 ? cases.map((c) => {
+    let action = "APK_UPLOADED";
+    let details = `APK uploaded: ${c.apk_name}`;
+    if (c.status === "completed") {
+      action = "ANALYSIS_COMPLETED";
+      details = `Static & Dynamic analysis completed for ${c.apk_name} — Threat Score: ${c.threat_score || 0}/100`;
+    } else if (c.status === "analyzing") {
+      action = "ANALYSIS_IN_PROGRESS";
+      details = `Automated forensics pipeline analyzing ${c.apk_name}...`;
+    }
+    return {
+      id: `act-${c.id}`,
+      action,
+      case_id: c.id,
+      case_number: c.case_number || `CASE-${c.id.slice(0, 8).toUpperCase()}`,
+      user: "APEX-X Engine",
+      timestamp: c.updated_at || c.created_at || new Date().toISOString(),
+      details,
+    };
+  }) : REAL_ACTIVITY;
+
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
       <m.header 
@@ -186,7 +207,7 @@ export default function Dashboard() {
             Recent Activity
           </h3>
           <div className="flex-1 overflow-y-auto space-y-4">
-            {REAL_ACTIVITY.map((activity) => (
+            {recentActivities.map((activity) => (
               <div key={activity.id} className="relative pl-4 border-l border-border-subtle">
                 <div className="absolute w-2 h-2 bg-primary rounded-full -left-[4.5px] top-1" />
                 <div className="mb-1">

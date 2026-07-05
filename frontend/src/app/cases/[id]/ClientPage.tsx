@@ -91,6 +91,18 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
               detailData.threat_score = Math.min(score + (yaraHits * 25), 100);
             }
           }
+
+          // AGGREGATE THREAT SCORE ACROSS ALL PHASES
+          let maxThreat = detailData.threat_score || 0;
+          resultsArray.forEach((r: any) => {
+            if (r.result?.threat_score && r.result.threat_score > maxThreat) {
+              maxThreat = r.result.threat_score;
+            }
+            if (r.result?.risk_score && r.result.risk_score > maxThreat) {
+              maxThreat = r.result.risk_score;
+            }
+          });
+          detailData.threat_score = maxThreat;
           
           if (!detailData.verdict || detailData.verdict === "completed") {
              if (detailData.threat_score >= 74) detailData.verdict = "High Risk";
@@ -98,8 +110,14 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
              else detailData.verdict = "Low Risk";
           }
           
-          const duration = staticResult.duration_seconds;
-          detailData.analysis_time = (duration && duration < 100) ? `${duration.toFixed(1)} s` : "24.2 s";
+          const duration = staticResult.duration_seconds || 0;
+          let formattedTime = `${duration.toFixed(1)} s`;
+          if (duration >= 60) {
+            const mins = Math.floor(duration / 60);
+            const secs = Math.floor(duration % 60);
+            formattedTime = `${mins}m ${secs}s`;
+          }
+          detailData.analysis_time = formattedTime;
           detailData.engine_version = "APEX-X v2.1";
           detailData.decompiler = staticResult.steps?.jadx?.status === "success" ? "JADX + Androguard" : "Androguard";
         }

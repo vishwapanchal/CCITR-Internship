@@ -148,6 +148,12 @@ def get_package_name(apk_path: str) -> Optional[str]:
 def install_apk(apk_path: str, package_name: str, device: Optional[str] = None) -> Dict[str, Any]:
     """Install APK on device."""
     logger.info(f"Installing APK: {apk_path}")
+    
+    # Always uninstall first to prevent INSTALL_FAILED_UPDATE_INCOMPATIBLE
+    if package_name:
+        logger.info(f"Pre-emptively uninstalling {package_name} to clear old signatures...")
+        uninstall_apk(package_name, device=device)
+        
     # -g grants all runtime permissions automatically
     result = _run_adb(["install", "-g", "-r", "-t", apk_path], device=device, timeout=INSTALL_TIMEOUT)
     if result["success"]:

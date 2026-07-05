@@ -95,16 +95,37 @@ def scan_file(file_path: str, rules) -> List[Dict[str, Any]]:
 
         for match in yara_matches:
             matched_strings = []
-            for offset, identifier, data in match.strings:
+            for string_match in match.strings:
                 try:
-                    decoded = data.decode("utf-8", errors="replace")[:100]
+                    if hasattr(string_match, 'identifier') and hasattr(string_match, 'instances'):
+                        # Newer yara-python
+                        identifier = string_match.identifier
+                        for instance in string_match.instances:
+                            offset = getattr(instance, 'offset', 0)
+                            data = getattr(instance, 'matched_data', b'')
+                            try:
+                                decoded = data.decode("utf-8", errors="replace")[:100]
+                            except Exception:
+                                decoded = str(data)[:100]
+                            matched_strings.append({
+                                "offset": offset,
+                                "identifier": identifier,
+                                "data": decoded,
+                            })
+                    else:
+                        # Older yara-python (tuple)
+                        offset, identifier, data = string_match
+                        try:
+                            decoded = data.decode("utf-8", errors="replace")[:100]
+                        except Exception:
+                            decoded = str(data)[:100]
+                        matched_strings.append({
+                            "offset": offset,
+                            "identifier": identifier,
+                            "data": decoded,
+                        })
                 except Exception:
-                    decoded = str(data)[:100]
-                matched_strings.append({
-                    "offset": offset,
-                    "identifier": identifier,
-                    "data": decoded,
-                })
+                    pass
 
             matches.append({
                 "rule": match.rule,

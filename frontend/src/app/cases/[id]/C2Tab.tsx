@@ -204,36 +204,118 @@ export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabPr
         </div>
       )}
 
-      {/* Contacted Infrastructure Table */}
-      {hasRealData && (infra.domains?.length > 0 || infra.ips?.length > 0) && (
-        <div className="bg-panel border border-border-subtle p-4">
-          <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
-            Contacted Infrastructure
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {infra.domains?.length > 0 && (
-              <div>
-                <div className="text-xs font-mono text-primary/50 mb-2 uppercase">Domains ({infra.domains.length})</div>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {infra.domains.map((d: string, i: number) => (
-                    <div key={i} className="text-xs font-mono text-primary/70 py-1 border-b border-border-subtle/30">{d}</div>
-                  ))}
+      {/* Contacted Infrastructure — Enriched Table */}
+      {hasRealData && (c2NodesToUse.length > 0) && (() => {
+        const ipNodes = c2NodesToUse.filter((n: any) => n.type === "ip");
+        const domainNodes = c2NodesToUse.filter((n: any) => n.type === "domain");
+        if (ipNodes.length === 0 && domainNodes.length === 0) return null;
+
+        const classificationBadge = (cls: string) => {
+          const map: Record<string, { color: string; bg: string; label: string }> = {
+            benign: { color: "text-green-400", bg: "bg-green-500/10 border-green-500/20", label: "🟢 Benign" },
+            suspicious: { color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/20", label: "🟡 Suspicious" },
+            malicious: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", label: "🔴 Malicious" },
+            unknown: { color: "text-primary/50", bg: "bg-primary/5 border-primary/10", label: "⚪ Unknown" },
+          };
+          const style = map[cls] || map.unknown;
+          return (
+            <span className={`px-2 py-0.5 text-xs font-mono rounded border ${style.bg} ${style.color}`}>
+              {style.label}
+            </span>
+          );
+        };
+
+        const riskBadge = (risk: string) => {
+          const colors: Record<string, string> = {
+            critical: "bg-red-500/20 text-red-400 border-red-500/30",
+            high: "bg-orange-500/15 text-orange-400 border-orange-500/25",
+            medium: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+            low: "bg-green-500/10 text-green-400 border-green-500/20",
+          };
+          return (
+            <span className={`px-2 py-0.5 text-xs font-mono rounded border uppercase ${colors[risk] || colors.medium}`}>
+              {risk}
+            </span>
+          );
+        };
+
+        return (
+          <div className="bg-panel border border-border-subtle p-4">
+            <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
+              Contacted Infrastructure
+            </h3>
+
+            {/* IP Addresses Table */}
+            {ipNodes.length > 0 && (
+              <div className="mb-4">
+                <div className="text-xs font-mono text-primary/50 mb-2 uppercase">
+                  IP Addresses ({ipNodes.length})
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border-subtle text-left">
+                        <th className="py-2 px-2 font-mono text-primary/50 font-normal">IP Address</th>
+                        <th className="py-2 px-2 font-mono text-primary/50 font-normal">Location</th>
+                        <th className="py-2 px-2 font-mono text-primary/50 font-normal">ISP / Org</th>
+                        <th className="py-2 px-2 font-mono text-primary/50 font-normal">Classification</th>
+                        <th className="py-2 px-2 font-mono text-primary/50 font-normal">Risk</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ipNodes.map((node: any, i: number) => {
+                        const meta = node.metadata || {};
+                        const location = [meta.city, meta.country].filter(Boolean).join(", ");
+                        return (
+                          <tr key={i} className="border-b border-border-subtle/30 hover:bg-primary/5 transition-colors">
+                            <td className="py-2 px-2 font-mono text-primary/80">{node.label}</td>
+                            <td className="py-2 px-2 text-primary/70">
+                              {location || <span className="text-primary/30 italic">Unknown</span>}
+                            </td>
+                            <td className="py-2 px-2 text-primary/70 max-w-[200px] truncate">
+                              {meta.asn || <span className="text-primary/30 italic">Unknown</span>}
+                            </td>
+                            <td className="py-2 px-2">{classificationBadge(meta.classification || "unknown")}</td>
+                            <td className="py-2 px-2">{riskBadge(node.risk)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
-            {infra.ips?.length > 0 && (
+
+            {/* Domains */}
+            {domainNodes.length > 0 && (
               <div>
-                <div className="text-xs font-mono text-primary/50 mb-2 uppercase">IP Addresses ({infra.ips.length})</div>
-                <div className="space-y-1 max-h-48 overflow-y-auto">
-                  {infra.ips.map((ip: string, i: number) => (
-                    <div key={i} className="text-xs font-mono text-primary/70 py-1 border-b border-border-subtle/30">{ip}</div>
+                <div className="text-xs font-mono text-primary/50 mb-2 uppercase">
+                  Domains ({domainNodes.length})
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {domainNodes.map((node: any, i: number) => (
+                    <span
+                      key={i}
+                      className={`px-2 py-1 text-xs font-mono rounded border ${
+                        node.risk === "critical"
+                          ? "bg-red-500/10 text-red-400 border-red-500/20"
+                          : node.risk === "high"
+                          ? "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                          : "bg-primary/5 text-primary/70 border-primary/10"
+                      }`}
+                    >
+                      {node.label}
+                      {node.metadata?.country && (
+                        <span className="ml-1 text-primary/40">({node.metadata.country})</span>
+                      )}
+                    </span>
                   ))}
                 </div>
               </div>
             )}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import ClientPage from './ClientPage';
 
 export const metadata = {
-  title: "APEX-X | Graph",
-  description: "APEX-X Graph Page",
+  title: "APEX-X | Global Threat Map",
+  description: "Interactive world map showing C2 infrastructure from analyzed APKs",
 };
 
 export default function Page() {

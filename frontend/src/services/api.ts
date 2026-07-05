@@ -95,6 +95,10 @@ export interface CaseResponse {
   verdict?: string;
   package_name?: string;
   priority?: string;
+  analysis_time?: string;
+  engine_version?: string;
+  decompiler?: string;
+  [key: string]: any;
 }
 
 export async function getCases(): Promise<{ data: CaseResponse[] | null; error: string | null; status: number }> {
