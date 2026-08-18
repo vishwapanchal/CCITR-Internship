@@ -7,7 +7,6 @@ context to answer investigator queries using the local LLM.
 import os
 import json
 import logging
-from typing import List, Dict, Any
 
 from app.config import settings
 from app.engines.intelligence import llm_client
@@ -95,8 +94,8 @@ def index_case_artifacts(case_id: str, case_dir: str) -> bool:
 
         # 2. Chunk text
         text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
+            chunk_size=getattr(settings, "RAG_CHUNK_SIZE", 1000),
+            chunk_overlap=getattr(settings, "RAG_CHUNK_OVERLAP", 200),
             length_function=len,
         )
         
@@ -112,7 +111,7 @@ def index_case_artifacts(case_id: str, case_dir: str) -> bool:
         metadatas = [{"case_id": case_id} for _ in range(len(chunks))]
         
         # Upsert in small batches
-        batch_size = 100
+        batch_size = getattr(settings, "RAG_BATCH_SIZE", 100)
         for i in range(0, len(chunks), batch_size):
             collection.upsert(
                 documents=chunks[i:i+batch_size],

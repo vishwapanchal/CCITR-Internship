@@ -36,6 +36,5 @@ def save_upload_file(upload_file: UploadFile, destination_path: str) -> bool:
         # Reset file pointer for any further reading (like hashing)
         upload_file.file.seek(0)
         return True
-    except Exception as e:
-        print(f"Error saving file: {e}")
+    except Exception:
         return False

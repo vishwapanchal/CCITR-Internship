@@ -172,38 +172,4 @@ def get_java_source_stats(output_dir: str) -> Dict[str, Any]:
     return stats
 
 
-def search_java_source(output_dir: str, patterns: List[str]) -> List[Dict[str, Any]]:
-    """
-    Search extracted Java source code for specific patterns (strings, method calls, etc.).
 
-    Args:
-        output_dir: Root of JADX output.
-        patterns: List of string patterns to search for.
-
-    Returns:
-        List of match dicts with file, line_number, line_content, matched_pattern.
-    """
-    matches = []
-    sources_dir = os.path.join(output_dir, "sources")
-    scan_dir = sources_dir if os.path.isdir(sources_dir) else output_dir
-
-    for root, _dirs, files in os.walk(scan_dir):
-        for f in files:
-            if not f.endswith(".java"):
-                continue
-            file_path = os.path.join(root, f)
-            try:
-                with open(file_path, "r", encoding="utf-8", errors="ignore") as fh:
-                    for line_num, line in enumerate(fh, 1):
-                        for pattern in patterns:
-                            if pattern.lower() in line.lower():
-                                matches.append({
-                                    "file": os.path.relpath(file_path, scan_dir),
-                                    "line_number": line_num,
-                                    "line_content": line.strip()[:200],
-                                    "matched_pattern": pattern,
-                                })
-            except Exception:
-                continue
-
-    return matches[:500]  # Cap results

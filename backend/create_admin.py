@@ -11,14 +11,16 @@ def init_db():
     admin = db.query(User).filter(User.username == "admin").first()
     if not admin:
         print("Creating default admin user...")
+        import os
+        admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin@123")
         admin_user = User(
             username="admin",
             role=Role.ADMINISTRATOR,
-            hashed_password=get_password_hash("admin@123")
+            hashed_password=get_password_hash(admin_password)
         )
         db.add(admin_user)
         db.commit()
-        print("Admin user created successfully. Username: admin, Password: admin@123")
+        print(f"Admin user created successfully. Username: admin, Password: {admin_password}")
     else:
         print("Admin user already exists.")
     

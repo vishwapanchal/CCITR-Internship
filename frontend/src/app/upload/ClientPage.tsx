@@ -6,11 +6,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import { uploadAPK } from "@/services/api";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function IntakePage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isDragging, setIsDragging] = useState(false);
@@ -63,12 +61,6 @@ export default function IntakePage() {
 
   const startScan = async () => {
     if (!file) return;
-
-    // Optional: force login before upload in a real app
-    // if (!isAuthenticated) {
-    //   router.push("/login");
-    //   return;
-    // }
 
     setIsScanning(true);
     setError(null);

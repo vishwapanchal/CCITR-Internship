@@ -6,9 +6,8 @@ for screen-share / remote-access scams.
 """
 
 import os
-import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 

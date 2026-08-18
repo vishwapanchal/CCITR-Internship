@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from datetime import datetime
 from uuid import UUID
 
@@ -47,8 +47,9 @@ from pydantic import validator
 class UserSignup(UserCreate):
     @validator("username")
     def validate_username(cls, v):
-        if not v.endswith("@cyber.gov"):
-            raise ValueError("Email must end with @cyber.gov")
+        from app.config import settings
+        if not v.endswith(settings.ALLOWED_EMAIL_DOMAIN):
+            raise ValueError(f"Email must end with {settings.ALLOWED_EMAIL_DOMAIN}")
         return v
 
 class UserResponse(UserBase):

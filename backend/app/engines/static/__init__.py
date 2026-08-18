@@ -12,7 +12,7 @@ import json
 import hashlib
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from app.engines.static import apktool_wrapper
 from app.engines.static import jadx_wrapper

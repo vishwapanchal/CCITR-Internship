@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "APEX-X Backend API"
     API_V1_STR: str = "/api/v1"
     
-    POSTGRES_USER: str = "apex"
-    POSTGRES_PASSWORD: str = "apexpassword"
-    POSTGRES_DB: str = "apex_db"
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_PORT: str = "5432"
+    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "apex")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "apexpassword")
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "apex_db")
+    POSTGRES_SERVER: str = os.getenv("POSTGRES_SERVER", "localhost")
+    POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "temporary_dev_secret_key_change_in_prod")
     ALGORITHM: str = "HS256"
@@ -46,6 +46,9 @@ class Settings(BaseSettings):
 
     # Threat Intelligence
     VIRUSTOTAL_API_KEY: str = os.getenv("VIRUSTOTAL_API_KEY", "")
+    
+    # Validation
+    ALLOWED_EMAIL_DOMAIN: str = os.getenv("ALLOWED_EMAIL_DOMAIN", "@cyber.gov")
     
     @property
     def CELERY_BROKER_URL(self) -> str:

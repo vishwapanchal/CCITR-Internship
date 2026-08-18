@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api import dependencies
 from app.api.middleware.rbac import get_current_user
 from app.models.database import Case, User, PhaseResult
 from app.services.task_service import analyze_apk_task
 from app.services.audit_service import log_action
-import logging
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 @router.post("/{case_id}/static", status_code=status.HTTP_202_ACCEPTED)
 async def trigger_static_analysis(

@@ -257,18 +257,7 @@ def run_monkey(package_name: str, events: int = 500, device: Optional[str] = Non
     return result
 
 
-def capture_logcat(device: Optional[str] = None, duration: int = 5) -> str:
-    """Capture logcat output. Clear first, then capture for duration."""
-    # Clear existing logcat
-    _run_adb(["logcat", "-c"], device=device)
 
-    time.sleep(duration)
-
-    # Dump logcat
-    result = _run_adb(["logcat", "-d", "-v", "time"], device=device, timeout=30)
-    if result["success"]:
-        return result["stdout"]
-    return ""
 
 
 def start_logcat_capture(device: Optional[str] = None) -> None:

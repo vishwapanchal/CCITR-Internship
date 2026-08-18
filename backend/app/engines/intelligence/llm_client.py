@@ -177,7 +177,7 @@ def _call_ollama_stream(
 def check_health() -> Dict[str, Any]:
     """Check if Ollama is running and which models are available."""
     try:
-        with httpx.Client(timeout=10) as client:
+        with httpx.Client(timeout=getattr(settings, "OLLAMA_HEALTH_TIMEOUT", 10)) as client:
             resp = client.get(f"{settings.OLLAMA_HOST}/api/tags")
             resp.raise_for_status()
             data = resp.json()

@@ -1,9 +1,6 @@
 "use client";
 
 import "./globals.css";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Shield, LogOut, User, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
@@ -15,10 +12,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { isAuthenticated, username, loadFromStorage, logout } = useAuth();
-  const isLoginPage = pathname === "/login";
+  const { loadFromStorage } = useAuth();
 
   useEffect(() => {
     loadFromStorage();

@@ -76,7 +76,7 @@ export default function CoPilotPage() {
           content: m.content,
         }));
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://apex-x.onrender.com/api/v1";
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://apex-x-backend.onrender.com/api/v1";
       const res = await fetch(`${apiUrl}/copilot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

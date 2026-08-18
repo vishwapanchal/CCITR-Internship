@@ -63,47 +63,7 @@ def _api_get(url: str, silent_404: bool = False) -> Optional[Dict]:
     return None
 
 
-def _upload_file(path: str) -> Optional[str]:
-    """Upload a file and return the analysis ID."""
-    if not _has_key():
-        return None
-    for attempt in range(3):
-        try:
-            with open(path, "rb") as f:
-                r = requests.post(
-                    f"{_BASE}/files",
-                    headers=_get_headers(),
-                    files={"file": (path.split("\\")[-1].split("/")[-1], f, "application/octet-stream")},
-                    timeout=120,
-                )
-            if r.status_code == 429:
-                time.sleep(_RATE_WAIT)
-                continue
-            if r.status_code == 409:
-                return None  # Already submitted
-            if not r.ok:
-                logger.debug(f"Upload failed: {r.status_code}")
-                return None
-            return r.json().get("data", {}).get("id")
-        except requests.RequestException as e:
-            logger.debug(f"Upload network error: {e}")
-            time.sleep(_RETRY_WAIT)
-    return None
 
-
-def _poll_analysis(analysis_id: str, max_wait: int = 300) -> Optional[str]:
-    """Poll until analysis completes. Returns sha256 or None."""
-    start = time.time()
-    while time.time() - start < max_wait:
-        data = _api_get(f"{_BASE}/analyses/{analysis_id}")
-        if not data:
-            time.sleep(30)
-            continue
-        status = data.get("data", {}).get("attributes", {}).get("status")
-        if status == "completed":
-            return data.get("meta", {}).get("file_info", {}).get("sha256")
-        time.sleep(30)
-    return None
 
 
 # ── Public API ───────────────────────────────────────────────────
@@ -113,30 +73,7 @@ def get_file_report(file_hash: str) -> Optional[Dict]:
     return _api_get(f"{_BASE}/files/{file_hash}", silent_404=True)
 
 
-def ensure_report(apk_path: str) -> Optional[Dict]:
-    """
-    Ensure a report exists: check by hash, upload if missing, poll until done.
-    Returns the full file report dict or None.
-    """
-    file_hash = sha256_of_file(apk_path)
-    report = get_file_report(file_hash)
-    if report:
-        return report
 
-    # Upload and wait
-    analysis_id = _upload_file(apk_path)
-    if analysis_id:
-        result_hash = _poll_analysis(analysis_id)
-        if result_hash:
-            return get_file_report(result_hash)
-
-    # Already submitted — poll by hash
-    for _ in range(10):
-        report = get_file_report(file_hash)
-        if report:
-            return report
-        time.sleep(30)
-    return None
 
 
 def get_contacted_ips(file_hash: str) -> List[Dict]:
@@ -179,12 +116,7 @@ def get_behaviours(file_hash: str) -> List[Dict]:
     return []
 
 
-def get_embedded_urls(file_hash: str) -> List[Dict]:
-    """Get URLs embedded in the file."""
-    data = _api_get(f"{_BASE}/files/{file_hash}/urls")
-    if data and "data" in data:
-        return data["data"]
-    return []
+
 
 
 # ── Extraction Helpers ───────────────────────────────────────────

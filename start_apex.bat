@@ -4,7 +4,7 @@ echo Starting APEX-X Backend and Frontend...
 echo ===================================================
 
 :: Start Backend in a new command prompt window
-start "APEX-X Backend" cmd /k "cd backend && set PYTHONPATH=C:\Users\ASUS\OneDrive\Desktop\Apex-X && .\venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8080 --reload"
+start "APEX-X Backend" cmd /k "cd backend && set PYTHONPATH=.. && .\venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8080 --reload"
 
 :: Start Frontend in a new command prompt window
 start "APEX-X Frontend" cmd /k "cd frontend && npm run dev"

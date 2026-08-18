@@ -5,9 +5,8 @@ that evade simple SHA256 file hashes.
 """
 
 import os
-import json
 import hashlib
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 def compute_structural_fingerprint(androguard_data: Dict[str, Any], apktool_dir: str) -> Dict[str, Any]:
     """

@@ -5,12 +5,11 @@ report via the local Qwen 2.5 LLM, translates via SarvamAI, and renders to PDF.
 """
 
 import os
-import sys
 import json
 import zipfile
 import datetime
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
@@ -42,7 +41,7 @@ def translate_text(text: str, target_lang: str) -> str:
         
     try:
         from sarvamai import SarvamAI
-        client = SarvamAI(api_subscription_key="sk_qzesjw16_SbwHTehCfWU6TiWKYMheuH9t")
+        client = SarvamAI(api_subscription_key=os.environ.get("SARVAM_API_KEY", ""))
         # Translate in chunks of ~450 chars to stay within API limits
         if len(text) > 450:
             chunks = []

@@ -1,10 +1,8 @@
 from celery import Celery
 from app.config import settings
-import time
 import os
 import json
-import hashlib
-from datetime import datetime, timezone
+from datetime import datetime
 from app.models.session import SessionLocal
 from app.models.database import Case, PhaseResult
 
@@ -30,9 +28,7 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
     """
     from app.engines.static import run_full_static_analysis
     from app.engines.dynamic import run_full_dynamic_analysis
-    from app.models.database import PhaseResult
     from app.services.hash_service import calculate_sha256, append_to_manifest
-    import os
     import logging
 
     logger = logging.getLogger(__name__)
@@ -138,7 +134,7 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         # 3.5 Cross-Case Syndicate Correlation
         from app.engines.c2 import correlation_engine
         logger.info(f"Running Cross-Case Syndicate Correlation for {case_id}")
-        correlation_result = correlation_engine.find_correlated_cases(str(case_id), apk_hash)
+        correlation_result = correlation_engine.find_correlated_cases(str(case_id), case.apk_hash)
         
         phase_record = PhaseResult(
             case_id=case_id,
@@ -176,7 +172,6 @@ def analyze_apk_task(case_id: str, run_static: bool = True, run_dynamic: bool = 
         narrative_dir = os.path.join(case_dir, "intelligence_analysis")
         os.makedirs(narrative_dir, exist_ok=True)
         with open(os.path.join(narrative_dir, "threat_narrative.json"), "w") as f:
-            import json
             json.dump(narrative_result, f, indent=2)
 
         phase_record = PhaseResult(

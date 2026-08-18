@@ -7,7 +7,6 @@ are completely open (read/write without auth).
 
 import os
 import re
-import json
 import logging
 import requests
 from typing import Dict, Any, List

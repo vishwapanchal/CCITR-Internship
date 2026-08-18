@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional, TypedDict, List
 from enum import Enum
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -120,7 +122,7 @@ def dynamic_agent(state: AgentState) -> AgentState:
 
     try:
         from app.engines.dynamic import run_full_dynamic_analysis
-        result = run_full_dynamic_analysis(state["apk_path"], state["case_dir"], duration=60)
+        result = run_full_dynamic_analysis(state["apk_path"], state["case_dir"], duration=getattr(settings, "DYNAMIC_ANALYSIS_DURATION", 60))
         state["phases"]["dynamic"] = {
             "status": PhaseStatus.COMPLETED,
             "risk_score": result.get("risk_score", 0),
@@ -289,9 +291,6 @@ def rag_agent(state: AgentState) -> AgentState:
 
 def should_continue_after_static(state: AgentState) -> str:
     """Decide next node after static analysis."""
-    static_status = state["phases"]["static"]["status"]
-    if static_status in (PhaseStatus.COMPLETED, PhaseStatus.SKIPPED):
-        return "dynamic_agent"
     # Even if static failed, try dynamic
     return "dynamic_agent"
 

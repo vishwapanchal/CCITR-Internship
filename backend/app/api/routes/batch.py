@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
 import zipfile
 import tempfile
 import os
@@ -14,7 +13,7 @@ from app.services.task_service import analyze_apk_task
 router = APIRouter()
 
 @router.post("/upload")
-async def upload_batch(background_tasks: BackgroundTasks, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_batch(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Upload a ZIP file containing multiple APKs for bulk triage.
     """

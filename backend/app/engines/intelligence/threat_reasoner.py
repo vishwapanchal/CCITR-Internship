@@ -8,8 +8,9 @@ and chain of evidence for law enforcement officers.
 import os
 import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 
+from app.config import settings
 from app.engines.intelligence import llm_client
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ def generate_threat_narrative(case_dir: str) -> Dict[str, Any]:
             model=llm_client.MODEL_CODER,
             system=SYSTEM_PROMPT,
             temperature=0.3,
-            max_tokens=1500
+            max_tokens=getattr(settings, "THREAT_REASONER_MAX_TOKENS", 1500)
         )
         
         if narrative.startswith("[ERROR"):
@@ -111,7 +112,7 @@ def _create_llm_summary(reports: Dict[str, Any]) -> Dict[str, Any]:
             "risk_score": static.get("risk_score"),
             "yara_rules_matched": static.get("steps", {}).get("yara", {}).get("data", {}).get("rules_matched", []),
             "dangerous_permissions": static.get("steps", {}).get("manifest", {}).get("data", {}).get("permissions", {}).get("dangerous", []),
-            "high_risk_api_calls": [api.get("api") for api in static.get("steps", {}).get("androguard", {}).get("data", {}).get("api_calls", {}).get("high_risk", [])][:15] # Top 15
+            "high_risk_api_calls": [api.get("api") for api in static.get("steps", {}).get("androguard", {}).get("data", {}).get("api_calls", {}).get("high_risk", [])][:getattr(settings, "THREAT_REASONER_MAX_API_CALLS", 15)] # Top 15
         }
         
     if "dynamic" in reports:

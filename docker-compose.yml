@@ -5,9 +5,9 @@ services:
     image: postgres:15-alpine
     container_name: apex-x-postgres
     environment:
-      POSTGRES_USER: apex
-      POSTGRES_PASSWORD: apexpassword
-      POSTGRES_DB: apex_db
+      POSTGRES_USER: ${POSTGRES_USER:-apex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-apexpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-apex_db}
     ports:
       - "5432:5432"
     volumes:
@@ -18,7 +18,7 @@ services:
     image: neo4j:5.21
     container_name: apex-x-neo4j
     environment:
-      NEO4J_AUTH: neo4j/apexpassword
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/apexpassword}
       NEO4J_apoc_export_file_enabled: "true"
       NEO4J_apoc_import_file_enabled: "true"
       NEO4J_apoc_import_file_use__neo4j__config: "true"
