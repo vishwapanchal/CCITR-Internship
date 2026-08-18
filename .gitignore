@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+backend/venv/
+
+# Build outputs
+.next/
+frontend/.next/
+frontend/out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Environment (keep .env out of version control)
+.env
+.env.local
+.env*.local
+backend/.env
+frontend/.env.local
+
+# Database
+*.db
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Test output (decompiled files are huge)
+backend/test_output/
+backend/test_results/*/static_analysis/
+backend/test_results/*/dynamic_analysis/
+
+# Old test_cases (moved to sample_apks/)
+test_cases/
+
+# Temporary
+*.log
+*.tmp
+
+# Data and Tools
+backend/app/data/
+backend/tools/
+backend/check_results.py
+backend/test_results/

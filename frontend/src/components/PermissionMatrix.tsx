@@ -1,0 +1,99 @@
+"use client";
+
+import type { Permission } from "@/services/realData";
+
+interface PermissionMatrixProps {
+  permissions: Permission[];
+}
+
+const riskColors: Record<string, { bg: string; text: string; icon: string }> = {
+  low: { bg: "bg-green-100", text: "text-green-700", icon: "🟢" },
+  medium: { bg: "bg-yellow-100", text: "text-yellow-700", icon: "🟠" },
+  high: { bg: "bg-orange-100", text: "text-orange-700", icon: "🔴" },
+  critical: { bg: "bg-red-100", text: "text-red-700", icon: "🚨" },
+};
+
+function formatPermName(perm: string) {
+  const parts = perm.split(".");
+  const last = parts[parts.length - 1];
+  return last.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+}
+
+const protectionColors: Record<string, string> = {
+  normal: "text-green-600",
+  dangerous: "text-red-600",
+  signature: "text-orange-600",
+  signatureOrSystem: "text-purple-600",
+};
+
+export default function PermissionMatrix({ permissions }: PermissionMatrixProps) {
+  const sortedPermissions = permissions.toSorted((a, b) => {
+    const riskOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    return (riskOrder[a.risk] || 3) - (riskOrder[b.risk] || 3);
+  });
+
+  const dangerousCount = permissions.filter((p) => p.protection_level === "dangerous").length;
+  const criticalCount = permissions.filter((p) => p.risk === "critical").length;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Summary bar */}
+      <div className="flex gap-4 mb-4 text-xs font-mono">
+        <span className="text-primary/60">
+          Total: <strong className="text-primary">{permissions.length}</strong>
+        </span>
+        <span className="text-red-600">
+          Dangerous: <strong>{dangerousCount}</strong>
+        </span>
+        <span className="text-red-700">
+          Critical Risk: <strong>{criticalCount}</strong>
+        </span>
+      </div>
+
+      {/* Table */}
+      <div className="flex-1 overflow-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border-subtle text-left">
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Permission</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Risk Level</th>
+              <th className="pb-2 font-mono text-xs text-primary/60 font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedPermissions.map((perm) => {
+              const risk = riskColors[perm.risk] || riskColors.low;
+              return (
+                <tr
+                  key={perm.name}
+                  className="border-b border-border-subtle/50 hover:bg-canvas/50 transition-colors"
+                  title={perm.description}
+                >
+                  <td className="py-2 pr-3">
+                    <span className="font-semibold text-sm break-all">{formatPermName(perm.name)}</span>
+                    <span className="block text-xs font-mono text-primary/40 mt-0.5">{perm.name}</span>
+                  </td>
+                  <td className="py-2 pr-3">
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-mono font-semibold ${protectionColors[perm.protection_level] || ""}`}>
+                        {perm.protection_level}
+                      </span>
+                      <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-full ${risk.bg} ${risk.text} flex items-center w-fit gap-1`}>
+                        <span>{risk.icon}</span> {perm.risk.charAt(0).toUpperCase() + perm.risk.slice(1).toLowerCase()}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-2">
+                    <span className={`text-xs font-mono ${perm.granted ? "text-red-600" : "text-green-600"}`}>
+                      {perm.granted ? "GRANTED" : "DENIED"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

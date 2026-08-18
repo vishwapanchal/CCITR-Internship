@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: apex-x-postgres
+    environment:
+      POSTGRES_USER: apex
+      POSTGRES_PASSWORD: apexpassword
+      POSTGRES_DB: apex_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:5.21
+    container_name: apex-x-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/apexpassword
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_import_file_use__neo4j__config: "true"
+    ports:
+      - "7474:7474" # HTTP Browser
+      - "7687:7687" # Bolt port
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      - neo4j_import:/var/lib/neo4j/import
+      - neo4j_plugins:/plugins
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: apex-x-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  chromadb:
+    image: chromadb/chroma:0.5.0
+    container_name: apex-x-chromadb
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+    ports:
+      - "8000:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    restart: unless-stopped
+
+  # ----------------------------------------------------
+  # TM2 Dynamic Analysis Infrastructure
+  # ----------------------------------------------------
+  android-emulator:
+    image: budtmo/docker-android:12.0
+    container_name: apex-x-android-emulator
+    privileged: true
+    environment:
+      - DEVICE=Nexus 5
+      - APPIUM=false
+    ports:
+      - "6080:6080"  # VNC Web UI
+      - "5554:5554"  # ADB Console
+      - "5555:5555"  # ADB Connection
+    volumes:
+      - /dev/kvm:/dev/kvm
+    restart: unless-stopped
+
+  # ----------------------------------------------------
+  # TM3 Local LLM Infrastructure
+  # ----------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: apex-x-ollama
+    environment:
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=30s
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
+  neo4j_import:
+  neo4j_plugins:
+  redis_data:
+  chromadb_data:
+  ollama_data:

@@ -1,0 +1,1457 @@
+{
+    "static": {
+        "phase": "static",
+        "status": "completed_with_errors",
+        "apk_path": "C:\\Users\\Prafull\\Desktop\\Apex-X\\test_cases\\diva-apk-file\\DivaApplication.apk",
+        "case_dir": "C:\\Users\\Prafull\\Desktop\\Apex-X\\backend\\test_results\\DivaApplication.apk_20260702_152911",
+        "started_at": "2026-07-02T09:59:11.554305+00:00",
+        "completed_at": "2026-07-02T10:01:58.192921+00:00",
+        "duration_seconds": 166.638616,
+        "steps": {
+            "apktool": {
+                "status": "failed",
+                "error": "APKTool returned None"
+            },
+            "jadx": {
+                "status": "success",
+                "output_dir": "C:\\Users\\Prafull\\Desktop\\Apex-X\\backend\\test_results\\DivaApplication.apk_20260702_152911\\static_analysis\\jadx_output",
+                "stats": {
+                    "java_files": 651,
+                    "total_lines": 120688,
+                    "packages": [
+                        "android.support.annotation",
+                        "android.support.design",
+                        "android.support.design.internal",
+                        "android.support.design.widget",
+                        "android.support.v4",
+                        "android.support.v4.accessibilityservice",
+                        "android.support.v4.animation",
+                        "android.support.v4.app",
+                        "android.support.v4.content",
+                        "android.support.v4.content.pm",
+                        "android.support.v4.content.res",
+                        "android.support.v4.database",
+                        "android.support.v4.graphics",
+                        "android.support.v4.graphics.drawable",
+                        "android.support.v4.hardware.display",
+                        "android.support.v4.hardware.fingerprint",
+                        "android.support.v4.internal.view",
+                        "android.support.v4.media",
+                        "android.support.v4.media.routing",
+                        "android.support.v4.media.session",
+                        "android.support.v4.net",
+                        "android.support.v4.os",
+                        "android.support.v4.print",
+                        "android.support.v4.provider",
+                        "android.support.v4.speech.tts",
+                        "android.support.v4.text",
+                        "android.support.v4.util",
+                        "android.support.v4.view",
+                        "android.support.v4.view.accessibility",
+                        "android.support.v4.view.animation",
+                        "android.support.v4.widget",
+                        "android.support.v7.app",
+                        "android.support.v7.appcompat",
+                        "android.support.v7.graphics.drawable",
+                        "android.support.v7.internal",
+                        "android.support.v7.internal.app",
+                        "android.support.v7.internal.text",
+                        "android.support.v7.internal.transition",
+                        "android.support.v7.internal.view",
+                        "android.support.v7.internal.view.menu",
+                        "android.support.v7.internal.widget",
+                        "android.support.v7.recyclerview",
+                        "android.support.v7.util",
+                        "android.support.v7.view",
+                        "android.support.v7.widget",
+                        "android.support.v7.widget.helper",
+                        "android.support.v7.widget.util",
+                        "jakhar.aseem.diva"
+                    ],
+                    "classes": [
+                        "AnimatorRes",
+                        "AnimRes",
+                        "AnyRes",
+                        "ArrayRes",
+                        "AttrRes",
+                        "BinderThread",
+                        "BoolRes",
+                        "CallSuper",
+                        "CheckResult",
+                        "ColorInt",
+                        "ColorRes",
+                        "DimenRes",
+                        "DrawableRes",
+                        "FloatRange",
+                        "FractionRes",
+                        "IdRes",
+                        "IntDef",
+                        "IntegerRes",
+                        "InterpolatorRes",
+                        "IntRange",
+                        "Keep",
+                        "LayoutRes",
+                        "MainThread",
+                        "MenuRes",
+                        "NonNull",
+                        "Nullable",
+                        "PluralsRes",
+                        "RawRes",
+                        "RequiresPermission",
+                        "Size",
+                        "StringDef",
+                        "StringRes",
+                        "StyleableRes",
+                        "StyleRes",
+                        "TransitionRes",
+                        "UiThread",
+                        "VisibleForTesting",
+                        "WorkerThread",
+                        "XmlRes",
+                        "BuildConfig",
+                        "R",
+                        "ForegroundLinearLayout",
+                        "NavigationMenu",
+                        "NavigationMenuItemView",
+                        "NavigationMenuPresenter",
+                        "NavigationMenuView",
+                        "NavigationSubMenu",
+                        "ParcelableSparseArray",
+                        "ScrimInsetsFrameLayout",
+                        "AnimationUtils",
+                        "AppBarLayout",
+                        "CircularBorderDrawable",
+                        "CircularBorderDrawableLollipop",
+                        "CollapsingTextHelper",
+                        "CollapsingToolbarLayout",
+                        "CoordinatorLayout",
+                        "CoordinatorLayoutInsetsHelper",
+                        "CoordinatorLayoutInsetsHelperLollipop",
+                        "FloatingActionButton",
+                        "FloatingActionButtonEclairMr1",
+                        "FloatingActionButtonHoneycombMr1",
+                        "FloatingActionButtonImpl",
+                        "FloatingActionButtonLollipop",
+                        "HeaderBehavior",
+                        "HeaderScrollingViewBehavior",
+                        "MathUtils",
+                        "NavigationView",
+                        "ShadowDrawableWrapper",
+                        "ShadowViewDelegate",
+                        "Snackbar",
+                        "SnackbarManager",
+                        "StateListAnimator",
+                        "SwipeDismissBehavior",
+                        "TabLayout",
+                        "TextInputLayout",
+                        "ThemeUtils",
+                        "ValueAnimatorCompat",
+                        "ValueAnimatorCompatImplEclairMr1",
+                        "ValueAnimatorCompatImplHoneycombMr1",
+                        "ViewGroupUtils",
+                        "ViewGroupUtilsHoneycomb",
+                        "ViewOffsetBehavior",
+                        "ViewOffsetHelper",
+                        "ViewUtils",
+                        "ViewUtilsLollipop",
+                        "BuildConfig",
+                        "AccessibilityServiceInfoCompat",
+                        "AccessibilityServiceInfoCompatIcs",
+                        "AccessibilityServiceInfoCompatJellyBeanMr2",
+                        "AnimatorCompatHelper",
+                        "AnimatorListenerCompat",
+                        "AnimatorProvider",
+                        "AnimatorUpdateListenerCompat",
+                        "DonutAnimatorCompatProvider",
+                        "HoneycombMr1AnimatorCompatProvider",
+                        "ValueAnimatorCompat",
+                        "ActionBarDrawerToggle",
+                        "ActionBarDrawerToggleHoneycomb",
+                        "ActionBarDrawerToggleJellybeanMR2",
+                        "ActivityCompat"
+                    ]
+                }
+            },
+            "androguard": {
+                "status": "success",
+                "data": {
+                    "package_name": "jakhar.aseem.diva",
+                    "app_name": "Diva",
+                    "version_name": "1.0",
+                    "version_code": "1",
+                    "min_sdk": "15",
+                    "target_sdk": "23",
+                    "max_sdk": null,
+                    "permissions": {
+                        "all": [
+                            "android.permission.WRITE_EXTERNAL_STORAGE",
+                            "android.permission.INTERNET",
+                            "android.permission.READ_EXTERNAL_STORAGE"
+                        ],
+                        "dangerous": [
+                            "android.permission.WRITE_EXTERNAL_STORAGE",
+                            "android.permission.READ_EXTERNAL_STORAGE"
+                        ],
+                        "normal": [
+                            "android.permission.INTERNET"
+                        ],
+                        "declared": [],
+                        "total_count": 3,
+                        "dangerous_count": 2
+                    },
+                    "activities": [
+                        {
+                            "name": "jakhar.aseem.diva.SQLInjectionActivity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InputValidation3Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.MainActivity",
+                            "exported": true
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InputValidation2URISchemeActivity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.APICredsActivity",
+                            "exported": true
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.Hardcode2Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.LogActivity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl1Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.HardcodeActivity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl2Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage1Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.APICreds2Activity",
+                            "exported": true
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage2Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl3Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage3Activity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl3NotesActivity",
+                            "exported": false
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage4Activity",
+                            "exported": false
+                        }
+                    ],
+                    "services": [],
+                    "receivers": [],
+                    "providers": [
+                        {
+                            "name": "jakhar.aseem.diva.NotesProvider"
+                        }
+                    ],
+                    "main_activity": "jakhar.aseem.diva.MainActivity",
+                    "certificate": {
+                        "issuer": "<asn1crypto.x509.Name 2300895898080 b'071\\x0b0\\t\\x06\\x03U\\x04\\x06\\x13\\x02US1\\x100\\x0e\\x06\\x03U\\x04\\n\\x13\\x07Android1\\x160\\x14\\x06\\x03U\\x04\\x03\\x13\\rAndroid Debug'>",
+                        "subject": "<asn1crypto.x509.Name 2300895898688 b'071\\x0b0\\t\\x06\\x03U\\x04\\x06\\x13\\x02US1\\x100\\x0e\\x06\\x03U\\x04\\n\\x13\\x07Android1\\x160\\x14\\x06\\x03U\\x04\\x03\\x13\\rAndroid Debug'>",
+                        "serial_number": "562245855",
+                        "fingerprint_sha256": "unknown",
+                        "valid_from": "unknown",
+                        "valid_to": "unknown"
+                    },
+                    "api_calls": {
+                        "high_risk": [
+                            {
+                                "api": "Landroid/view/accessibility/AccessibilityEvent;",
+                                "risk_pattern": "Landroid/view/accessibility/AccessibilityEvent;"
+                            }
+                        ],
+                        "all_external": [
+                            "Ljava/lang/Object;",
+                            "Landroid/util/SparseArray;",
+                            "Landroid/os/Parcel;",
+                            "Landroid/widget/FrameLayout;",
+                            "Landroid/graphics/Rect;",
+                            "Landroid/content/Context;",
+                            "Landroid/content/res/TypedArray;",
+                            "Landroid/graphics/Canvas;",
+                            "Landroid/graphics/drawable/Drawable;",
+                            "Landroid/view/animation/LinearInterpolator;",
+                            "Landroid/view/animation/DecelerateInterpolator;",
+                            "Ljava/lang/Math;",
+                            "Landroid/view/View$BaseSavedState;",
+                            "Landroid/widget/LinearLayout$LayoutParams;",
+                            "Landroid/view/animation/AnimationUtils;",
+                            "Landroid/widget/LinearLayout;",
+                            "Ljava/util/ArrayList;",
+                            "Landroid/view/View;",
+                            "Ljava/util/List;",
+                            "Ljava/lang/IllegalArgumentException;",
+                            "Landroid/graphics/RectF;",
+                            "Landroid/graphics/Paint;",
+                            "Landroid/graphics/LinearGradient;",
+                            "Landroid/text/TextPaint;",
+                            "Landroid/graphics/Color;",
+                            "Ljava/lang/CharSequence;",
+                            "Landroid/text/TextUtils;",
+                            "Landroid/graphics/Bitmap;",
+                            "Landroid/view/animation/Interpolator;",
+                            "Landroid/graphics/Typeface;",
+                            "Landroid/widget/FrameLayout$LayoutParams;",
+                            "Landroid/view/ViewGroup;",
+                            "Landroid/graphics/drawable/ColorDrawable;",
+                            "Landroid/view/ViewGroup$OnHierarchyChangeListener;",
+                            "Landroid/view/ViewGroup$MarginLayoutParams;",
+                            "Ljava/lang/IllegalStateException;",
+                            "Landroid/view/ViewParent;",
+                            "Ljava/lang/StringBuilder;",
+                            "Landroid/content/res/Resources;",
+                            "Landroid/widget/ImageButton;",
+                            "Landroid/view/View$MeasureSpec;",
+                            "Landroid/view/animation/Animation;",
+                            "Landroid/animation/AnimatorListenerAdapter;",
+                            "Landroid/content/res/ColorStateList;",
+                            "Landroid/view/View$OnClickListener;",
+                            "Landroid/view/LayoutInflater;",
+                            "Landroid/widget/TextView;",
+                            "Landroid/widget/Button;",
+                            "Landroid/text/Layout;",
+                            "Landroid/os/Handler;",
+                            "Landroid/os/Looper;",
+                            "Ljava/lang/ref/WeakReference;",
+                            "Landroid/os/Message;",
+                            "Landroid/util/StateSet;",
+                            "Landroid/widget/ImageView;",
+                            "Ljava/lang/Class;",
+                            "Landroid/view/accessibility/AccessibilityEvent;",
+                            "Landroid/view/accessibility/AccessibilityNodeInfo;",
+                            "Landroid/widget/Toast;",
+                            "Landroid/widget/HorizontalScrollView;",
+                            "Ljava/util/Iterator;",
+                            "Landroid/text/Editable;",
+                            "Landroid/view/animation/AccelerateInterpolator;",
+                            "Landroid/widget/EditText;",
+                            "Landroid/util/TypedValue;",
+                            "Landroid/content/res/Resources$Theme;",
+                            "Ljava/lang/String;",
+                            "Ljava/lang/Integer;",
+                            "Ljava/lang/ThreadLocal;",
+                            "Landroid/graphics/Matrix;",
+                            "Landroid/accessibilityservice/AccessibilityServiceInfo;",
+                            "Landroid/graphics/drawable/InsetDrawable;",
+                            "Landroid/app/Activity;",
+                            "Landroid/view/Window;",
+                            "Landroid/app/ActionBar;",
+                            "Ljava/lang/reflect/Method;",
+                            "Landroid/util/Log;",
+                            "Landroid/content/pm/PackageManager;",
+                            "Landroid/app/SharedElementCallback;",
+                            "Landroid/app/ActivityManager;",
+                            "Landroid/app/ActivityOptions;",
+                            "Landroid/util/Pair;",
+                            "Landroid/app/AppOpsManager;",
+                            "Landroid/view/ViewTreeObserver;",
+                            "Landroid/os/Parcelable$Creator;",
+                            "Landroid/os/Bundle;",
+                            "Landroid/os/IBinder;",
+                            "Ljava/util/Arrays;",
+                            "Ljava/lang/RuntimeException;",
+                            "Ljava/lang/ClassLoader;",
+                            "Ljava/io/PrintWriter;",
+                            "Ljava/lang/Boolean;",
+                            "Landroid/view/animation/Animation$AnimationListener;",
+                            "Ljava/lang/System;",
+                            "Landroid/widget/TabHost;",
+                            "Landroid/widget/TabWidget;",
+                            "Landroid/widget/TabHost$TabSpec;",
+                            "Landroid/widget/TabHost$OnTabChangeListener;",
+                            "Landroid/transition/Transition$EpicenterCallback;",
+                            "Landroid/transition/Transition;",
+                            "Ljava/util/Map;",
+                            "Ljava/util/Set;",
+                            "Ljava/util/Map$Entry;",
+                            "Landroid/transition/TransitionSet;",
+                            "Landroid/transition/TransitionManager;",
+                            "Landroid/widget/ListView;",
+                            "Landroid/content/ComponentName;",
+                            "Landroid/content/Intent;",
+                            "Landroid/app/Notification;",
+                            "Landroid/app/Notification$Action$Builder;",
+                            "Landroid/app/Notification$Builder;",
+                            "Landroid/app/Notification$Action;",
+                            "Landroid/app/RemoteInput$Builder;",
+                            "Landroid/app/RemoteInput;",
+                            "Landroid/app/Notification$BigPictureStyle;",
+                            "Landroid/app/Notification$BigTextStyle;",
+                            "Landroid/app/Notification$InboxStyle;",
+                            "Ljava/lang/reflect/Field;",
+                            "Landroid/app/Service;",
+                            "Ljava/lang/SecurityException;",
+                            "Ljava/util/LinkedList;",
+                            "Ljava/util/HashMap;",
+                            "Ljava/util/HashSet;",
+                            "Landroid/os/HandlerThread;",
+                            "Ljava/util/Collection;",
+                            "Landroid/provider/Settings$Secure;",
+                            "Landroid/app/NotificationManager;",
+                            "Landroid/content/ClipData;",
+                            "Landroid/content/ClipDescription;",
+                            "Landroid/content/ClipData$Item;",
+                            "Landroid/text/Html;",
+                            "Ljava/lang/IndexOutOfBoundsException;",
+                            "Landroid/view/Menu;",
+                            "Landroid/view/MenuItem;",
+                            "Landroid/widget/ShareActionProvider;",
+                            "Landroid/graphics/drawable/BitmapDrawable;",
+                            "Landroid/widget/ImageView$ScaleType;",
+                            "Landroid/util/AndroidRuntimeException;",
+                            "Landroid/app/PendingIntent;",
+                            "Landroid/content/ContentResolver;",
+                            "Ljava/io/File;",
+                            "Landroid/os/Process;",
+                            "Landroid/os/Environment;",
+                            "Landroid/content/SharedPreferences$Editor;",
+                            "Landroid/content/ContentProvider;",
+                            "Landroid/content/pm/ProviderInfo;",
+                            "Landroid/content/res/XmlResourceParser;",
+                            "Landroid/webkit/MimeTypeMap;",
+                            "Ljava/lang/UnsupportedOperationException;",
+                            "Landroid/os/ParcelFileDescriptor;",
+                            "Ljava/lang/Long;",
+                            "Landroid/database/MatrixCursor;",
+                            "Landroid/database/ContentObserver;",
+                            "Landroid/content/BroadcastReceiver;",
+                            "Landroid/content/IntentFilter;",
+                            "Ljava/util/concurrent/atomic/AtomicInteger;",
+                            "Ljava/lang/Thread;",
+                            "Ljava/util/concurrent/FutureTask;",
+                            "Ljava/util/concurrent/ExecutionException;",
+                            "Ljava/lang/Enum;",
+                            "Ljava/util/concurrent/LinkedBlockingQueue;",
+                            "Ljava/util/concurrent/ThreadPoolExecutor;",
+                            "Ljava/util/concurrent/atomic/AtomicBoolean;",
+                            "Ljava/util/concurrent/Executor;",
+                            "Landroid/os/Binder;",
+                            "Landroid/os/PowerManager$WakeLock;",
+                            "Landroid/os/PowerManager;",
+                            "Landroid/graphics/BitmapShader;",
+                            "Landroid/graphics/BitmapFactory;",
+                            "Ljava/util/WeakHashMap;",
+                            "Landroid/hardware/display/DisplayManager;",
+                            "Landroid/hardware/fingerprint/FingerprintManager$AuthenticationCallback;",
+                            "Landroid/hardware/fingerprint/FingerprintManager$AuthenticationResult;",
+                            "Landroid/hardware/fingerprint/FingerprintManager;",
+                            "Landroid/hardware/fingerprint/FingerprintManager$CryptoObject;",
+                            "Ljava/util/Collections;",
+                            "Landroid/media/MediaDescription$Builder;",
+                            "Landroid/media/MediaDescription;",
+                            "Landroid/net/Uri;",
+                            "Landroid/media/MediaMetadata$Builder;",
+                            "Landroid/media/MediaMetadata;",
+                            "Landroid/media/Rating;",
+                            "Landroid/media/AudioManager;",
+                            "Landroid/media/RemoteControlClient;",
+                            "Landroid/os/SystemClock;",
+                            "Landroid/view/KeyEvent;",
+                            "Landroid/media/VolumeProvider;",
+                            "Landroid/media/MediaRouter$Callback;",
+                            "Landroid/media/MediaRouter;",
+                            "Landroid/media/MediaRouter$RouteCategory;",
+                            "Landroid/media/MediaRouter$RouteGroup;",
+                            "Landroid/media/MediaRouter$RouteInfo;",
+                            "Landroid/media/MediaRouter$UserRouteInfo;",
+                            "Landroid/media/MediaRouter$VolumeCallback;",
+                            "Landroid/media/session/MediaController$Callback;",
+                            "Landroid/media/session/MediaController$PlaybackInfo;",
+                            "Landroid/media/AudioAttributes;",
+                            "Landroid/media/session/MediaController$TransportControls;",
+                            "Landroid/media/session/MediaController;",
+                            "Landroid/os/ResultReceiver;",
+                            "Landroid/media/RemoteControlClient$MetadataEditor;",
+                            "Landroid/media/session/MediaSession$Callback;",
+                            "Landroid/media/session/MediaSession$QueueItem;",
+                            "Landroid/media/session/MediaSession;",
+                            "Landroid/media/AudioAttributes$Builder;",
+                            "Landroid/media/session/PlaybackState$CustomAction;",
+                            "Landroid/media/session/PlaybackState$CustomAction$Builder;",
+                            "Landroid/media/session/PlaybackState;",
+                            "Landroid/media/session/PlaybackState$Builder;",
+                            "Landroid/net/NetworkInfo;",
+                            "Landroid/net/ConnectivityManager;",
+                            "Landroid/net/TrafficStats;",
+                            "Landroid/os/AsyncTask;",
+                            "Landroid/os/CancellationSignal;",
+                            "Landroid/os/Trace;",
+                            "Landroid/print/PrintDocumentAdapter;",
+                            "Landroid/print/PrintDocumentInfo$Builder;",
+                            "Landroid/print/PrintAttributes;",
+                            "Landroid/print/PrintDocumentAdapter$LayoutResultCallback;",
+                            "Landroid/print/pdf/PrintedPdfDocument;",
+                            "Landroid/graphics/pdf/PdfDocument$Page;",
+                            "Landroid/graphics/pdf/PdfDocument$PageInfo;",
+                            "Ljava/io/FileOutputStream;",
+                            "Landroid/print/PrintDocumentAdapter$WriteResultCallback;",
+                            "Landroid/graphics/BitmapFactory$Options;",
+                            "Landroid/graphics/ColorMatrix;",
+                            "Landroid/graphics/ColorMatrixColorFilter;",
+                            "Ljava/io/InputStream;",
+                            "Landroid/print/PrintAttributes$Builder;",
+                            "Landroid/print/PrintManager;",
+                            "Ljava/lang/AutoCloseable;",
+                            "Landroid/provider/DocumentsContract;",
+                            "Landroid/database/Cursor;",
+                            "Landroid/speech/tts/TextToSpeech;",
+                            "Landroid/speech/tts/UtteranceProgressListener;",
+                            "Ljava/util/Locale;",
+                            "Ljava/lang/Character;",
+                            "Ljava/io/FileDescriptor;",
+                            "Ljava/io/FileInputStream;",
+                            "Ljava/io/IOException;",
+                            "Ljava/lang/ArrayIndexOutOfBoundsException;",
+                            "Ljava/io/Writer;",
+                            "Ljava/util/LinkedHashMap;",
+                            "Ljava/lang/NullPointerException;",
+                            "Ljava/lang/reflect/Array;",
+                            "Landroid/view/View$AccessibilityDelegate;",
+                            "Landroid/view/GestureDetector$OnGestureListener;",
+                            "Landroid/view/GestureDetector$OnDoubleTapListener;",
+                            "Landroid/view/Gravity;",
+                            "Landroid/view/MotionEvent;",
+                            "Landroid/database/DataSetObservable;",
+                            "Landroid/text/method/SingleLineTransformationMethod;",
+                            "Landroid/view/ScaleGestureDetector;",
+                            "Landroid/view/VelocityTracker;",
+                            "Landroid/animation/ValueAnimator;",
+                            "Landroid/view/ViewConfiguration;",
+                            "Landroid/view/ViewGroup$LayoutParams;",
+                            "Landroid/database/DataSetObserver;",
+                            "Landroid/widget/Scroller;",
+                            "Ljava/lang/Runnable;",
+                            "Landroid/view/FocusFinder;",
+                            "Landroid/view/SoundEffectConstants;",
+                            "Landroid/view/ViewPropertyAnimator;",
+                            "Landroid/view/accessibility/AccessibilityManager;",
+                            "Landroid/view/accessibility/AccessibilityNodeInfo$CollectionItemInfo;",
+                            "Landroid/view/accessibility/AccessibilityNodeInfo$AccessibilityAction;",
+                            "Landroid/view/accessibility/AccessibilityNodeInfo$CollectionInfo;",
+                            "Landroid/view/accessibility/AccessibilityNodeInfo$RangeInfo;",
+                            "Landroid/view/accessibility/AccessibilityNodeProvider;",
+                            "Landroid/view/accessibility/AccessibilityRecord;",
+                            "Landroid/view/accessibility/AccessibilityWindowInfo;",
+                            "Landroid/view/animation/PathInterpolator;",
+                            "Landroid/graphics/PathMeasure;",
+                            "Landroid/graphics/Path;",
+                            "Landroid/graphics/drawable/shapes/OvalShape;",
+                            "Landroid/graphics/RadialGradient;",
+                            "Landroid/graphics/drawable/ShapeDrawable;",
+                            "Landroid/widget/CompoundButton;",
+                            "Landroid/widget/ProgressBar;",
+                            "Landroid/widget/Filter;",
+                            "Landroid/widget/Filter$FilterResults;",
+                            "Landroid/view/WindowInsets;",
+                            "Landroid/widget/EdgeEffect;",
+                            "Landroid/widget/ListPopupWindow;",
+                            "Landroid/graphics/drawable/Drawable$Callback;",
+                            "Landroid/widget/PopupMenu;",
+                            "Landroid/widget/PopupWindow;",
+                            "Landroid/widget/OverScroller;",
+                            "Landroid/widget/SearchView;",
+                            "Landroid/app/SearchManager;",
+                            "Landroid/graphics/PorterDuffColorFilter;",
+                            "Landroid/widget/ArrayAdapter;",
+                            "Landroid/widget/CursorAdapter;",
+                            "Landroid/widget/CheckedTextView;",
+                            "Landroid/content/DialogInterface$OnClickListener;",
+                            "Landroid/content/DialogInterface$OnMultiChoiceClickListener;",
+                            "Landroid/widget/SimpleCursorAdapter;",
+                            "Landroid/content/DialogInterface;",
+                            "Landroid/view/ViewStub;",
+                            "Landroid/view/ContextThemeWrapper;",
+                            "Landroid/app/Dialog;",
+                            "Landroid/widget/ListAdapter;",
+                            "Landroid/location/Location;",
+                            "Landroid/location/LocationManager;",
+                            "Ljava/util/Calendar;",
+                            "Landroid/graphics/PorterDuff$Mode;",
+                            "Landroid/content/ContextWrapper;",
+                            "Landroid/util/AttributeSet;",
+                            "Ljava/lang/reflect/Constructor;",
+                            "Landroid/app/Notification$MediaStyle;",
+                            "Landroid/widget/RemoteViews;",
+                            "Ljava/text/NumberFormat;",
+                            "Landroid/view/ActionMode;",
+                            "Landroid/view/InflateException;",
+                            "Landroid/view/SubMenu;",
+                            "Landroid/view/MenuInflater;",
+                            "Lorg/xmlpull/v1/XmlPullParser;",
+                            "Landroid/util/Xml;",
+                            "Landroid/view/Window$Callback;",
+                            "Landroid/widget/BaseAdapter;",
+                            "Ljava/lang/Float;",
+                            "Landroid/content/pm/ResolveInfo;",
+                            "Ljava/math/BigDecimal;",
+                            "Lorg/xmlpull/v1/XmlSerializer;",
+                            "Lorg/xmlpull/v1/XmlPullParserException;",
+                            "Landroid/widget/PopupWindow$OnDismissListener;",
+                            "Landroid/widget/AdapterView;",
+                            "Landroid/view/ViewTreeObserver$OnScrollChangedListener;",
+                            "Landroid/widget/AbsListView;",
+                            "Ljava/lang/NoSuchFieldException;",
+                            "Ljava/lang/IllegalAccessException;",
+                            "Landroid/widget/Spinner;",
+                            "Landroid/widget/AbsListView$LayoutParams;",
+                            "Landroid/graphics/drawable/DrawableContainer$DrawableContainerState;",
+                            "Landroid/graphics/drawable/LayerDrawable;",
+                            "Landroid/util/SparseIntArray;",
+                            "Landroid/graphics/drawable/shapes/RoundRectShape;",
+                            "Landroid/graphics/drawable/ClipDrawable;",
+                            "Landroid/graphics/drawable/AnimationDrawable;",
+                            "Landroid/widget/RatingBar;",
+                            "Landroid/widget/SeekBar;",
+                            "Landroid/widget/ThemedSpinnerAdapter;",
+                            "Landroid/widget/SpinnerAdapter;",
+                            "Landroid/view/KeyEvent$DispatcherState;",
+                            "Landroid/widget/AdapterView$OnItemClickListener;",
+                            "Landroid/database/Observable;",
+                            "Landroid/view/View$OnFocusChangeListener;",
+                            "Landroid/widget/AutoCompleteTextView;",
+                            "Landroid/view/inputmethod/InputMethodManager;",
+                            "Landroid/text/method/TransformationMethod;",
+                            "Landroid/text/StaticLayout;",
+                            "Landroid/view/GestureDetector$SimpleOnGestureListener;",
+                            "Landroid/database/sqlite/SQLiteOpenHelper;",
+                            "Landroid/database/sqlite/SQLiteDatabase;",
+                            "Landroid/content/UriMatcher;",
+                            "Landroid/content/ContentUris;",
+                            "Landroid/database/SQLException;",
+                            "Landroid/database/sqlite/SQLiteQueryBuilder;",
+                            "Landroid/graphics/drawable/Drawable$ConstantState;",
+                            "Landroid/graphics/Outline;",
+                            "Ljava/lang/Package;",
+                            "Ljava/util/Comparator;",
+                            "Landroid/graphics/drawable/GradientDrawable;",
+                            "Landroid/view/animation/AccelerateDecelerateInterpolator;",
+                            "Landroid/animation/Animator;",
+                            "Landroid/view/animation/AlphaAnimation;",
+                            "Landroid/view/animation/AnimationSet;",
+                            "Landroid/view/animation/ScaleAnimation;",
+                            "Ljava/lang/Iterable;",
+                            "Ljava/lang/reflect/Modifier;",
+                            "Ljava/util/concurrent/CountDownLatch;",
+                            "Landroid/net/Uri$Builder;",
+                            "Landroid/view/WindowManager;",
+                            "Landroid/view/Display;",
+                            "Landroid/os/RemoteException;",
+                            "Landroid/os/RemoteCallbackList;",
+                            "Ljava/nio/CharBuffer;",
+                            "Landroid/view/GestureDetector;",
+                            "Landroid/widget/FilterQueryProvider;",
+                            "Landroid/widget/ScrollView;",
+                            "Landroid/view/KeyCharacterMap;",
+                            "Ljava/lang/AssertionError;",
+                            "Landroid/view/ActionMode$Callback;",
+                            "Landroid/view/MenuItem$OnMenuItemClickListener;",
+                            "Landroid/widget/CheckBox;",
+                            "Landroid/widget/RadioButton;",
+                            "Ljava/util/concurrent/CopyOnWriteArrayList;",
+                            "Landroid/view/KeyCharacterMap$KeyData;",
+                            "Landroid/view/ActionProvider;",
+                            "Landroid/view/CollapsibleActionView;",
+                            "Landroid/view/MenuItem$OnActionExpandListener;",
+                            "Landroid/util/SparseBooleanArray;",
+                            "Landroid/widget/MultiAutoCompleteTextView;",
+                            "Landroid/graphics/PointF;",
+                            "Ljava/lang/NoSuchMethodException;",
+                            "Landroid/app/SearchableInfo;",
+                            "Landroid/text/SpannableStringBuilder;",
+                            "Landroid/text/style/ImageSpan;",
+                            "Ljava/util/BitSet;",
+                            "Landroid/graphics/drawable/StateListDrawable;",
+                            "Landroid/view/WindowManager$LayoutParams;",
+                            "Landroid/view/LayoutInflater$Factory;",
+                            "Landroid/graphics/drawable/RippleDrawable;",
+                            "Landroid/animation/StateListAnimator;",
+                            "Landroid/animation/ObjectAnimator;",
+                            "Landroid/text/SpannableString;",
+                            "Landroid/text/style/TextAppearanceSpan;",
+                            "Landroid/content/pm/ActivityInfo;",
+                            "Landroid/content/pm/PackageManager$NameNotFoundException;",
+                            "Ljava/io/FileNotFoundException;",
+                            "Landroid/preference/PreferenceManager;",
+                            "Landroid/content/SharedPreferences;",
+                            "Landroid/webkit/WebView;",
+                            "Landroid/webkit/WebSettings;",
+                            "Ljava/lang/Exception;",
+                            "Ljava/io/FileWriter;"
+                        ],
+                        "count": 416,
+                        "high_risk_count": 1
+                    },
+                    "strings": {
+                        "urls": [
+                            "http://payatu.com"
+                        ],
+                        "ips": [],
+                        "file_paths": [],
+                        "crypto_constants": [],
+                        "suspicious": [
+                            "XREFto for string 'Landroid/media/session/MediaSession$Token;' in\n",
+                            "XREFto for string 'VISIBILITY_SECRET' in\n",
+                            "XREFto for string 'onAuthenticationHelp' in\n",
+                            "XREFto for string 'getWindowToken' in\n",
+                            "XREFto for string 'Session token may not be null.' in\nLandroid/support/v4/media/MediaBrowserServiceCompat;:<analysis.MethodAnalysis Landroid/support/v4/media/MediaBrowserServiceCompat;->setSessionToke",
+                            "XREFto for string 'activity_sqlinjection' in\n",
+                            "XREFto for string 'onGetRoot' in\n",
+                            "XREFto for string 'ids1_password' in\n",
+                            "XREFto for string 'getToken' in\n",
+                            "XREFto for string 'sqli' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->onCreate(Landroid/os/Bundle;)V [access_flags=protected] @ 0x1730",
+                            "XREFto for string 'sessionToken' in\n",
+                            "XREFto for string 'root' in\n",
+                            "XREFto for string 'action_bar_root' in\n",
+                            "XREFto for string '  mRootHints=' in\nLandroid/support/v4/media/MediaBrowserCompat$MediaBrowserImplBase;:<analysis.MethodAnalysis Landroid/support/v4/media/MediaBrowserCompat$MediaBrowserImplBase;->dum",
+                            "XREFto for string 'TAG_ROOT_PATH' in\n",
+                            "XREFto for string 'val$token' in\n",
+                            "XREFto for string 'mRootId' in\n",
+                            "XREFto for string 'onAuthenticationFailed' in\n",
+                            "XREFto for string 'windowToken' in\n",
+                            "XREFto for string 'mRootHints' in\n",
+                            "XREFto for string 'rootHints' in\n",
+                            "XREFto for string 'authenticate' in\n",
+                            "XREFto for string 'No root for client ' in\nLandroid/support/v4/media/MediaBrowserServiceCompat$ServiceBinder$1;:<analysis.MethodAnalysis Landroid/support/v4/media/MediaBrowserServiceCompat$ServiceBind",
+                            "XREFto for string '  mRootId=' in\nLandroid/support/v4/media/MediaBrowserCompat$MediaBrowserImplBase;:<analysis.MethodAnalysis Landroid/support/v4/media/MediaBrowserCompat$MediaBrowserImplBase;->dump()",
+                            "XREFto for string 'AUTHORITY' in\n",
+                            "XREFto for string 'authority' in\n",
+                            "XREFto for string \"SELECT * FROM sqliuser WHERE user = '\" in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->search(Landroid/view/View;)V [a",
+                            "XREFto for string 'Landroid/hardware/fingerprint/FingerprintManager$AuthenticationCallback;' in\n",
+                            "XREFto for string 'TVEETER API Key: secrettveeterapikey\\nAPI User name: diva2\\nAPI Password: p@ssword2' in\nLjakhar/aseem/diva/APICreds2Activity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/APICreds2Ac",
+                            "XREFto for string 'mAuthority' in\n",
+                            "XREFto for string 'Landroid/support/v4/hardware/fingerprint/FingerprintManagerCompat$AuthenticationResult;' in\n",
+                            "XREFto for string 'Landroid/support/v4/media/session/MediaSessionCompat$Token$1;' in\n",
+                            "XREFto for string 'onAuthenticationError' in\n",
+                            "XREFto for string 'METADATA_KEY_AUTHOR' in\n",
+                            "XREFto for string 'Landroid/support/v4/media/MediaBrowserServiceCompat$BrowserRoot;' in\n",
+                            "XREFto for string 'invalidateRoot' in\n",
+                            "XREFto for string 'Landroid/support/v4/hardware/fingerprint/FingerprintManagerCompatApi23$AuthenticationCallback;' in\n",
+                            "XREFto for string 'No authority: ' in\nLandroid/support/v7/widget/SuggestionsAdapter;:<analysis.MethodAnalysis Landroid/support/v7/widget/SuggestionsAdapter;->getDrawableFromResourceUri(Landroid/net/Ur",
+                            "XREFto for string 'rootView' in\n",
+                            "XREFto for string ') Credit card: (' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->search(Landroid/view/View;)V [access_flags=public] @",
+                            "XREFto for string \"'\" in\nLandroid/support/v7/internal/app/AppCompatViewInflater$DeclaredOnClickListener;:<analysis.MethodAnalysis Landroid/support/v7/internal/app/AppCompatViewInflater$DeclaredOnClick",
+                            "XREFto for string 'Error occurred while searching in database: ' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->search(Landroid/view/Vie",
+                            "XREFto for string 'BrowserRoot' in\n",
+                            "XREFto for string ') not found' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->search(Landroid/view/View;)V [access_flags=public] @ 0x17",
+                            "XREFto for string 'CREATE TABLE IF NOT EXISTS sqliuser(user VARCHAR, password VARCHAR, credit_card VARCHAR);' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQ",
+                            "XREFto for string 'AuthenticationCallback' in\n",
+                            "XREFto for string 'val$rootHints' in\n",
+                            "XREFto for string 'password' in\nLjakhar/aseem/diva/InsecureDataStorage1Activity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/InsecureDataStorage1Activity;->saveCredentials(Landroid/view/View;)V [acces",
+                            "XREFto for string 'SQLInjectionActivity.java' in\n",
+                            "XREFto for string \"INSERT INTO sqliuser VALUES ('john', 'password123', '5555666677778888');\" in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivit",
+                            "XREFto for string 'val$root' in\n",
+                            "XREFto for string 'sceneRoot' in\n",
+                            "XREFto for string 'mRecycledRoot' in\n",
+                            "XREFto for string 'sessionToken must not be null' in\nLandroid/support/v4/media/session/MediaControllerCompat;:<analysis.MethodAnalysis Landroid/support/v4/media/session/MediaControllerCompat;-><init>(",
+                            "XREFto for string 'DEVICE_ROOT' in\n",
+                            "XREFto for string 'fromToken' in\n",
+                            "XREFto for string \"INSERT INTO sqliuser VALUES ('admin', 'passwd123', '1234567812345678');\" in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity",
+                            "XREFto for string '; password: ' in\nLandroid/support/v4/view/accessibility/AccessibilityNodeInfoCompat;:<analysis.MethodAnalysis Landroid/support/v4/view/accessibility/AccessibilityNodeInfoCompat;->to",
+                            "XREFto for string 'setPassword' in\n",
+                            "XREFto for string 'The session token has already been set.' in\nLandroid/support/v4/media/MediaBrowserServiceCompat;:<analysis.MethodAnalysis Landroid/support/v4/media/MediaBrowserServiceCompat;->setSe",
+                            "XREFto for string 'AuthenticationResultInternal' in\n",
+                            "XREFto for string 'Error occurred while creating database for SQLI: ' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->onCreate(Landroid/o",
+                            "XREFto for string 'writeInterfaceToken' in\n",
+                            "XREFto for string 'CREATE TABLE IF NOT EXISTS myuser(user VARCHAR, password VARCHAR);' in\nLjakhar/aseem/diva/InsecureDataStorage2Activity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/InsecureDataStora",
+                            "XREFto for string 'addRoot' in\n",
+                            "XREFto for string 'idToken' in\n",
+                            "XREFto for string 'mRoots' in\n",
+                            "XREFto for string 'mRoot' in\n",
+                            "XREFto for string 'ROOT' in\n",
+                            "XREFto for string 'vendorsecretkey' in\nLjakhar/aseem/diva/HardcodeActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/HardcodeActivity;->access(Landroid/view/View;)V [access_flags=public] @ 0x172498",
+                            "XREFto for string 'getRootView' in\n",
+                            "XREFto for string 'DROP TABLE IF EXISTS sqliuser;' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->onCreate(Landroid/os/Bundle;)V [access",
+                            "XREFto for string 'token' in\n",
+                            "XREFto for string 'Landroid/support/v4/hardware/fingerprint/FingerprintManagerCompat$AuthenticationCallback;' in\n",
+                            "XREFto for string 'KEY_AUTHOR' in\n",
+                            "XREFto for string 'Unable to find configured root for ' in\nLandroid/support/v4/content/FileProvider$SimplePathStrategy;:<analysis.MethodAnalysis Landroid/support/v4/content/FileProvider$SimplePathStra",
+                            "XREFto for string 'val$sceneRoot' in\n",
+                            "XREFto for string 'getSessionToken' in\n",
+                            "XREFto for string 'getRootMenu' in\n",
+                            "XREFto for string 'User: (' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->search(Landroid/view/View;)V [access_flags=public] @ 0x1730fc",
+                            "XREFto for string 'token is not a valid MediaSession.Token object' in\nLandroid/support/v4/media/session/MediaSessionCompatApi21;:<analysis.MethodAnalysis Landroid/support/v4/media/session/MediaSession",
+                            "XREFto for string 'getRootId' in\n",
+                            "XREFto for string 'Ljavax/crypto/Cipher;' in\n",
+                            "XREFto for string 'Landroid/hardware/fingerprint/FingerprintManager$AuthenticationResult;' in\n",
+                            "XREFto for string 'rootPath' in\n",
+                            "XREFto for string 'verifyToken' in\n",
+                            "XREFto for string 'getAuthority' in\n",
+                            "XREFto for string ')\\n' in\nLjakhar/aseem/diva/SQLInjectionActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/SQLInjectionActivity;->search(Landroid/view/View;)V [access_flags=public] @ 0x1730fc>\n",
+                            "XREFto for string 'getSuggestAuthority' in\n",
+                            "XREFto for string 'API Key: 123secretapikey123\\nAPI User name: diva\\nAPI Password: p@ssword' in\nLjakhar/aseem/diva/APICredsActivity;:<analysis.MethodAnalysis Ljakhar/aseem/diva/APICredsActivity;->onCr",
+                            "XREFto for string 'Ljakhar/aseem/diva/SQLInjectionActivity;' in\n",
+                            "XREFto for string ' is not authorized for package ' in\nLandroid/support/v4/app/NotificationCompatSideChannelService;:<analysis.MethodAnalysis Landroid/support/v4/app/NotificationCompatSideChannelServi",
+                            "XREFto for string '(root)' in\nLandroid/support/v4/app/FragmentHostCallback;:<analysis.MethodAnalysis Landroid/support/v4/app/FragmentHostCallback;->doLoaderStart()V [access_flags=] @ 0x11d544>\nLandroi",
+                            "XREFto for string 'mMediaSessionToken' in\n",
+                            "XREFto for string '  mMediaSessionToken=' in\nLandroid/support/v4/media/MediaBrowserCompat$MediaBrowserImplBase;:<analysis.MethodAnalysis Landroid/support/v4/media/MediaBrowserCompat$MediaBrowserImplBa",
+                            "XREFto for string 'cipher' in\n",
+                            "XREFto for string 'Landroid/support/v4/hardware/fingerprint/FingerprintManagerCompatApi23$AuthenticationResultInternal;' in\n",
+                            "XREFto for string 'AuthenticationResult' in\n",
+                            "XREFto for string 'root-path' in\nLandroid/support/v4/content/FileProvider;:<analysis.MethodAnalysis Landroid/support/v4/content/FileProvider;->parsePathStrategy(Landroid/content/Context; Ljava/lang/St",
+                            "XREFto for string 'The root id in BrowserRoot cannot be null. Use null for BrowserRoot instead.' in\nLandroid/support/v4/media/MediaBrowserServiceCompat$BrowserRoot;:<analysis.MethodAnalysis Landroid/s"
+                        ]
+                    },
+                    "libraries": [],
+                    "files": {
+                        "dex": [
+                            "classes.dex"
+                        ],
+                        "native": [
+                            "lib/mips/libdivajni.so",
+                            "lib/armeabi-v7a/libdivajni.so",
+                            "lib/x86_64/libdivajni.so",
+                            "lib/x86/libdivajni.so",
+                            "lib/arm64-v8a/libdivajni.so",
+                            "lib/mips64/libdivajni.so",
+                            "lib/armeabi/libdivajni.so"
+                        ],
+                        "assets": [],
+                        "other": [
+                            "AndroidManifest.xml",
+                            "res/anim/abc_fade_in.xml",
+                            "res/anim/abc_fade_out.xml",
+                            "res/anim/abc_grow_fade_in_from_bottom.xml",
+                            "res/anim/abc_popup_enter.xml",
+                            "res/anim/abc_popup_exit.xml",
+                            "res/anim/abc_shrink_fade_out_from_bottom.xml",
+                            "res/anim/abc_slide_in_bottom.xml",
+                            "res/anim/abc_slide_in_top.xml",
+                            "res/anim/abc_slide_out_bottom.xml",
+                            "res/anim/abc_slide_out_top.xml",
+                            "res/anim/design_fab_in.xml",
+                            "res/anim/design_fab_out.xml",
+                            "res/anim/design_snackbar_in.xml",
+                            "res/anim/design_snackbar_out.xml",
+                            "res/color-v11/abc_background_cache_hint_selector_material_dark.xml",
+                            "res/color-v11/abc_background_cache_hint_selector_material_light.xml",
+                            "res/color-v23/abc_color_highlight_material.xml",
+                            "res/color/abc_background_cache_hint_selector_material_dark.xml",
+                            "res/color/abc_background_cache_hint_selector_material_light.xml",
+                            "res/color/abc_primary_text_disable_only_material_dark.xml",
+                            "res/color/abc_primary_text_disable_only_material_light.xml",
+                            "res/color/abc_primary_text_material_dark.xml",
+                            "res/color/abc_primary_text_material_light.xml",
+                            "res/color/abc_search_url_text.xml",
+                            "res/color/abc_secondary_text_material_dark.xml",
+                            "res/color/abc_secondary_text_material_light.xml",
+                            "res/color/switch_thumb_material_dark.xml",
+                            "res/color/switch_thumb_material_light.xml",
+                            "res/drawable-hdpi-v4/abc_ab_share_pack_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_btn_check_to_on_mtrl_000.png",
+                            "res/drawable-hdpi-v4/abc_btn_check_to_on_mtrl_015.png",
+                            "res/drawable-hdpi-v4/abc_btn_radio_to_on_mtrl_000.png",
+                            "res/drawable-hdpi-v4/abc_btn_radio_to_on_mtrl_015.png",
+                            "res/drawable-hdpi-v4/abc_btn_rating_star_off_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_btn_rating_star_on_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png",
+                            "res/drawable-hdpi-v4/abc_btn_switch_to_on_mtrl_00012.9.png",
+                            "res/drawable-hdpi-v4/abc_cab_background_top_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_ic_ab_back_mtrl_am_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_clear_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_commit_search_api_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_go_search_api_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_menu_copy_mtrl_am_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_menu_cut_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_menu_moreoverflow_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_menu_paste_mtrl_am_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_menu_selectall_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_menu_share_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_search_api_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_ic_voice_search_api_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_list_divider_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_list_focused_holo.9.png",
+                            "res/drawable-hdpi-v4/abc_list_longpressed_holo.9.png",
+                            "res/drawable-hdpi-v4/abc_list_pressed_holo_dark.9.png",
+                            "res/drawable-hdpi-v4/abc_list_pressed_holo_light.9.png",
+                            "res/drawable-hdpi-v4/abc_list_selector_disabled_holo_dark.9.png",
+                            "res/drawable-hdpi-v4/abc_list_selector_disabled_holo_light.9.png",
+                            "res/drawable-hdpi-v4/abc_menu_hardkey_panel_mtrl_mult.9.png",
+                            "res/drawable-hdpi-v4/abc_popup_background_mtrl_mult.9.png",
+                            "res/drawable-hdpi-v4/abc_scrubber_control_off_mtrl_alpha.png",
+                            "res/drawable-hdpi-v4/abc_scrubber_control_to_pressed_mtrl_000.png",
+                            "res/drawable-hdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png",
+                            "res/drawable-hdpi-v4/abc_scrubber_primary_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_scrubber_track_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_spinner_mtrl_am_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_switch_track_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_tab_indicator_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_textfield_activated_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_textfield_default_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_textfield_search_activated_mtrl_alpha.9.png",
+                            "res/drawable-hdpi-v4/abc_textfield_search_default_mtrl_alpha.9.png",
+                            "res/drawable-ldrtl-hdpi-v4/abc_ic_ab_back_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-hdpi-v4/abc_ic_menu_copy_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-hdpi-v4/abc_ic_menu_cut_mtrl_alpha.png",
+                            "res/drawable-ldrtl-hdpi-v4/abc_spinner_mtrl_am_alpha.9.png",
+                            "res/drawable-ldrtl-mdpi-v4/abc_ic_ab_back_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-mdpi-v4/abc_ic_menu_copy_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-mdpi-v4/abc_ic_menu_cut_mtrl_alpha.png",
+                            "res/drawable-ldrtl-mdpi-v4/abc_spinner_mtrl_am_alpha.9.png",
+                            "res/drawable-ldrtl-xhdpi-v4/abc_ic_ab_back_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-xhdpi-v4/abc_ic_menu_copy_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-xhdpi-v4/abc_ic_menu_cut_mtrl_alpha.png",
+                            "res/drawable-ldrtl-xhdpi-v4/abc_spinner_mtrl_am_alpha.9.png",
+                            "res/drawable-ldrtl-xxhdpi-v4/abc_ic_ab_back_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-xxhdpi-v4/abc_ic_menu_copy_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-xxhdpi-v4/abc_ic_menu_cut_mtrl_alpha.png",
+                            "res/drawable-ldrtl-xxhdpi-v4/abc_spinner_mtrl_am_alpha.9.png",
+                            "res/drawable-ldrtl-xxxhdpi-v4/abc_ic_ab_back_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-xxxhdpi-v4/abc_ic_menu_copy_mtrl_am_alpha.png",
+                            "res/drawable-ldrtl-xxxhdpi-v4/abc_ic_menu_cut_mtrl_alpha.png",
+                            "res/drawable-ldrtl-xxxhdpi-v4/abc_spinner_mtrl_am_alpha.9.png",
+                            "res/drawable-mdpi-v4/abc_ab_share_pack_mtrl_alpha.9.png",
+                            "res/drawable-mdpi-v4/abc_btn_check_to_on_mtrl_000.png",
+                            "res/drawable-mdpi-v4/abc_btn_check_to_on_mtrl_015.png",
+                            "res/drawable-mdpi-v4/abc_btn_radio_to_on_mtrl_000.png",
+                            "res/drawable-mdpi-v4/abc_btn_radio_to_on_mtrl_015.png",
+                            "res/drawable-mdpi-v4/abc_btn_rating_star_off_mtrl_alpha.png",
+                            "res/drawable-mdpi-v4/abc_btn_rating_star_on_mtrl_alpha.png",
+                            "res/drawable-mdpi-v4/abc_btn_switch_to_on_mtrl_00001.9.png"
+                        ]
+                    }
+                }
+            },
+            "manifest": {
+                "status": "success",
+                "data": {
+                    "permissions": {
+                        "all": [
+                            "android.permission.WRITE_EXTERNAL_STORAGE",
+                            "android.permission.READ_EXTERNAL_STORAGE",
+                            "android.permission.INTERNET"
+                        ],
+                        "dangerous": [
+                            "android.permission.WRITE_EXTERNAL_STORAGE",
+                            "android.permission.READ_EXTERNAL_STORAGE"
+                        ],
+                        "normal": [
+                            "android.permission.INTERNET"
+                        ],
+                        "malware_indicators": [],
+                        "total_count": 3,
+                        "dangerous_count": 2,
+                        "malware_indicator_count": 0
+                    },
+                    "activities": [
+                        {
+                            "name": "jakhar.aseem.diva.MainActivity",
+                            "exported": true,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": true,
+                            "intent_filters": [
+                                {
+                                    "actions": [
+                                        "android.intent.action.MAIN"
+                                    ],
+                                    "categories": [
+                                        "android.intent.category.LAUNCHER"
+                                    ],
+                                    "data_schemes": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.LogActivity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.HardcodeActivity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage1Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage2Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage3Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InsecureDataStorage4Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.SQLInjectionActivity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InputValidation2URISchemeActivity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl1Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.APICredsActivity",
+                            "exported": true,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": true,
+                            "intent_filters": [
+                                {
+                                    "actions": [
+                                        "jakhar.aseem.diva.action.VIEW_CREDS"
+                                    ],
+                                    "categories": [
+                                        "android.intent.category.DEFAULT"
+                                    ],
+                                    "data_schemes": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl2Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.APICreds2Activity",
+                            "exported": true,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": true,
+                            "intent_filters": [
+                                {
+                                    "actions": [
+                                        "jakhar.aseem.diva.action.VIEW_CREDS2"
+                                    ],
+                                    "categories": [
+                                        "android.intent.category.DEFAULT"
+                                    ],
+                                    "data_schemes": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl3Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.Hardcode2Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.AccessControl3NotesActivity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        },
+                        {
+                            "name": "jakhar.aseem.diva.InputValidation3Activity",
+                            "exported": false,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        }
+                    ],
+                    "services": [],
+                    "receivers": [],
+                    "providers": [
+                        {
+                            "name": "jakhar.aseem.diva.NotesProvider",
+                            "exported": true,
+                            "permission": null,
+                            "enabled": true,
+                            "has_intent_filter": false,
+                            "intent_filters": []
+                        }
+                    ],
+                    "exported_components": [
+                        {
+                            "type": "activitie",
+                            "name": "jakhar.aseem.diva.MainActivity",
+                            "intent_filters": [
+                                {
+                                    "actions": [
+                                        "android.intent.action.MAIN"
+                                    ],
+                                    "categories": [
+                                        "android.intent.category.LAUNCHER"
+                                    ],
+                                    "data_schemes": []
+                                }
+                            ]
+                        },
+                        {
+                            "type": "activitie",
+                            "name": "jakhar.aseem.diva.APICredsActivity",
+                            "intent_filters": [
+                                {
+                                    "actions": [
+                                        "jakhar.aseem.diva.action.VIEW_CREDS"
+                                    ],
+                                    "categories": [
+                                        "android.intent.category.DEFAULT"
+                                    ],
+                                    "data_schemes": []
+                                }
+                            ]
+                        },
+                        {
+                            "type": "activitie",
+                            "name": "jakhar.aseem.diva.APICreds2Activity",
+                            "intent_filters": [
+                                {
+                                    "actions": [
+                                        "jakhar.aseem.diva.action.VIEW_CREDS2"
+                                    ],
+                                    "categories": [
+                                        "android.intent.category.DEFAULT"
+                                    ],
+                                    "data_schemes": []
+                                }
+                            ]
+                        },
+                        {
+                            "type": "provider",
+                            "name": "jakhar.aseem.diva.NotesProvider",
+                            "intent_filters": []
+                        }
+                    ],
+                    "intent_filters": [
+                        {
+                            "component": "jakhar.aseem.diva.MainActivity",
+                            "component_type": "activitie",
+                            "actions": [
+                                "android.intent.action.MAIN"
+                            ],
+                            "categories": [
+                                "android.intent.category.LAUNCHER"
+                            ],
+                            "data_schemes": []
+                        },
+                        {
+                            "component": "jakhar.aseem.diva.APICredsActivity",
+                            "component_type": "activitie",
+                            "actions": [
+                                "jakhar.aseem.diva.action.VIEW_CREDS"
+                            ],
+                            "categories": [
+                                "android.intent.category.DEFAULT"
+                            ],
+                            "data_schemes": []
+                        },
+                        {
+                            "component": "jakhar.aseem.diva.APICreds2Activity",
+                            "component_type": "activitie",
+                            "actions": [
+                                "jakhar.aseem.diva.action.VIEW_CREDS2"
+                            ],
+                            "categories": [
+                                "android.intent.category.DEFAULT"
+                            ],
+                            "data_schemes": []
+                        }
+                    ],
+                    "security_flags": {
+                        "debuggable": true,
+                        "allow_backup": true,
+                        "uses_cleartext_traffic": null,
+                        "network_security_config": null,
+                        "theme": "@style/AppTheme",
+                        "large_heap": null,
+                        "test_only": null
+                    },
+                    "misconfigurations": [
+                        {
+                            "severity": "critical",
+                            "issue": "Application is debuggable",
+                            "detail": "android:debuggable=true allows attacker to attach a debugger and inspect app internals.",
+                            "owasp": "M7 \u2014 Insufficient Binary Protections"
+                        },
+                        {
+                            "severity": "high",
+                            "issue": "Application allows backup",
+                            "detail": "android:allowBackup=true (or default) allows data extraction via ADB backup.",
+                            "owasp": "M9 \u2014 Insecure Data Storage"
+                        },
+                        {
+                            "severity": "medium",
+                            "issue": "Exported activitie without permission",
+                            "detail": "Component 'jakhar.aseem.diva.APICredsActivity' is exported without a required permission, allowing any app to interact with it.",
+                            "owasp": "M8 \u2014 Security Misconfiguration"
+                        },
+                        {
+                            "severity": "medium",
+                            "issue": "Exported activitie without permission",
+                            "detail": "Component 'jakhar.aseem.diva.APICreds2Activity' is exported without a required permission, allowing any app to interact with it.",
+                            "owasp": "M8 \u2014 Security Misconfiguration"
+                        },
+                        {
+                            "severity": "medium",
+                            "issue": "Exported provider without permission",
+                            "detail": "Component 'jakhar.aseem.diva.NotesProvider' is exported without a required permission, allowing any app to interact with it.",
+                            "owasp": "M8 \u2014 Security Misconfiguration"
+                        }
+                    ],
+                    "package_name": "jakhar.aseem.diva",
+                    "min_sdk": null,
+                    "target_sdk": null
+                }
+            },
+            "yara": {
+                "status": "success",
+                "data": {
+                    "matches": [],
+                    "total_files_scanned": 2735,
+                    "total_matches": 0,
+                    "rules_matched": []
+                }
+            },
+            "iocs": {
+                "status": "success",
+                "data": {
+                    "urls": [
+                        "http://payatu.com"
+                    ],
+                    "ips": [],
+                    "domains": [
+                        "anchorrect.top",
+                        "android.intent.extra.cc",
+                        "android.net",
+                        "android.support.v4.net",
+                        "bounds.top",
+                        "childrect.top",
+                        "desiredchildrect.top",
+                        "displayframe.top",
+                        "existingbounds.top",
+                        "firstrect.top",
+                        "innerbounds.top",
+                        "insets.top",
+                        "java.io",
+                        "java.net",
+                        "localinsets.top",
+                        "mdecorinsets.top",
+                        "out.top",
+                        "outerbounds.top",
+                        "outrect.top",
+                        "padding.top",
+                        "parent.top",
+                        "payatu.com",
+                        "postinfo.top",
+                        "postlayoutinfo.top",
+                        "preinfo.top",
+                        "prelayoutinfo.top",
+                        "r.id.info",
+                        "r.top",
+                        "rect.top",
+                        "rectf.top",
+                        "result.top",
+                        "screenbounds.top",
+                        "secondrect.top",
+                        "selectorrect.top",
+                        "textappearance.statusbar.eventcontent.info",
+                        "this.mbounds.top",
+                        "this.mcollapsedbounds.top",
+                        "this.mcontentbounds.top",
+                        "this.mcontentinsets.top",
+                        "this.mcurrentbounds.top",
+                        "this.mdecorinsets.top",
+                        "this.mdecorpadding.top",
+                        "this.mdstrectf.top",
+                        "this.mexpandedbounds.top",
+                        "this.minnerinsets.top",
+                        "this.minsets.top",
+                        "this.mshadowpadding.top",
+                        "this.mtemprect.top",
+                        "this.mtmprect.top",
+                        "this.top",
+                        "thumbinsets.top"
+                    ],
+                    "emails": [],
+                    "crypto_wallets": [],
+                    "api_keys": [],
+                    "base64_urls": [],
+                    "total_indicators": 52
+                }
+            }
+        },
+        "errors": [
+            "APKTool decompilation failed"
+        ],
+        "risk_score": 26,
+        "risk_breakdown": {
+            "total_score": 26,
+            "category_scores": {
+                "permissions": 4,
+                "iocs": 7,
+                "yara": 0,
+                "api_calls": 0,
+                "manifest_misconfig": 15
+            },
+            "details": {
+                "permissions": {
+                    "raw_score": 9,
+                    "normalized_score": 4,
+                    "max_score": 25,
+                    "permissions_scored": [
+                        {
+                            "permission": "android.permission.WRITE_EXTERNAL_STORAGE",
+                            "risk_points": 5
+                        },
+                        {
+                            "permission": "android.permission.READ_EXTERNAL_STORAGE",
+                            "risk_points": 4
+                        }
+                    ]
+                },
+                "iocs": {
+                    "raw_score": 7,
+                    "normalized_score": 7,
+                    "max_score": 20,
+                    "external_urls": 1,
+                    "suspicious_domains": 51
+                },
+                "yara": {
+                    "raw_score": 0,
+                    "normalized_score": 0,
+                    "max_score": 25,
+                    "rules_triggered": [],
+                    "total_rule_matches": 0
+                },
+                "api_calls": {
+                    "raw_score": 0,
+                    "normalized_score": 0,
+                    "max_score": 15,
+                    "high_risk_apis": []
+                },
+                "manifest_misconfig": {
+                    "raw_score": 31,
+                    "normalized_score": 15,
+                    "max_score": 15,
+                    "issues": [
+                        {
+                            "issue": "Application is debuggable",
+                            "severity": "critical",
+                            "score": 8
+                        },
+                        {
+                            "issue": "debuggable",
+                            "severity": "critical",
+                            "score": 6
+                        },
+                        {
+                            "issue": "Application allows backup",
+                            "severity": "high",
+                            "score": 5
+                        },
+                        {
+                            "issue": "Exported activitie without permission",
+                            "severity": "medium",
+                            "score": 3
+                        },
+                        {
+                            "issue": "Exported activitie without permission",
+                            "severity": "medium",
+                            "score": 3
+                        },
+                        {
+                            "issue": "Exported provider without permission",
+                            "severity": "medium",
+                            "score": 3
+                        },
+                        {
+                            "issue": "allow_backup",
+                            "severity": "high",
+                            "score": 3
+                        }
+                    ]
+                }
+            },
+            "risk_level": "low"
+        },
+        "artifact_hashes": {
+            "static_report.json": "3fea4a83b7e93c2aa214b779aea87746e349563ff6bf0f9aaaad6628c0583479",
+            "ioc_list.json": "3b01737fa147ac5ff33a02414a4d7cba6a2f54b8a414d0af11339109692af240",
+            "permissions_profile.json": "11dc128e5844b06f69c38b50f17c8f6030d4b6e74f9bd0af9c5f61a37d7ff228"
+        }
+    }
+}
