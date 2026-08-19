@@ -28,8 +28,8 @@ class Settings(BaseSettings):
 
     # Ollama (Local LLM)
     OLLAMA_HOST: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    OLLAMA_MODEL_CODER: str = os.getenv("OLLAMA_MODEL_CODER", "qwen2.5-coder:7b")
-    OLLAMA_MODEL_SECURITY: str = os.getenv("OLLAMA_MODEL_SECURITY", "qwen2.5-coder:7b")
+    OLLAMA_MODEL_CODER: str = os.getenv("OLLAMA_MODEL_CODER", "qwen3:8b")
+    OLLAMA_MODEL_SECURITY: str = os.getenv("OLLAMA_MODEL_SECURITY", "qwen3:8b")
     OLLAMA_TIMEOUT: int = 300  # 5 min for slow machines
 
     # Neo4j

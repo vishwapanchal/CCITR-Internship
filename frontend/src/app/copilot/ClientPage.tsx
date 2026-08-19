@@ -30,7 +30,7 @@ export default function CoPilotPage() {
       id: "system-init",
       role: "system",
       content:
-        "APEX-X Co-Pilot initialized — powered by Qwen 2.5 (Local LLM). Select a case and ask me anything about its security analysis.",
+        "APEX-X Co-Pilot initialized — powered by Qwen 3 8B (Local LLM). Select a case and ask me anything about its security analysis.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -187,7 +187,7 @@ export default function CoPilotPage() {
                 <div className="flex items-center gap-2 text-primary/60">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="font-mono text-xs">
-                    Qwen 2.5 is reasoning...
+                    Qwen 3 is reasoning...
                   </span>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function CoPilotPage() {
           </form>
           <div className="text-center mt-2">
             <span className="text-[10px] font-mono text-primary/40 uppercase">
-              Powered by Qwen 2.5 (Local) · All inference runs locally via Ollama — zero cloud API calls.
+              Powered by Qwen 3 8B (Local) · All inference runs locally via Ollama — zero cloud API calls.
             </span>
           </div>
         </div>

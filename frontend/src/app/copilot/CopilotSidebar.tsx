@@ -59,7 +59,7 @@ export default function CopilotSidebar({
             <div className="flex items-center gap-2 text-xs font-mono">
               <Zap className="w-3 h-3 text-emerald-500" />
               <span className="text-primary/60">
-                Qwen 2.5 (Local)
+                Qwen 3 8B (Local)
               </span>
             </div>
           </div>
