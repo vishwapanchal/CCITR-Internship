@@ -4,10 +4,24 @@ echo "==========================================="
 echo "   APEX-X Setup: Installing Dependencies"
 echo "==========================================="
 
-# 1. System packages (Apktool, Jadx)
-echo "[*] Installing Apktool and Jadx via APT..."
+# 1. System packages (Apktool)
+echo "[*] Installing Apktool via APT..."
 sudo apt-get update
-sudo apt-get install -y apktool jadx
+sudo apt-get install -y apktool unzip wget default-jre
+
+# 1.5. Install Jadx manually
+echo "[*] Installing Jadx..."
+JADX_VERSION="1.4.7"
+if ! command -v jadx &> /dev/null; then
+    wget -qO jadx.zip "https://github.com/skylot/jadx/releases/download/v${JADX_VERSION}/jadx-${JADX_VERSION}.zip"
+    sudo unzip -q -o jadx.zip -d /opt/jadx
+    sudo ln -sf /opt/jadx/bin/jadx /usr/local/bin/jadx
+    sudo ln -sf /opt/jadx/bin/jadx-gui /usr/local/bin/jadx-gui
+    rm jadx.zip
+    echo "[*] Jadx installed."
+else
+    echo "[*] Jadx is already installed."
+fi
 
 # 2. Ollama Models
 echo "[*] Checking Ollama..."
