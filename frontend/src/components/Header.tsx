@@ -94,7 +94,7 @@ export default function Header() {
 
         {/* Desktop Nav / Typewriter */}
         <div className="hidden md:flex items-center gap-2">
-          {!isAuthenticated && isLandingPage ? (
+          {isLandingPage ? (
             <div className="px-6 py-2 font-mono text-sm text-primary/80 font-medium whitespace-nowrap min-w-[280px]">
               {text}
               <m.span
