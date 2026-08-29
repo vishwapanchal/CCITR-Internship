@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import type { CaseResponse } from "@/services/api";
-import { ChevronRight } from "lucide-react";
+import { deleteCase } from "@/services/api";
+import { ChevronRight, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface CaseCardProps {
   caseData: CaseResponse;
+  onDeleted?: (caseId: string) => void;
 }
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
@@ -29,22 +32,64 @@ function getRiskLabel(score: number): string {
   return "Critical";
 }
 
-export default function CaseCard({ caseData }: CaseCardProps) {
+export default function CaseCard({ caseData, onDeleted }: CaseCardProps) {
   const status = statusConfig[caseData.status] || statusConfig.pending;
   const score = caseData.threat_score || 0;
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const confirmed = window.confirm(
+      `🗑️ Delete "${caseData.apk_name}"?\n\nThis will permanently remove the case and all analysis results from the database and disk.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteCase(caseData.id);
+      if (onDeleted) {
+        onDeleted(caseData.id);
+      } else {
+        window.location.reload();
+      }
+    } catch (err) {
+      alert("Failed to delete case: " + err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <Link prefetch={false} href={`/cases/${caseData.id}`}>
-      <div className="bg-white border border-border-subtle rounded-xl p-4 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group">
+      <div className={`bg-white border border-border-subtle rounded-xl p-4 hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-medium text-text-muted">
             {caseData.case_number}
           </span>
-          <span
-            className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.bg} ${status.text}`}
-          >
-            {status.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${status.bg} ${status.text}`}
+            >
+              {status.label}
+            </span>
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title="Delete case"
+              className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+            >
+              {isDeleting ? (
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         <h3 className="font-semibold text-sm mb-0.5 truncate">{caseData.apk_name}</h3>

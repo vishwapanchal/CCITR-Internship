@@ -10,6 +10,51 @@ from app.models.schemas import Case as CaseSchema
 router = APIRouter()
 
 
+@router.delete("/{case_id}")
+def delete_case(case_id: UUID, db: Session = Depends(get_db)):
+    """
+    Delete a case and all its associated data (phase results, files on disk).
+    """
+    import os
+    import shutil
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    apk_name = case.apk_name
+    case_id_str = str(case_id)
+
+    # Delete phase results
+    db.query(PhaseResult).filter(PhaseResult.case_id == case_id).delete()
+
+    # Delete fingerprints if table exists
+    try:
+        from app.models.database import ApkFingerprint
+        db.query(ApkFingerprint).filter(ApkFingerprint.case_id == case_id).delete()
+    except Exception:
+        pass
+
+    # Delete the case record
+    db.delete(case)
+    db.commit()
+
+    # Delete case directory from disk
+    DATA_DIR = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "data", "cases"
+    )
+    case_dir = os.path.join(DATA_DIR, case_id_str)
+    if os.path.exists(case_dir):
+        shutil.rmtree(case_dir)
+        logger.info(f"Deleted case directory: {case_dir}")
+
+    logger.info(f"Case {case_id_str} ({apk_name}) deleted successfully")
+    return {"status": "deleted", "case_id": case_id_str, "apk_name": apk_name}
+
 @router.get("/threat-map")
 def get_threat_map(db: Session = Depends(get_db)):
     """

@@ -196,7 +196,11 @@ export default function Dashboard() {
           
           <div className="flex-1 overflow-y-auto pr-2 space-y-3">
             {cases.map((caseData) => (
-              <CaseCard key={caseData.id} caseData={caseData} />
+              <CaseCard
+                key={caseData.id}
+                caseData={caseData}
+                onDeleted={(deletedId) => setCases(cases.filter(c => c.id !== deletedId))}
+              />
             ))}
           </div>
         </m.div>

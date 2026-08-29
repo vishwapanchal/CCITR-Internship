@@ -280,6 +280,19 @@ export async function runDynamicAnalysis(caseId: string): Promise<any> {
   return response.json();
 }
 
+export async function deleteCase(caseId: string): Promise<any> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}`, {
+    method: "DELETE",
+    headers,
+  });
+  if (!response.ok) throw new Error("Failed to delete case");
+  return response.json();
+}
+
 export function exportIOCsAsSTIX(iocs: { type: string; value: string; context: string; confidence: number }[]): void {
   const stixBundle = {
     type: "bundle",
