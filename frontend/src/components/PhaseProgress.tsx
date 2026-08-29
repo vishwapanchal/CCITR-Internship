@@ -15,7 +15,7 @@ const statusColors: Record<string, { bg: string; bar: string; text: string }> = 
 
 export default function PhaseProgress({ phases }: PhaseProgressProps) {
   const completedCount = phases.filter((p) => p.status === "completed").length;
-  const overallProgress = Math.round(
+  const overallProgress = phases.length === 0 ? 0 : Math.round(
     phases.reduce((sum, p) => sum + p.progress, 0) / phases.length
   );
 

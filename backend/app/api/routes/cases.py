@@ -4,7 +4,7 @@ from typing import List
 from uuid import UUID
 
 from app.api.dependencies import get_db
-from app.models.database import Case
+from app.models.database import Case, AuditLog
 from app.models.schemas import Case as CaseSchema
 
 router = APIRouter()
@@ -16,6 +16,30 @@ def get_cases(db: Session = Depends(get_db)):
     """
     cases = db.query(Case).all()
     return cases
+
+@router.get("/activity/recent")
+def get_recent_activity(limit: int = 20, db: Session = Depends(get_db)):
+    """
+    Retrieve recent audit log entries (uploads, analysis triggers, etc.) across all cases.
+    """
+    logs = (
+        db.query(AuditLog)
+        .order_by(AuditLog.timestamp.desc())
+        .limit(min(limit, 100))
+        .all()
+    )
+    return [
+        {
+            "id": log.id,
+            "timestamp": log.timestamp.isoformat() if log.timestamp else None,
+            "user": log.user.username if log.user else "system",
+            "action": log.action,
+            "case_id": str(log.case_id) if log.case_id else None,
+            "case_number": log.case.case_number if log.case else None,
+            "details": log.details,
+        }
+        for log in logs
+    ]
 
 @router.get("/{case_id}", response_model=CaseSchema)
 def get_case(case_id: UUID, db: Session = Depends(get_db)):

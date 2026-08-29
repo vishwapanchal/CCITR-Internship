@@ -117,20 +117,48 @@ def _create_llm_summary(reports: Dict[str, Any]) -> Dict[str, Any]:
         
     if "dynamic" in reports:
         dyn = reports["dynamic"]
-        network = dyn.get("steps", {}).get("network", {})
+        network_activity = dyn.get("network_activity", [])
         summary["dynamic"] = {
+            "mode": dyn.get("mode"),
             "risk_score": dyn.get("risk_score"),
-            "dns_queries": network.get("dns_queries", []),
-            "http_hosts": list(set(req.get("host") for req in network.get("http_requests", []) if req.get("host"))),
+            "behaviors": dyn.get("behaviors", {}),
+            "contacted_hosts": list({n.get("destination") for n in network_activity if n.get("destination")})[:20],
         }
-        
+
+        pentest = dyn.get("pentest_data")
+        if pentest:
+            net_stats = pentest.get("network_stats") or {}
+            summary["dynamic"]["parent_child_payloads"] = [
+                {
+                    "package_name": c.get("package_name"),
+                    "is_hidden": c.get("is_hidden"),
+                    "is_running": c.get("is_running"),
+                    "risk_level": c.get("risk_level"),
+                }
+                for c in pentest.get("child_apks", [])
+            ]
+            if net_stats.get("status") == "success":
+                summary["dynamic"]["pcap_traffic"] = {
+                    "total_packets": net_stats.get("total_packets"),
+                    "total_bytes": net_stats.get("total_bytes"),
+                    "inbound_bytes": net_stats.get("direction_summary", {}).get("inbound_bytes"),
+                    "outbound_bytes": net_stats.get("direction_summary", {}).get("outbound_bytes"),
+                    "suspicious_indicators": [
+                        i["description"] for i in net_stats.get("suspicious_indicators", [])
+                    ],
+                }
+
     if "c2" in reports:
         c2 = reports["c2"]
+        attribution = c2.get("attribution", {})
+        infra = c2.get("contacted_infrastructure", {})
         summary["c2"] = {
-            "attribution_confidence": c2.get("steps", {}).get("attribution", {}).get("attribution_confidence"),
-            "related_apks_count": c2.get("steps", {}).get("attribution", {}).get("related_apks_count"),
-            "campaigns_found": c2.get("steps", {}).get("attribution", {}).get("campaigns_found"),
-            "suspicious_domains": [d.get("domain") for d in c2.get("steps", {}).get("enrichment", {}).get("data", {}).get("domains", []) if d.get("suspicious_tld")]
+            "malware_family": attribution.get("malware_family"),
+            "threat_category": attribution.get("threat_category"),
+            "attribution_confidence": attribution.get("confidence"),
+            "detection_ratio": attribution.get("detection_ratio"),
+            "contacted_domains": infra.get("domains", []),
+            "contacted_ips": infra.get("ips", []),
         }
         
     if "vuln" in reports:

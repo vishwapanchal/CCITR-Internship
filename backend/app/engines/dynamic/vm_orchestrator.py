@@ -103,6 +103,26 @@ def wait_for_boot(device: str, timeout: int = 90) -> bool:
     return False
 
 
+def get_device_ip(device: str) -> Optional[str]:
+    """
+    Get the device's own IP address on its active route, used to classify
+    captured packets as inbound vs outbound.
+    """
+    result = _run_adb(["shell", "ip", "route", "get", "8.8.8.8"], device=device, timeout=10)
+    if result["success"]:
+        match = re.search(r"src\s+(\d+\.\d+\.\d+\.\d+)", result["stdout"])
+        if match:
+            return match.group(1)
+
+    # Fallback: parse `ip addr` for the first non-loopback IPv4 address.
+    result = _run_adb(["shell", "ip", "-4", "addr", "show"], device=device, timeout=10)
+    if result["success"]:
+        for match in re.finditer(r"inet\s+(\d+\.\d+\.\d+\.\d+)/\d+.*scope global", result["stdout"]):
+            return match.group(1)
+
+    return None
+
+
 def get_package_name(apk_path: str) -> Optional[str]:
     """Extract package name from an APK using aapt2 or aapt."""
     adb = _find_adb()

@@ -9,7 +9,7 @@ import json
 import zipfile
 import datetime
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import FileResponse
@@ -160,27 +160,62 @@ def _fallback_narrative(case_data: Dict[str, Any]) -> str:
     if sec_flags.get("allow_backup"):
         sections.append("  - MEDIUM: Backup enabled")
     
+    dyn = case_data.get("dynamic_analysis", {})
+    if dyn:
+        sections.append("")
+        sections.append("5. DYNAMIC ANALYSIS")
+        sections.append(f"Mode: {dyn.get('mode', 'unknown')} | Runtime Risk Score: {dyn.get('risk_score', 0)}/100")
+        flags = dyn.get("behavioral_flags", [])
+        if flags:
+            sections.append(f"Behavioral Flags: {', '.join(flags)}")
+        hosts = dyn.get("contacted_hosts", [])
+        if hosts:
+            sections.append(f"Contacted Hosts ({len(hosts)}):")
+            for h in hosts[:10]:
+                sections.append(f"  - {h}")
+
+    pentest = case_data.get("pentest_analysis")
+    if pentest:
+        sections.append("")
+        sections.append("5b. MANUAL PENETRATION TEST -- PARENT/CHILD PAYLOAD & NETWORK EVIDENCE")
+        sections.append(f"Child APKs Detected: {pentest.get('child_apk_count', 0)}")
+        if pentest.get("hidden_child_apks"):
+            sections.append(f"  - HIDDEN (no launcher icon): {', '.join(pentest['hidden_child_apks'])}")
+        if pentest.get("running_child_apks"):
+            sections.append(f"  - RUNNING at capture time: {', '.join(pentest['running_child_apks'])}")
+        traffic = pentest.get("network_traffic")
+        if traffic:
+            sections.append(
+                f"PCAP Capture: {traffic.get('total_packets', 0)} packets, "
+                f"{traffic.get('total_bytes', 0)} bytes total "
+                f"(inbound: {traffic.get('inbound_bytes', 0)} bytes, outbound: {traffic.get('outbound_bytes', 0)} bytes)"
+            )
+            for indicator in traffic.get("suspicious_indicators", []):
+                sections.append(f"  - SUSPICIOUS: {indicator}")
+        elif pentest.get("pcapdroid_used"):
+            sections.append("PCAP was captured via PCAPdroid but could not be parsed for traffic statistics.")
+
     if vulns:
         sections.append("")
-        sections.append("5. VULNERABILITY ASSESSMENT")
+        sections.append("6. VULNERABILITY ASSESSMENT")
         sections.append(f"Total: {len(vulns)} | Critical: {len(critical_vulns)} | High: {len(high_vulns)}")
         for v in vulns[:6]:
             sections.append(f"  - [{v.get('severity','').upper()}] {v.get('title','')} (CVSS {v.get('cvss_score',0)})")
-    
+
     c2 = case_data.get("c2_intelligence", {})
     if c2:
         sections.append("")
-        sections.append("6. C2 & ATTRIBUTION")
+        sections.append("7. C2 & ATTRIBUTION")
         sections.append(f"C2 Risk Score: {c2.get('risk_score', 0)}/100")
         infra = c2.get("contacted_infrastructure", [])
         if infra:
             sections.append(f"Contacted Infrastructure: {len(infra)} endpoints")
         attr = c2.get("attribution", {})
-        if attr.get("campaign"):
-            sections.append(f"Attributed Campaign: {attr.get('campaign')}")
-    
+        if attr.get("malware_family") and attr.get("malware_family") != "Unknown":
+            sections.append(f"Attributed Malware Family: {attr.get('malware_family')}")
+
     sections.append("")
-    sections.append("7. SECTION 65B COMPLIANCE")
+    sections.append("8. SECTION 65B COMPLIANCE")
     sections.append("This forensic document is certified under Section 65B of the Indian Evidence Act.")
     sections.append(f"Generated: {datetime.datetime.utcnow().isoformat()}Z")
     
@@ -243,12 +278,39 @@ def _load_case_data(case_id: str, db: Session) -> Dict[str, Any]:
             
         elif pr.phase == "dynamic" and pr.result:
             result = pr.result
+            network_activity = result.get("network_activity", [])
             data["dynamic_analysis"] = {
-                "monkey_events": result.get("monkey_test", {}).get("events_injected", 0),
-                "network_analysis": result.get("network_analysis", {}),
-                "behavioral_flags": result.get("behavioral_analysis", {}).get("flags", []),
+                "mode": result.get("mode", "unknown"),
+                "total_events": result.get("total_events", 0),
+                "contacted_hosts": _safe_slice(
+                    list({n.get("destination") for n in network_activity if n.get("destination")}), 15
+                ),
+                "behavioral_flags": [k for k, v in result.get("behaviors", {}).items() if v],
                 "risk_score": result.get("risk_score", 0),
             }
+
+            pentest = result.get("pentest_data")
+            if pentest:
+                net_stats = pentest.get("network_stats") or {}
+                data["pentest_analysis"] = {
+                    "child_apk_count": pentest.get("child_apk_count", 0),
+                    "hidden_child_apks": [
+                        c.get("package_name") for c in pentest.get("hidden_child_apks", [])
+                    ],
+                    "running_child_apks": [
+                        c.get("package_name") for c in pentest.get("running_child_apks", [])
+                    ],
+                    "pcapdroid_used": pentest.get("pcapdroid_used", False),
+                    "network_traffic": {
+                        "total_packets": net_stats.get("total_packets"),
+                        "total_bytes": net_stats.get("total_bytes"),
+                        "inbound_bytes": net_stats.get("direction_summary", {}).get("inbound_bytes"),
+                        "outbound_bytes": net_stats.get("direction_summary", {}).get("outbound_bytes"),
+                        "suspicious_indicators": [
+                            i.get("description") for i in net_stats.get("suspicious_indicators", [])
+                        ],
+                    } if net_stats.get("status") == "success" else None,
+                }
             
         elif pr.phase == "c2_intelligence" and pr.result:
             result = pr.result
@@ -365,27 +427,91 @@ class PDFGenerator:
 
 
 class EvidencePackager:
+    """
+    Builds the Section 65B evidence ZIP from the case's real artifacts on
+    disk plus its real audit-log chain of custody. Deliberately excludes
+    the full decompiled source tree (apktool/jadx output) to keep the
+    package a reasonable size — it includes the APK itself, every phase's
+    JSON report, the SHA256 manifest, and (for manual-pentest cases) the
+    captured PCAP and any pulled child/dropper APKs.
+    """
+
+    # Top-level files/dirs under a case directory that are safe & valuable
+    # to include verbatim. Everything else (decompiled sources, temp dirs)
+    # is skipped to keep the ZIP from ballooning to hundreds of MB.
+    INCLUDED_REPORT_FILES = [
+        "static_analysis/static_report.json",
+        "dynamic_analysis/dynamic_report.json",
+        "c2_intelligence/c2_report.json",
+        "vulnerability_analysis/vulnerability_report.json",
+        "intelligence_analysis/threat_narrative.json",
+        "intelligence_analysis/malware_classification.json",
+        "sha256_manifest.json",
+    ]
+
     def __init__(self, cases_dir, keys_dir):
         self.cases_dir = cases_dir
 
-    def package_case(self, case_id: str, case_number: str):
+    def package_case(self, case_id: str, case_number: str, db: Optional[Session] = None) -> str:
+        case_dir = os.path.join(self.cases_dir, case_id)
         zip_filename = f"evidence_package_{case_id}.zip"
         zip_path = os.path.join(self.cases_dir, zip_filename)
-        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+
+        included_files: List[str] = []
+
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            # ── The APK itself ──
+            if os.path.isdir(case_dir):
+                for f in os.listdir(case_dir):
+                    if f.lower().endswith(".apk"):
+                        zf.write(os.path.join(case_dir, f), arcname=f"artifacts/{f}")
+                        included_files.append(f"artifacts/{f}")
+
+                # ── Phase reports + hash manifest ──
+                for rel_path in self.INCLUDED_REPORT_FILES:
+                    abs_path = os.path.join(case_dir, rel_path)
+                    if os.path.exists(abs_path):
+                        zf.write(abs_path, arcname=f"reports/{os.path.basename(rel_path)}")
+                        included_files.append(f"reports/{os.path.basename(rel_path)}")
+
+                # ── Manual pentest artifacts: PCAP + child/dropper APKs ──
+                pentest_dir = os.path.join(case_dir, "pentest_analysis")
+                if os.path.isdir(pentest_dir):
+                    for f in os.listdir(pentest_dir):
+                        if f.endswith((".pcap", ".apk")):
+                            zf.write(os.path.join(pentest_dir, f), arcname=f"pentest_artifacts/{f}")
+                            included_files.append(f"pentest_artifacts/{f}")
+
+            # ── Real chain of custody, from the audit log ──
+            chain_entries = []
+            if db is not None:
+                try:
+                    from app.services.audit_service import export_chain_of_custody
+                    coc_path = export_chain_of_custody(db, UUID(case_id), case_dir)
+                    with open(coc_path, "r") as f:
+                        chain_entries = json.load(f).get("chain_of_custody", [])
+                    zf.write(coc_path, arcname="chain_of_custody.json")
+                    included_files.append("chain_of_custody.json")
+                except Exception as e:
+                    logger.warning(f"Could not export real chain of custody for {case_id}: {e}")
+
             zf.writestr("manifest.json", json.dumps({
-                "case_number": case_number, "case_id": case_id,
-                "status": "SEALED", "timestamp": f"{datetime.datetime.utcnow().isoformat()}Z"
+                "case_number": case_number,
+                "case_id": case_id,
+                "status": "SEALED",
+                "packaged_at": f"{datetime.datetime.utcnow().isoformat()}Z",
+                "included_files": included_files,
+                "chain_of_custody_entries": len(chain_entries),
             }, indent=2))
+
             zf.writestr("section_65B_certificate.txt",
                 f"CERTIFICATE UNDER SECTION 65B OF THE INDIAN EVIDENCE ACT\n\n"
                 f"Case: {case_number}\n"
                 f"This is to certify that the electronic record contained herein was produced "
-                f"by APEX-X Automated Forensic System.\n"
-                f"Timestamp: {datetime.datetime.utcnow().isoformat()}Z")
-            zf.writestr("chain_of_custody.log",
-                f"{datetime.datetime.utcnow().isoformat()}Z - Evidence ingested into APEX-X\n"
-                f"{datetime.datetime.utcnow().isoformat()}Z - Hash verified: SHA256 matches manifest\n"
-                f"{datetime.datetime.utcnow().isoformat()}Z - Sealed for court presentation.")
+                f"by APEX-X Automated Forensic System from the artifacts listed in manifest.json, "
+                f"each verified against sha256_manifest.json.\n"
+                f"Packaged: {datetime.datetime.utcnow().isoformat()}Z")
+
         return zip_path
 
 
@@ -435,18 +561,22 @@ async def download_report(case_id: str, language: str = "en", db: Session = Depe
 
 
 @router.get("/{case_id}/evidence-package")
-async def download_evidence_package(case_id: str):
+async def download_evidence_package(case_id: str, db: Session = Depends(get_db)):
     """
-    Generates and returns the Section 65B ZIP evidence package.
+    Generates and returns the Section 65B ZIP evidence package: the APK,
+    every phase's JSON report, the SHA256 manifest, PCAP/child-APK artifacts
+    (for manual pentest cases), and a real chain of custody from the audit log.
     """
     try:
         packager = EvidencePackager(CASES_DIR, os.path.join(root_dir, "keys"))
-        case_number = f"CASE-{case_id[:8].upper()}"
-        
+
+        case = db.query(Case).filter(Case.id == UUID(case_id)).first()
+        case_number = case.case_number if case else f"CASE-{case_id[:8].upper()}"
+
         case_dir = os.path.join(CASES_DIR, case_id)
         os.makedirs(case_dir, exist_ok=True)
-        
-        zip_path = packager.package_case(case_id, case_number)
+
+        zip_path = packager.package_case(case_id, case_number, db=db)
         
         if not os.path.exists(zip_path):
             raise HTTPException(status_code=500, detail="Failed to generate evidence package")

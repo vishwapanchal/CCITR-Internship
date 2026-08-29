@@ -1,22 +1,18 @@
 import React from "react";
 import VulnerabilityCard from "@/components/VulnerabilityCard";
-import { REAL_VULNERABILITIES } from "@/services/realData";
 
 interface VulnsTabProps {
   caseData: any;
   analysisResults?: any;
-  isMockCase: boolean;
 }
 
-export default function VulnsTab({ caseData, analysisResults, isMockCase }: VulnsTabProps) {
+export default function VulnsTab({ caseData, analysisResults }: VulnsTabProps) {
   // Find vulnerability phase result from the array structure
-  const vulnResult = Array.isArray(analysisResults) 
-    ? analysisResults.find((r: any) => r.phase === "vulnerability")?.result 
+  const vulnResult = Array.isArray(analysisResults)
+    ? analysisResults.find((r: any) => r.phase === "vulnerability")?.result
     : null;
-    
-  const vulnsToUse = isMockCase 
-    ? REAL_VULNERABILITIES.filter((v: any) => v.case_id === caseData?.id) 
-    : (vulnResult?.findings || []);
+
+  const vulnsToUse = vulnResult?.findings || [];
   
   return (
     <div className="space-y-4">

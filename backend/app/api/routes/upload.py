@@ -137,12 +137,14 @@ async def upload_apk(
     db: Session = Depends(dependencies.get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if not file.filename.endswith(".apk"):
+    safe_filename = os.path.basename(file.filename or "")
+    if not safe_filename or safe_filename in (".", "..") or not safe_filename.endswith(".apk"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid file type. Only .apk files are allowed."
         )
-    
+    file.filename = safe_filename
+
     # 1. Hash the uploaded file
     await file.seek(0)
     apk_hash = calculate_sha256(file.file)

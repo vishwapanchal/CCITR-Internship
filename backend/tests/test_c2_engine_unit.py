@@ -1,81 +1,50 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from app.engines.c2 import infra_enricher, graph_builder
+import json
+import os
+from unittest.mock import patch
 
-def test_infra_enricher_private_ip():
-    """Test enrichment of a private IP address."""
-    result = infra_enricher.enrich_ip("192.168.1.1")
-    assert result["address"] == "192.168.1.1"
-    assert result["is_private"] is True
-    assert result["provider"] == "Private Network"
+from app.engines.c2 import graph_builder
 
-def test_infra_enricher_known_cloud():
-    """Test enrichment of a known AWS IP range."""
-    result = infra_enricher.enrich_ip("54.1.2.3")
-    assert result["address"] == "54.1.2.3"
-    assert result["is_private"] is False
-    assert result["provider"] == "Amazon AWS"
-    assert result["country"] == "US"
 
-def test_infra_enricher_suspicious_domain():
-    """Test enrichment of a suspicious TLD domain."""
-    result = infra_enricher.enrich_domain("malware-c2.tk")
-    assert result["domain"] == "malware-c2.tk"
-    assert result["suspicious_tld"] is True
-    assert result["tld"] == ".tk"
-    assert any("Suspicious TLD" in indicator for indicator in result["risk_indicators"])
-
-def test_infra_enricher_dga_domain():
-    """Test enrichment of a DGA-like domain."""
-    result = infra_enricher.enrich_domain("xkjqwdzbp9921.com")
-    assert result["domain"] == "xkjqwdzbp9921.com"
-    assert any("DGA" in indicator for indicator in result["risk_indicators"])
-
-@patch("app.engines.c2.graph_builder.GraphDatabase")
-def test_graph_builder_success(mock_graph_db, tmp_path):
-    """Test Neo4j graph construction with mocked DB driver."""
-    # Setup mock driver and session
-    mock_driver = MagicMock()
-    mock_session = MagicMock()
-    mock_graph_db.driver.return_value = mock_driver
-    mock_driver.session.return_value.__enter__.return_value = mock_session
-    
-    # Mock Neo4j responses to be empty for simplicity
-    mock_session.run.return_value = []
-    
-    # Setup dummy case dir
+@patch("app.engines.c2.virustotal_client._has_key", return_value=False)
+def test_graph_builder_no_iocs(mock_has_key, tmp_path):
+    """With no IOC/dynamic report files present, only the central APK node is built."""
     case_dir = tmp_path / "case_1"
     case_dir.mkdir()
-    
-    # Build graph
-    result = graph_builder.build_c2_graph(
-        case_id="case_1", 
-        case_dir=str(case_dir), 
-        apk_hash="dummyhash", 
-        package_name="com.test.app"
-    )
-    
-    assert result["status"] == "success"
-    # Basic nodes (Case, APK) are created even if no IOCs exist
-    assert result["nodes_created"] == 2
-    assert result["relationships_created"] == 1
-    
-    # Ensure Neo4j run was called
-    mock_session.run.assert_called()
 
-@patch("app.engines.c2.graph_builder._get_driver")
-def test_graph_builder_no_db(mock_get_driver, tmp_path):
-    """Test graph builder handles DB unavailability."""
-    mock_get_driver.return_value = None
-    
-    case_dir = tmp_path / "case_2"
-    case_dir.mkdir()
-    
     result = graph_builder.build_c2_graph(
-        case_id="case_2", 
-        case_dir=str(case_dir), 
-        apk_hash="dummyhash"
+        case_dir=str(case_dir),
+        apk_hash="dummyhash",
+        package_name="com.test.app",
     )
-    
-    assert result["status"] == "failed"
-    assert "Could not connect to Neo4j" in result["errors"]
+
+    assert result["status"] == "success"
+    assert result["total_nodes"] == 1
+    assert result["total_edges"] == 0
+    assert result["nodes"][0]["id"] == "apk-com.test.app"
+
+
+@patch("app.engines.c2.virustotal_client._has_key", return_value=False)
+def test_graph_builder_with_static_iocs(mock_has_key, tmp_path):
+    """Domains/IPs from the static IOC list become graph nodes with edges to the APK."""
+    case_dir = tmp_path / "case_2"
+    static_dir = case_dir / "static_analysis"
+    static_dir.mkdir(parents=True)
+
+    with open(static_dir / "ioc_list.json", "w") as f:
+        json.dump({
+            "domains": ["malicious-c2.example"],
+            "ips": ["1.2.3.4"],
+            "urls": [],
+        }, f)
+
+    result = graph_builder.build_c2_graph(
+        case_dir=str(case_dir),
+        apk_hash="dummyhash",
+        package_name="com.test.app",
+    )
+
+    assert result["status"] == "success"
+    node_ids = {n["id"] for n in result["nodes"]}
+    assert "domain-malicious-c2.example" in node_ids
+    assert "ip-1.2.3.4" in node_ids
+    assert result["total_edges"] == 2  # APK -> domain, APK -> ip

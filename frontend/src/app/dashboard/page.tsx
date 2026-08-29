@@ -3,11 +3,9 @@
 import { m, Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ActivitySquare, CheckCircle2, Search, Filter } from "lucide-react";
+import { ActivitySquare, CheckCircle2, Search } from "lucide-react";
 import CaseCard from "@/components/CaseCard";
-import PhaseProgress from "@/components/PhaseProgress";
-import { REAL_ACTIVITY, REAL_PHASE_STATUS_ANALYZING } from "@/services/realData";
-import { getCases, CaseResponse } from "@/services/api";
+import { getCases, getRecentActivity, CaseResponse } from "@/services/api";
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -25,11 +23,18 @@ const itemVariants: Variants = {
 export default function Dashboard() {
   const router = useRouter();
   const [cases, setCases] = useState<CaseResponse[]>([]);
-  
+  const [activity, setActivity] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
     getCases().then(({ data }) => {
       if (data) {
         setCases(data);
+      }
+    });
+    getRecentActivity().then(({ data }) => {
+      if (data) {
+        setActivity(data);
       }
     });
   }, []);
@@ -40,6 +45,14 @@ export default function Dashboard() {
     analyzing: cases.filter((c) => c.status === "analyzing").length,
     completed: cases.filter((c) => c.status === "completed").length,
   };
+
+  const filteredCases = searchQuery.trim()
+    ? cases.filter((c) =>
+        c.apk_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.case_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.package_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : cases;
 
   return (
     <main className="min-h-screen p-6 md:p-8 max-w-[1600px] mx-auto w-full flex flex-col gap-6">
@@ -137,7 +150,13 @@ export default function Dashboard() {
                           <span className="font-mono text-xs font-semibold">{caseItem.case_number}</span>
                         </div>
                         <p className="text-xs truncate mb-3">{caseItem.apk_name}</p>
-                        <PhaseProgress phases={REAL_PHASE_STATUS_ANALYZING} />
+                        <div className="flex items-center gap-2 text-xs text-blue-600">
+                          <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Analyzing...
+                        </div>
                       </div>
                     );
                   }
@@ -160,23 +179,28 @@ export default function Dashboard() {
             <div className="flex gap-2 w-full sm:w-auto">
               <div className="relative flex-1 sm:flex-none">
                 <Search className="w-4 h-4 absolute left-2.5 top-2 text-primary/40" />
-                <input 
-                  type="text" 
-                  placeholder="Search cases..." 
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search cases..."
                   aria-label="Search cases"
                   className="w-full bg-canvas border border-border-subtle pl-8 pr-3 py-1.5 text-xs font-mono focus:outline-none focus:border-primary/50"
                 />
               </div>
-              <button type="button" className="bg-canvas border border-border-subtle p-1.5 hover:bg-border-subtle/50 transition-colors shrink-0">
-                <Filter className="w-4 h-4" />
-              </button>
             </div>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto pr-2 space-y-3">
-            {cases.map((caseData) => (
-              <CaseCard key={caseData.id} caseData={caseData} />
-            ))}
+            {filteredCases.length === 0 ? (
+              <p className="text-xs text-primary/50 italic text-center py-8">
+                {searchQuery ? "No cases match your search." : "No cases yet. Upload an APK to get started."}
+              </p>
+            ) : (
+              filteredCases.map((caseData) => (
+                <CaseCard key={caseData.id} caseData={caseData} />
+              ))
+            )}
           </div>
         </m.div>
 
@@ -186,22 +210,32 @@ export default function Dashboard() {
             Recent Activity
           </h3>
           <div className="flex-1 overflow-y-auto space-y-4">
-            {REAL_ACTIVITY.map((activity) => (
-              <div key={activity.id} className="relative pl-4 border-l border-border-subtle">
-                <div className="absolute w-2 h-2 bg-primary rounded-full -left-[4.5px] top-1" />
-                <div className="mb-1">
-                  <span className="text-xs font-mono text-primary/60 mr-2" suppressHydrationWarning>
-                    {new Date(activity.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </span>
-                  <span className="text-xs font-semibold">{activity.user}</span>
+            {activity.length === 0 ? (
+              <p className="text-xs text-primary/50 italic text-center py-8">No activity recorded yet.</p>
+            ) : (
+              activity.map((entry) => (
+                <div key={entry.id} className="relative pl-4 border-l border-border-subtle">
+                  <div className="absolute w-2 h-2 bg-primary rounded-full -left-[4.5px] top-1" />
+                  <div className="mb-1">
+                    <span className="text-xs font-mono text-primary/60 mr-2" suppressHydrationWarning>
+                      {entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                    </span>
+                    <span className="text-xs font-semibold">{entry.user}</span>
+                  </div>
+                  <p className="text-xs font-mono mb-1">{String(entry.action || "").replace(/_/g, " ")}</p>
+                  {entry.case_number && (
+                    <div className="bg-canvas border border-border-subtle p-2 text-xs">
+                      <span className="font-mono font-semibold block mb-1">{entry.case_number}</span>
+                      {entry.details && (
+                        <span className="text-primary/80 break-all">
+                          {typeof entry.details === "string" ? entry.details : JSON.stringify(entry.details)}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs font-mono mb-1">{activity.action.replace(/_/g, " ")}</p>
-                <div className="bg-canvas border border-border-subtle p-2 text-xs">
-                  <span className="font-mono font-semibold block mb-1">{activity.case_number}</span>
-                  <span className="text-primary/80">{activity.details}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </m.div>
 

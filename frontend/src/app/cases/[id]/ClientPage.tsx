@@ -1,29 +1,10 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import ThreatScore from "@/components/ThreatScore";
-import BehaviorTimeline from "@/components/BehaviorTimeline";
-import NetworkGraph from "@/components/NetworkGraph";
-import PermissionMatrix from "@/components/PermissionMatrix";
-import IOCTable from "@/components/IOCTable";
-import VulnerabilityCard from "@/components/VulnerabilityCard";
-import PhaseProgress from "@/components/PhaseProgress";
+import { useState, useEffect } from "react";
 import CaseTabs from "./CaseTabs";
-import {
-  REAL_CASES,
-  REAL_PERMISSIONS,
-  REAL_IOCS,
-  REAL_TIMELINE_EVENTS,
-  REAL_GRAPH_NODES,
-  REAL_GRAPH_EDGES,
-  REAL_VULNERABILITIES,
-  REAL_YARA_MATCHES,
-  REAL_PHASE_STATUS,
-  REAL_PHASE_STATUS_ANALYZING,
-  REAL_REPORTS,
-} from "@/services/realData";
-import { downloadReport, downloadEvidencePackage, getCaseDetail, getCaseResults } from "@/services/api";
-import { FileText, Download, AlertTriangle, Shield, Activity, Network, Bug, FileDown, ArrowLeft } from "lucide-react";
+import type { PhaseStatus } from "@/services/realData";
+import { getCaseDetail, getCaseResults } from "@/services/api";
+import { FileText, Shield, Activity, Network, Bug, FileDown, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 const TABS = [
@@ -37,15 +18,44 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+const PHASE_LABELS: Record<string, string> = {
+  static: "Static Analysis",
+  dynamic: "Dynamic Analysis",
+  c2_intelligence: "C2 Intelligence",
+  vulnerability: "Vulnerability Scan",
+};
 
+function derivePhaseStatus(resultsArray: { phase: string; result: any }[], caseStatus: string): PhaseStatus[] {
+  const phases = ["static", "dynamic", "c2_intelligence", "vulnerability"];
+  return phases.map((phase) => {
+    const entry = resultsArray.find((r) => r.phase === phase);
+    if (!entry) {
+      return {
+        phase: PHASE_LABELS[phase],
+        status: caseStatus === "analyzing" && phase === "static" ? "running" : "pending",
+        progress: 0,
+        started_at: null,
+        completed_at: null,
+      };
+    }
+    const isPending = entry.result?.status === "pending";
+    return {
+      phase: PHASE_LABELS[phase],
+      status: isPending ? "pending" : "completed",
+      progress: isPending ? 0 : 100,
+      started_at: null,
+      completed_at: entry.result?.completed_at || null,
+    };
+  });
+}
 
 export default function CaseDetailClient({ caseId }: { caseId: string }) {
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [caseData, setCaseData] = useState<any>(null);
   const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [phaseStatus, setPhaseStatus] = useState<PhaseStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [caseReports, setCaseReports] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadData(isInitial = true) {
@@ -59,14 +69,15 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
       }
       
       setCaseData(detailData);
-      
+
       // Fetch analysis results
       const { data: resultsData } = await getCaseResults(caseId);
+      const resultsArray = resultsData?.results
+        ? Object.entries(resultsData.results).map(([phase, result]) => ({ phase, result }))
+        : [];
       if (resultsData?.results) {
-        // Convert dict {static: {...}, c2_intelligence: {...}} to array [{phase, result}]
-        const resultsArray = Object.entries(resultsData.results).map(([phase, result]) => ({ phase, result }));
         setAnalysisResults(resultsArray);
-        
+
         // Enrich caseData with derived metrics
         const staticResult = resultsArray.find((r: any) => r.phase === "static")?.result as any;
         if (staticResult) {
@@ -99,27 +110,16 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
           }
           
           const duration = staticResult.duration_seconds;
-          detailData.analysis_time = (duration && duration < 100) ? `${duration.toFixed(1)} s` : "24.2 s";
-          detailData.engine_version = "APEX-X v2.1";
+          if (typeof duration === "number") {
+            detailData.analysis_time = `${duration.toFixed(1)} s`;
+          }
           detailData.decompiler = staticResult.steps?.jadx?.status === "success" ? "JADX + Androguard" : "Androguard";
         }
       }
-      
+
       setCaseData(detailData);
-      
-      const langs = ["English", "Hindi", "Kannada", "Tamil", "Telugu"];
-      const generatedReports = langs.map((lang, idx) => ({
-        id: `rpt-${detailData.id}-${lang.toLowerCase()}`,
-        case_id: detailData.id,
-        case_number: detailData.case_number || `CASE-${detailData.id.slice(0, 8).toUpperCase()}`,
-        title: `${detailData.apk_name || "APK"} — Investigation Report (${lang})`,
-        type: "pdf",
-        language: lang,
-        generated_at: new Date().toISOString(),
-        size_kb: 1850 + idx * 120,
-      }));
-      setCaseReports(generatedReports);
-      
+      setPhaseStatus(derivePhaseStatus(resultsArray, detailData.status));
+
       if (isInitial) setIsLoading(false);
     }
     
@@ -147,8 +147,6 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
   if (error || !caseData) {
     return <div className="p-8 flex justify-center"><p className="font-mono text-red-600">{error || "Case not found"}</p></div>;
   }
-
-  const phaseStatus = caseData.status === "analyzing" ? REAL_PHASE_STATUS_ANALYZING : REAL_PHASE_STATUS;
 
   return (
     <main className="flex-1 flex flex-col max-w-7xl mx-auto w-full p-6">
@@ -230,7 +228,6 @@ export default function CaseDetailClient({ caseId }: { caseId: string }) {
         activeTab={activeTab}
         caseData={caseData}
         phaseStatus={phaseStatus}
-        caseReports={caseReports}
         analysisResults={analysisResults}
       />
     </main>

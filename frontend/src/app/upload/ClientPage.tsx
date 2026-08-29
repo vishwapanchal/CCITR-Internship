@@ -75,22 +75,18 @@ export default function IntakePage() {
     }, 500);
 
     try {
-      // In a real app, we'd send metadata too
       const { data, error } = await uploadAPK(file, (p) => setProgress(p));
-      
+
       clearInterval(progressInterval);
-      setProgress(100);
 
-      setTimeout(() => {
-        if (data && data.id) {
-          router.push(`/cases/${data.id}`);
-        } else {
-          // If backend failed, use a mock ID for demo purposes
-          console.warn("Upload API failed, simulating success for demo:", error);
-          router.push(`/cases/c3d4e5f6-a7b8-9012-cdef-123456789012`); 
-        }
-      }, 1000);
-
+      if (data && data.id) {
+        setProgress(100);
+        setTimeout(() => router.push(`/cases/${data.id}`), 500);
+      } else {
+        setIsScanning(false);
+        setProgress(0);
+        setError(error || "Upload failed. Please check backend connection.");
+      }
     } catch (err) {
       clearInterval(progressInterval);
       setIsScanning(false);

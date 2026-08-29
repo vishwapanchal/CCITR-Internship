@@ -1,21 +1,19 @@
 import React from "react";
 import NetworkGraph from "@/components/NetworkGraph";
-import { REAL_GRAPH_NODES, REAL_GRAPH_EDGES } from "@/services/realData";
 
 interface C2TabProps {
   caseData: any;
   analysisResults?: any;
-  isMockCase: boolean;
 }
 
-export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabProps) {
+export default function C2Tab({ caseData, analysisResults }: C2TabProps) {
   // analysisResults is an array of {phase, result} — extract c2_intelligence result
   const c2Result = Array.isArray(analysisResults)
     ? analysisResults.find((r: any) => r.phase === "c2_intelligence")?.result
     : (analysisResults?.c2_intelligence || analysisResults?.c2 || {});
   const c2Data = c2Result || {};
-  const c2NodesToUse = isMockCase ? REAL_GRAPH_NODES : (c2Data?.nodes || []);
-  const c2EdgesToUse = isMockCase ? REAL_GRAPH_EDGES : (c2Data?.edges || []);
+  const c2NodesToUse = c2Data?.nodes || [];
+  const c2EdgesToUse = c2Data?.edges || [];
   const attribution = c2Data?.attribution || {};
   
   // Try to use our internal ML classification if VT/external attribution fails
@@ -43,7 +41,7 @@ export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabPr
   const detections = attribution?.top_detections || [];
   const verdicts = attribution?.sandbox_verdicts || [];
 
-  const hasRealData = !isMockCase && (c2NodesToUse.length > 0 || finalFamily !== "Unknown" || Object.keys(c2Data).length > 0);
+  const hasRealData = c2NodesToUse.length > 0 || finalFamily !== "Unknown" || Object.keys(c2Data).length > 0;
 
   return (
     <div className="space-y-4">
@@ -94,112 +92,78 @@ export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabPr
       </div>
 
       {/* Attribution + Detections */}
-      {(hasRealData || isMockCase) && (
+      {hasRealData && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Malware Family */}
           <div className="bg-panel border border-border-subtle p-4">
             <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
               Malware Family
             </h3>
-            {isMockCase ? (
-              <div className="space-y-2">
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Family</span>
-                  <span className="text-sm font-semibold">SpyAgent / PhishKing variant</span>
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">First Seen</span>
-                  <span className="text-sm font-mono">2026-01-20</span>
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Target Region</span>
-                  <span className="text-sm">India — Banking sector users</span>
-                </div>
+            <div className="space-y-2">
+              <div>
+                <span className="text-xs font-mono text-primary/60 block">Family</span>
+                <span className="text-sm font-semibold capitalize">{finalFamily}</span>
               </div>
-            ) : (
-              <div className="space-y-2">
+              {attribution.all_families?.length > 1 && (
                 <div>
-                  <span className="text-xs font-mono text-primary/60 block">Family</span>
-                  <span className="text-sm font-semibold capitalize">{finalFamily}</span>
-                </div>
-                {attribution.all_families?.length > 1 && (
-                  <div>
-                    <span className="text-xs font-mono text-primary/60 block">Also Known As</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {attribution.all_families.slice(0, 8).map((f: string, i: number) => (
-                        <span key={i} className="px-2 py-0.5 text-xs font-mono bg-red-500/10 text-red-400 border border-red-500/20 rounded">
-                          {f}
-                        </span>
-                      ))}
-                    </div>
+                  <span className="text-xs font-mono text-primary/60 block">Also Known As</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {attribution.all_families.slice(0, 8).map((f: string, i: number) => (
+                      <span key={i} className="px-2 py-0.5 text-xs font-mono bg-red-500/10 text-red-400 border border-red-500/20 rounded">
+                        {f}
+                      </span>
+                    ))}
                   </div>
-                )}
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Threat Category</span>
-                  <span className="text-sm font-semibold" style={{ color: finalCategory === 'Confirmed Malicious' ? '#ef4444' : finalCategory === 'Suspicious' ? '#f59e0b' : '#3b82f6' }}>
-                    {finalCategory}
-                  </span>
                 </div>
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Target Region</span>
-                  <span className="text-sm">{attribution.target_region || "Unknown"}</span>
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Motivation</span>
-                  <span className="text-sm">{attribution.motivation || "Unknown"}</span>
-                </div>
-                {attribution.tags?.length > 0 && (
-                  <div>
-                    <span className="text-xs font-mono text-primary/60 block">Tags</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {attribution.tags.map((t: string, i: number) => (
-                        <span key={i} className="px-2 py-0.5 text-xs font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              )}
+              <div>
+                <span className="text-xs font-mono text-primary/60 block">Threat Category</span>
+                <span className="text-sm font-semibold" style={{ color: finalCategory === 'Confirmed Malicious' ? '#ef4444' : finalCategory === 'Suspicious' ? '#f59e0b' : '#3b82f6' }}>
+                  {finalCategory}
+                </span>
               </div>
-            )}
+              <div>
+                <span className="text-xs font-mono text-primary/60 block">Target Region</span>
+                <span className="text-sm">{attribution.target_region || "Unknown"}</span>
+              </div>
+              <div>
+                <span className="text-xs font-mono text-primary/60 block">Motivation</span>
+                <span className="text-sm">{attribution.motivation || "Unknown"}</span>
+              </div>
+              {attribution.tags?.length > 0 && (
+                <div>
+                  <span className="text-xs font-mono text-primary/60 block">Tags</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {attribution.tags.map((t: string, i: number) => (
+                      <span key={i} className="px-2 py-0.5 text-xs font-mono bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* AV Engine Detections */}
           <div className="bg-panel border border-border-subtle p-4">
             <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
-              {isMockCase ? "Campaign Links" : "Engine Detections"}
+              Engine Detections
             </h3>
-            {isMockCase ? (
-              <div className="space-y-2">
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Campaign</span>
-                  <span className="text-sm font-semibold">Operation PhishKing</span>
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Threat Actor</span>
-                  <span className="text-sm font-mono">APT-IND-07 (Confidence: 65%)</span>
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-primary/60 block">Motivation</span>
-                  <span className="text-sm">Financial — Banking credential theft</span>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1 max-h-64 overflow-y-auto">
-                {detections.length === 0 ? (
-                  <p className="text-xs text-primary/50 italic">No detections recorded</p>
-                ) : (
-                  detections.map((d: any, i: number) => (
-                    <div key={i} className="flex items-center justify-between py-1 border-b border-border-subtle/50">
-                      <span className="text-xs font-mono text-primary/70 truncate" style={{ maxWidth: "40%" }}>{d.engine}</span>
-                      <span className={`text-xs font-mono px-2 py-0.5 rounded ${d.category === 'malicious' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
-                        {d.result || d.category}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+            <div className="space-y-1 max-h-64 overflow-y-auto">
+              {detections.length === 0 ? (
+                <p className="text-xs text-primary/50 italic">No detections recorded</p>
+              ) : (
+                detections.map((d: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between py-1 border-b border-border-subtle/50">
+                    <span className="text-xs font-mono text-primary/70 truncate" style={{ maxWidth: "40%" }}>{d.engine}</span>
+                    <span className={`text-xs font-mono px-2 py-0.5 rounded ${d.category === 'malicious' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
+                      {d.result || d.category}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}

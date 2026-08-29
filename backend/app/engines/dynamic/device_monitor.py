@@ -20,6 +20,7 @@ from typing import Dict, Any, List, Optional
 from uuid import uuid4
 
 from app.engines.dynamic import vm_orchestrator
+from app.engines.dynamic import pcap_analyzer
 
 logger = logging.getLogger(__name__)
 
@@ -506,6 +507,14 @@ def start_monitoring_session(
     logger.info(f"[Pentest] Taking package snapshot BEFORE on {device_serial}")
     packages_before = _snapshot_packages(device_serial)
 
+    # Record the device's own IP so captured packets can be classified
+    # inbound/outbound once the PCAP is parsed.
+    device_ip = vm_orchestrator.get_device_ip(device_serial)
+    if device_ip:
+        logger.info(f"[Pentest] Device IP for direction classification: {device_ip}")
+    else:
+        logger.warning("[Pentest] Could not determine device IP — PCAP traffic direction will be UNKNOWN")
+
     # Step 2: Install PCAPdroid for network capture
     pcapdroid_available = _install_pcapdroid(device_serial)
 
@@ -525,6 +534,7 @@ def start_monitoring_session(
         "apk_path": apk_path,
         "status": "monitoring",
         "started_at": datetime.now(timezone.utc).isoformat(),
+        "device_ip": device_ip,
         "packages_before": packages_before,
         "child_apks_detected": [],
         "events": [],
@@ -611,10 +621,34 @@ def stop_monitoring_session(session_id: str) -> Dict[str, Any]:
         except subprocess.TimeoutExpired:
             logcat_proc.kill()
 
-    # Step 2: Stop PCAPdroid and pull PCAP
+    # Step 2: Stop PCAPdroid, pull the PCAP, and parse it for byte/packet/
+    # direction statistics and suspicious-traffic indicators.
     pcap_path = None
+    pcap_stats = None
     if session.get("pcap_active"):
         pcap_path = _stop_pcapdroid_capture(device, pentest_dir)
+        if pcap_path:
+            pcap_stats = pcap_analyzer.analyze_pcap(pcap_path, device_ip=session.get("device_ip"))
+            if pcap_stats.get("status") == "success":
+                logger.info(
+                    f"[Pentest] PCAP analysis: {pcap_stats['total_packets']} packets, "
+                    f"{pcap_stats['total_bytes']} bytes, "
+                    f"{len(pcap_stats['suspicious_indicators'])} suspicious indicators"
+                )
+                for indicator in pcap_stats["suspicious_indicators"]:
+                    event_category = "data_exfil" if indicator["type"] == "exfiltration_pattern" else "network"
+                    session["events"].append({
+                        "id": str(uuid4()),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "api_call": f"NETWORK_INDICATOR: {indicator['type']}",
+                        "description": indicator["description"],
+                        "category": event_category,
+                        "risk_level": indicator["severity"].upper(),
+                        "class_name": "PCAPAnalyzer",
+                        "source": "pcap_analysis",
+                    })
+            else:
+                logger.warning(f"[Pentest] PCAP analysis failed: {pcap_stats.get('error')}")
 
     # Step 3: Package diff — detect child APKs
     logger.info("[Pentest] Taking package snapshot AFTER")
@@ -732,7 +766,14 @@ def stop_monitoring_session(session_id: str) -> Dict[str, Any]:
         30 if r["risk_level"] == "CRITICAL" else 15 if r["risk_level"] == "HIGH" else 5
         for r in child_apk_reports
     )
-    final_risk = min(risk_data["risk_score"] + child_risk_boost, 100)
+    # Boost risk for suspicious network indicators found in the PCAP (beaconing, exfiltration, etc.)
+    network_risk_boost = 0
+    if pcap_stats and pcap_stats.get("status") == "success":
+        network_risk_boost = sum(
+            20 if i["severity"] == "critical" else 10 if i["severity"] == "high" else 3
+            for i in pcap_stats["suspicious_indicators"]
+        )
+    final_risk = min(risk_data["risk_score"] + child_risk_boost + network_risk_boost, 100)
 
     end_time = datetime.now(timezone.utc)
 
@@ -765,16 +806,28 @@ def stop_monitoring_session(session_id: str) -> Dict[str, Any]:
             "pcapdroid_used": session.get("pcap_active", False),
             "packages_before_count": len(session["packages_before"]),
             "packages_after_count": len(packages_after),
+            "device_ip": session.get("device_ip"),
+            "network_stats": pcap_stats,
         },
     }
 
-    # Save report
+    # Save report — both a pentest-specific copy and the standard
+    # dynamic_analysis/dynamic_report.json location that the report
+    # generator and threat-reasoning agent read for every dynamic result.
     report_path = os.path.join(pentest_dir, "pentest_report.json")
     try:
         with open(report_path, "w") as f:
             json.dump(result, f, indent=2, default=str)
     except Exception as e:
         logger.error(f"[Pentest] Failed to save report: {e}")
+
+    dynamic_dir = os.path.join(case_dir, "dynamic_analysis")
+    os.makedirs(dynamic_dir, exist_ok=True)
+    try:
+        with open(os.path.join(dynamic_dir, "dynamic_report.json"), "w") as f:
+            json.dump(result, f, indent=2, default=str)
+    except Exception as e:
+        logger.error(f"[Pentest] Failed to save standard dynamic report: {e}")
 
     # Clean up session
     session["status"] = "completed"

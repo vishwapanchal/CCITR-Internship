@@ -1,15 +1,13 @@
 import React from "react";
 import PermissionMatrix from "@/components/PermissionMatrix";
 import IOCTable from "@/components/IOCTable";
-import { REAL_PERMISSIONS, REAL_YARA_MATCHES, REAL_IOCS } from "@/services/realData";
 
 interface StaticTabProps {
   caseData: any;
   analysisResults?: any;
-  isMockCase: boolean;
 }
 
-export default function StaticTab({ caseData, analysisResults, isMockCase }: StaticTabProps) {
+export default function StaticTab({ caseData, analysisResults }: StaticTabProps) {
   // Extract real data from analysis results array
   const staticResult = Array.isArray(analysisResults)
     ? analysisResults.find((r: any) => r.phase === "static")?.result
@@ -17,9 +15,7 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
 
   // Build permissions from real data
   let permissionsToUse: any[] = [];
-  if (isMockCase) {
-    permissionsToUse = REAL_PERMISSIONS.filter((p: any) => p.case_id === caseData?.id);
-  } else if (staticResult) {
+  if (staticResult) {
     const steps = staticResult.steps || {};
     // Try manifest data first, then androguard
     const manifestPerms = steps.manifest?.data?.permissions || {};
@@ -58,9 +54,7 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
 
   // Build YARA matches from real data
   let yaraMatchesToUse: any[] = [];
-  if (isMockCase) {
-    yaraMatchesToUse = REAL_YARA_MATCHES.filter((y: any) => y.case_id === caseData?.id);
-  } else if (staticResult?.steps?.yara?.data?.matches) {
+  if (staticResult?.steps?.yara?.data?.matches) {
     yaraMatchesToUse = staticResult.steps.yara.data.matches.map((m: any) => ({
       rule_name: m.rule,
       category: m.namespace || "general",
@@ -72,9 +66,7 @@ export default function StaticTab({ caseData, analysisResults, isMockCase }: Sta
 
   // Build IOCs from real data
   let iocsToUse: any[] = [];
-  if (isMockCase) {
-    iocsToUse = REAL_IOCS.filter((i: any) => i.case_id === caseData?.id);
-  } else if (staticResult?.steps?.iocs?.data) {
+  if (staticResult?.steps?.iocs?.data) {
     const iocData = staticResult.steps.iocs.data;
     const allIocs: any[] = [];
     let iocId = 1;

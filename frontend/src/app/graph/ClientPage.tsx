@@ -1,23 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import NetworkGraph from "@/components/NetworkGraph";
-import { REAL_GRAPH_NODES, REAL_GRAPH_EDGES } from "@/services/realData";
+import { getCases, getCaseResults } from "@/services/api";
+import type { GraphNode, GraphEdge } from "@/services/realData";
 import { Network, Search } from "lucide-react";
 
 export default function GraphExplorer() {
   const [filterType, setFilterType] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [allNodes, setAllNodes] = useState<GraphNode[]>([]);
+  const [allEdges, setAllEdges] = useState<GraphEdge[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const nodes =
-    filterType === "all"
-      ? REAL_GRAPH_NODES
-      : REAL_GRAPH_NODES.filter(
-          (n) => n.type === filterType || n.type === "apk"
-        );
+  useEffect(() => {
+    async function loadGraph() {
+      const { data: cases } = await getCases();
+      const completedCases = (cases || []).filter((c) => c.status === "completed");
 
-  const nodeIds = new Set(nodes.map((n) => n.id));
-  const edges = REAL_GRAPH_EDGES.filter(
-    (e) => nodeIds.has(e.source) && nodeIds.has(e.target)
+      const nodeMap = new Map<string, GraphNode>();
+      const edgeMap = new Map<string, GraphEdge>();
+
+      await Promise.all(
+        completedCases.map(async (c) => {
+          const { data: resultsData } = await getCaseResults(c.id);
+          const c2Result = resultsData?.results && (resultsData.results as any)["c2_intelligence"];
+          const nodes: GraphNode[] = c2Result?.nodes || [];
+          const edges: GraphEdge[] = c2Result?.edges || [];
+
+          for (const n of nodes) {
+            if (!nodeMap.has(n.id)) nodeMap.set(n.id, n);
+          }
+          for (const e of edges) {
+            const uniqueId = `${c.id}-${e.id}`;
+            edgeMap.set(uniqueId, { ...e, id: uniqueId });
+          }
+        })
+      );
+
+      setAllNodes(Array.from(nodeMap.values()));
+      setAllEdges(Array.from(edgeMap.values()));
+      setIsLoading(false);
+    }
+    loadGraph();
+  }, []);
+
+  const nodes = useMemo(() => {
+    let filtered = filterType === "all" ? allNodes : allNodes.filter((n) => n.type === filterType || n.type === "apk");
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter((n) => n.label.toLowerCase().includes(q));
+    }
+    return filtered;
+  }, [allNodes, filterType, search]);
+
+  const nodeIds = useMemo(() => new Set(nodes.map((n) => n.id)), [nodes]);
+  const edges = useMemo(
+    () => allEdges.filter((e) => nodeIds.has(e.source) && nodeIds.has(e.target)),
+    [allEdges, nodeIds]
   );
 
   return (
@@ -33,7 +73,7 @@ export default function GraphExplorer() {
               Threat Map
             </h1>
             <p className="text-xs text-text-muted">
-              See how apps connect to external domains and infrastructure
+              How your analyzed apps connect to shared domains and infrastructure
             </p>
           </div>
         </div>
@@ -45,6 +85,8 @@ export default function GraphExplorer() {
               type="text"
               aria-label="Search nodes"
               placeholder="Search nodes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="bg-white border border-border-subtle pl-8 pr-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-full sm:w-56"
             />
           </div>
@@ -57,19 +99,23 @@ export default function GraphExplorer() {
             <option value="all">All Types</option>
             <option value="domain">Domains</option>
             <option value="ip">IP Addresses</option>
-            <option value="campaign">Campaigns</option>
-            <option value="threat_actor">Threat Actors</option>
+            <option value="url">URLs</option>
+            <option value="file">Dropped Files</option>
           </select>
         </div>
       </div>
 
       {/* Graph */}
       <div className="flex-1 bg-white border border-border-subtle rounded-xl min-h-0 relative overflow-hidden">
-        {nodes.length > 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full text-text-muted">
+            Loading threat graph...
+          </div>
+        ) : nodes.length > 0 ? (
           <NetworkGraph nodes={nodes} edges={edges} />
         ) : (
           <div className="flex items-center justify-center h-full text-text-muted">
-            No nodes to display for this filter.
+            No C2 infrastructure indicators found across completed cases yet.
           </div>
         )}
       </div>

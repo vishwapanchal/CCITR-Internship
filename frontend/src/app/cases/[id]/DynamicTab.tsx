@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import BehaviorTimeline from "@/components/BehaviorTimeline";
-import { REAL_TIMELINE_EVENTS } from "@/services/realData";
 import {
   runDynamicAnalysis,
   scanPentestDevices,
@@ -10,26 +9,9 @@ import {
 } from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
 
-const MOCK_APIS = [
-  { api: "DexClassLoader()", cls: "dalvik.system", risk: "CRITICAL" },
-  { api: "getLastKnownLocation()", cls: "android.location.LocationManager", risk: "HIGH" },
-  { api: "query(content://sms)", cls: "android.content.ContentResolver", risk: "CRITICAL" },
-  { api: "sendTextMessage()", cls: "android.telephony.SmsManager", risk: "CRITICAL" },
-  { api: "open(CAMERA_FACING_FRONT)", cls: "android.hardware.Camera", risk: "HIGH" },
-  { api: "setActiveAdmin()", cls: "android.app.admin.DevicePolicyManager", risk: "CRITICAL" },
-  { api: "getInstance(AES/CBC)", cls: "javax.crypto.Cipher", risk: "MEDIUM" },
-];
-
-const MOCK_NETWORK = [
-  { dest: "c2.malware-ops.ru", proto: "HTTPS", port: "443", size: "-", dir: "OUTBOUND" },
-  { dest: "91.234.99.18", proto: "HTTPS", port: "443", size: "-", dir: "OUTBOUND" },
-  { dest: "update-service.ddns.net", proto: "DNS", port: "53", size: "-", dir: "OUTBOUND" },
-];
-
 interface DynamicTabProps {
   caseData: any;
   analysisResults?: any;
-  isMockCase: boolean;
 }
 
 type DynamicMode = "select" | "emulator" | "pentest";
@@ -53,7 +35,7 @@ interface PentestLiveStatus {
   device_serial: string;
 }
 
-export default function DynamicTab({ caseData, analysisResults, isMockCase }: DynamicTabProps) {
+export default function DynamicTab({ caseData, analysisResults }: DynamicTabProps) {
   const { token } = useAuth();
 
   // Emulator state
@@ -233,9 +215,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     };
   });
 
-  const timelineEventsToUse = (dynamicEvents && dynamicEvents.length > 0)
-    ? dynamicEvents
-    : (isMockCase ? REAL_TIMELINE_EVENTS : []);
+  const timelineEventsToUse = dynamicEvents || [];
 
   // Process Suspicious APIs
   const dynamicApis = rawEvents.reduce((acc: any[], evt: any) => {
@@ -251,7 +231,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     return acc;
   }, []);
 
-  const apisToUse = (dynamicApis && dynamicApis.length > 0) ? dynamicApis : (isMockCase ? MOCK_APIS : []);
+  const apisToUse = dynamicApis || [];
 
   // Process Network Connections
   const dynamicConnections = dynamicResult?.network_activity?.map((conn: any) => ({
@@ -263,7 +243,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     source: conn.source,
   })) || [];
 
-  const networkToUse = (dynamicConnections && dynamicConnections.length > 0) ? dynamicConnections : (isMockCase ? MOCK_NETWORK : []);
+  const networkToUse = dynamicConnections || [];
 
   // Extract pentest-specific data
   const pentestData = dynamicResult?.pentest_data || null;
@@ -276,7 +256,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     ? "Manual Pentest"
     : dynamicResult?.mode === "heuristic"
     ? "Heuristic (No VM)"
-    : "Mock Data";
+    : "Not Started";
 
   return (
     <div className="space-y-4">
@@ -291,7 +271,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       </div>
 
       {/* ── Mode Selector (only when no results yet and not in active session) ── */}
-      {!isMockCase && !dynamicResult && !isPentestActive && dynamicMode === "select" && (
+      {!dynamicResult && !isPentestActive && dynamicMode === "select" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Emulator Option */}
           <button
@@ -351,7 +331,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       )}
 
       {/* ── Emulator Countdown (when emulator is running) ── */}
-      {!isMockCase && !dynamicResult && dynamicMode === "emulator" && countdown !== null && (
+      {!dynamicResult && dynamicMode === "emulator" && countdown !== null && (
         <div className="bg-panel border border-blue-500/30 p-6 text-center">
           <svg className="animate-spin mx-auto h-8 w-8 text-blue-400 mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -363,7 +343,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       )}
 
       {/* ── Manual Pentest Panel ── */}
-      {!isMockCase && dynamicMode === "pentest" && !dynamicResult && (
+      {dynamicMode === "pentest" && !dynamicResult && (
         <div className="bg-panel border border-red-500/20 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -592,6 +572,91 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* PCAP Network Traffic Analysis (pentest-specific) */}
+      {pentestData?.network_stats?.status === "success" && (
+        <div className="bg-panel border border-border-subtle p-4">
+          <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
+            📡 PCAP Network Traffic Analysis
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+            <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+              <div className="text-xs text-primary/50 font-mono uppercase">Total Packets</div>
+              <div className="text-2xl font-bold text-blue-500">{pentestData.network_stats.total_packets}</div>
+            </div>
+            <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+              <div className="text-xs text-primary/50 font-mono uppercase">Total Bytes</div>
+              <div className="text-2xl font-bold text-blue-500">
+                {(pentestData.network_stats.total_bytes / 1024).toFixed(1)} KB
+              </div>
+            </div>
+            <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+              <div className="text-xs text-primary/50 font-mono uppercase">Outbound</div>
+              <div className="text-lg font-bold text-orange-500">
+                {(pentestData.network_stats.direction_summary?.outbound_bytes / 1024).toFixed(1)} KB
+              </div>
+              <div className="text-xs text-primary/40 font-mono">
+                {pentestData.network_stats.direction_summary?.outbound_packets} pkts
+              </div>
+            </div>
+            <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+              <div className="text-xs text-primary/50 font-mono uppercase">Inbound</div>
+              <div className="text-lg font-bold text-green-500">
+                {(pentestData.network_stats.direction_summary?.inbound_bytes / 1024).toFixed(1)} KB
+              </div>
+              <div className="text-xs text-primary/40 font-mono">
+                {pentestData.network_stats.direction_summary?.inbound_packets} pkts
+              </div>
+            </div>
+          </div>
+
+          {pentestData.network_stats.suspicious_indicators?.length > 0 && (
+            <div className="bg-red-500/5 border border-red-500/30 p-3 rounded-lg mb-3">
+              <h4 className="text-xs font-bold text-red-400 mb-2">⚠ Suspicious Traffic Indicators</h4>
+              {pentestData.network_stats.suspicious_indicators.map((ind: any, i: number) => (
+                <div key={i} className="flex items-start gap-2 text-xs font-mono text-red-300 mt-1">
+                  <span className="text-red-500 shrink-0">●</span>
+                  <span>{ind.description}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {pentestData.network_stats.flows?.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border-subtle text-left">
+                    <th className="pb-2 font-mono text-xs text-primary/60">Remote Endpoint</th>
+                    <th className="pb-2 font-mono text-xs text-primary/60">Protocol</th>
+                    <th className="pb-2 font-mono text-xs text-primary/60">Direction</th>
+                    <th className="pb-2 font-mono text-xs text-primary/60">Packets</th>
+                    <th className="pb-2 font-mono text-xs text-primary/60">Bytes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pentestData.network_stats.flows.slice(0, 10).map((flow: any, i: number) => (
+                    <tr key={i} className="border-b border-border-subtle/50 hover:bg-canvas/50">
+                      <td className="py-2 font-mono text-xs">{flow.remote_ip}:{flow.remote_port}</td>
+                      <td className="py-2 text-xs font-mono">{flow.protocol}</td>
+                      <td className="py-2 text-xs">
+                        <span className={
+                          flow.direction === "OUTBOUND" ? "text-orange-500" :
+                          flow.direction === "INBOUND" ? "text-green-500" : "text-primary/40"
+                        }>
+                          {flow.direction}
+                        </span>
+                      </td>
+                      <td className="py-2 text-xs font-mono">{flow.packets}</td>
+                      <td className="py-2 text-xs font-mono">{flow.bytes.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

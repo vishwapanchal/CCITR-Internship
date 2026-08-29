@@ -125,14 +125,39 @@ def _load_case_context(case_id: str, db: Session) -> Dict[str, Any]:
             
         elif pr.phase == "dynamic" and pr.result:
             result = pr.result
+            network_activity = result.get("network_activity", [])
             context["dynamic_analysis"] = {
-                "monkey_events": result.get("monkey_test", {}).get("events_injected", 0),
-                "monkey_duration": result.get("monkey_test", {}).get("duration_seconds", 0),
-                "api_hooks": result.get("api_hooks", {}),
-                "network_analysis": result.get("network_analysis", {}),
-                "behavioral_flags": result.get("behavioral_analysis", {}).get("flags", []),
+                "mode": result.get("mode", "unknown"),
+                "total_events": result.get("total_events", 0),
+                "contacted_hosts": _safe_slice(
+                    list({n.get("destination") for n in network_activity if n.get("destination")}), 20
+                ),
+                "behavioral_flags": [k for k, v in result.get("behaviors", {}).items() if v],
                 "risk_score": result.get("risk_score", 0),
             }
+
+            pentest = result.get("pentest_data")
+            if pentest:
+                net_stats = pentest.get("network_stats") or {}
+                context["dynamic_analysis"]["parent_child_payloads"] = [
+                    {
+                        "package_name": c.get("package_name"),
+                        "is_hidden": c.get("is_hidden"),
+                        "is_running": c.get("is_running"),
+                        "risk_level": c.get("risk_level"),
+                    }
+                    for c in pentest.get("child_apks", [])
+                ]
+                if net_stats.get("status") == "success":
+                    context["dynamic_analysis"]["pcap_traffic"] = {
+                        "total_packets": net_stats.get("total_packets"),
+                        "total_bytes": net_stats.get("total_bytes"),
+                        "inbound_bytes": net_stats.get("direction_summary", {}).get("inbound_bytes"),
+                        "outbound_bytes": net_stats.get("direction_summary", {}).get("outbound_bytes"),
+                        "suspicious_indicators": [
+                            i.get("description") for i in net_stats.get("suspicious_indicators", [])
+                        ],
+                    }
             
         elif pr.phase == "c2_intelligence" and pr.result:
             result = pr.result

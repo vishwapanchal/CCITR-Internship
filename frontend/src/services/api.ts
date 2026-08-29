@@ -1,7 +1,10 @@
 // API service wrapper for APEX-X backend
-// Falls back to mock data when backend is unavailable
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://apex-x-backend.onrender.com/api/v1";
+
+export function getApiBaseUrl(): string {
+  return API_BASE_URL;
+}
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -81,8 +84,6 @@ export async function signupAPI(username: string, password: string) {
 
 // ---- Cases ----
 
-import { REAL_CASES } from "./realData";
-
 export interface CaseResponse {
   id: string;
   case_number: string;
@@ -95,28 +96,22 @@ export interface CaseResponse {
   verdict?: string;
   package_name?: string;
   priority?: string;
+  analysis_time?: string;
+  engine_version?: string;
+  decompiler?: string;
 }
 
 export async function getCases(): Promise<{ data: CaseResponse[] | null; error: string | null; status: number }> {
   try {
     const response = await apiFetch<CaseResponse[]>("/cases");
-    const realCasesList = response.data || [];
-    // Append the 3 dummy mock cases for demonstration
-    const combined = [...realCasesList, ...(REAL_CASES as unknown as CaseResponse[])];
-    return { data: combined, error: response.error, status: 200 };
+    return { data: response.data || [], error: response.error, status: 200 };
   } catch (error: any) {
-    return { data: REAL_CASES as unknown as CaseResponse[], error: error.message, status: 500 };
+    return { data: null, error: error.message, status: 500 };
   }
 }
 
 export async function getCaseDetail(caseId: string): Promise<{ data: CaseResponse | null; error: string | null; status: number }> {
   try {
-    // Check if it's one of our mock cases first
-    const mockCase = REAL_CASES.find((c) => c.id === caseId);
-    if (mockCase) {
-      return { data: mockCase as unknown as CaseResponse, error: null, status: 200 };
-    }
-    
     const response = await apiFetch<CaseResponse>(`/cases/${caseId}`);
     return { data: response.data, error: response.error, status: 200 };
   } catch (error: any) {
@@ -165,6 +160,10 @@ export async function uploadAPK(
     }
     xhr.send(formData);
   });
+}
+
+export async function getRecentActivity(limit = 20) {
+  return apiFetch<any[]>(`/cases/activity/recent?limit=${limit}`);
 }
 
 // ---- Results ----

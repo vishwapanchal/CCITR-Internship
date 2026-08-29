@@ -9,6 +9,8 @@ import { AlertTriangle, Info } from "lucide-react";
 export default function OverviewTab({ caseData, phaseStatus, analysisResults }: { caseData: any; phaseStatus: any; analysisResults?: any }) {
   // Build findings dynamically from real analysis results
   const findings: { severity: string; title: string; description: string }[] = [];
+  // Radar categories: [Network, Storage, Crypto, Permissions, Execution]
+  const radarScores = [0, 0, 0, 0, 0];
 
   if (analysisResults && Array.isArray(analysisResults)) {
     const staticResult = analysisResults.find((r: any) => r.phase === "static");
@@ -18,7 +20,8 @@ export default function OverviewTab({ caseData, phaseStatus, analysisResults }: 
       // Permissions
       const manifest = steps.manifest?.data || {};
       const perms = manifest.permissions || {};
-      const dangerousPerms = Object.entries(perms).filter(([_, v]: any) => v?.protection_level === "dangerous");
+      const permEntries = Object.entries(perms);
+      const dangerousPerms = permEntries.filter(([_, v]: any) => v?.protection_level === "dangerous");
       if (dangerousPerms.length > 0) {
         findings.push({
           severity: dangerousPerms.length > 10 ? "critical" : "warning",
@@ -26,36 +29,48 @@ export default function OverviewTab({ caseData, phaseStatus, analysisResults }: 
           description: `Including ${dangerousPerms.slice(0, 3).map(([k]) => k.split(".").pop()).join(", ")}${dangerousPerms.length > 3 ? ` and ${dangerousPerms.length - 3} more` : ""}`
         });
       }
+      radarScores[3] = permEntries.length > 0 ? Math.min(1, dangerousPerms.length / permEntries.length) : 0;
 
       // YARA matches
       const yara = steps.yara?.data || {};
       if (yara.total_matches > 0) {
         findings.push({ severity: "critical", title: `${yara.total_matches} YARA Rule Matches`, description: `Rules: ${(yara.rules_matched || []).join(", ")}` });
       }
+      radarScores[4] = Math.min(1, (yara.total_matches || 0) / 5);
 
       // IOCs
       const iocs = steps.iocs?.data || {};
       if (iocs.total_indicators > 0) {
         findings.push({ severity: "info", title: `${iocs.total_indicators} Network Indicators Detected`, description: `${iocs.urls?.length || 0} URLs, ${iocs.ips?.length || 0} IPs, ${iocs.domains?.length || 0} domains` });
       }
+      radarScores[0] = Math.min(1, (iocs.total_indicators || 0) / 10);
 
       // Misconfigurations
       const misconfigs = manifest.misconfigurations || [];
+      let storageHits = 0;
+      let cryptoHits = 0;
       if (misconfigs.length > 0) {
         misconfigs.slice(0, 3).forEach((m: any) => {
           let title = "Security Misconfiguration";
           let desc = String(m);
           let severity = "warning";
-          
+
           if (typeof m === "object" && m !== null) {
             title = m.issue || m.title || m.name || title;
             desc = m.description || (m.owasp ? `OWASP: ${m.owasp}` : "N/A");
             severity = m.severity === "critical" ? "critical" : (m.severity || "warning");
           }
-          
+
           findings.push({ severity, title, description: desc });
         });
       }
+      for (const m of misconfigs) {
+        const text = typeof m === "string" ? m : JSON.stringify(m);
+        if (/backup|storage|sqlite|preferences/i.test(text)) storageHits++;
+        if (/crypto|cipher|ssl|tls/i.test(text)) cryptoHits++;
+      }
+      radarScores[1] = Math.min(1, storageHits / 3);
+      radarScores[2] = Math.min(1, cryptoHits / 3);
     }
 
     // C2 results
@@ -63,12 +78,19 @@ export default function OverviewTab({ caseData, phaseStatus, analysisResults }: 
     if (c2Result?.result?.c2_indicators?.length > 0) {
       findings.push({ severity: "critical", title: "C2 Communication Indicators", description: `Found ${c2Result.result.c2_indicators.length} potential C2 indicators` });
     }
+    if (typeof c2Result?.result?.risk_score === "number") {
+      radarScores[0] = Math.max(radarScores[0], Math.min(1, c2Result.result.risk_score / 100));
+    }
 
     // Vulnerabilities
     const vulnResult = analysisResults.find((r: any) => r.phase === "vulnerability");
-    if (vulnResult?.result?.vulnerabilities?.length > 0) {
-      const vulns = vulnResult.result.vulnerabilities;
-      findings.push({ severity: "critical", title: `${vulns.length} Vulnerabilities Discovered`, description: `${vulns.filter((v: any) => v.severity === "critical" || v.severity === "high").length} high/critical severity` });
+    const vulnFindings = vulnResult?.result?.findings || [];
+    if (vulnFindings.length > 0) {
+      findings.push({ severity: "critical", title: `${vulnFindings.length} Vulnerabilities Discovered`, description: `${vulnFindings.filter((v: any) => v.severity === "critical" || v.severity === "high").length} high/critical severity` });
+      const cryptoVulns = vulnFindings.filter((v: any) => v.owasp === "M10").length;
+      const storageVulns = vulnFindings.filter((v: any) => v.owasp === "M9" || v.owasp === "M8").length;
+      radarScores[2] = Math.max(radarScores[2], Math.min(1, cryptoVulns / 2));
+      radarScores[1] = Math.max(radarScores[1], Math.min(1, storageVulns / 3));
     }
   }
 
@@ -100,7 +122,7 @@ export default function OverviewTab({ caseData, phaseStatus, analysisResults }: 
 
       {/* Vulnerability Radar */}
       <div className="bg-panel border border-border-subtle p-6 md:col-span-4 flex flex-col items-center justify-center">
-        <VulnerabilityRadar />
+        <VulnerabilityRadar scores={radarScores} />
       </div>
 
       {/* Key Findings Summary — DYNAMIC from real analysis */}

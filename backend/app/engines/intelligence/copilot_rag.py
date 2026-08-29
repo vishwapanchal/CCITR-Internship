@@ -43,6 +43,10 @@ def index_case_artifacts(case_id: str, case_dir: str) -> bool:
     Reads all JSON reports for a case, converts them to text chunks, 
     and indexes them into ChromaDB for RAG queries.
     """
+    if not LANGCHAIN_AVAILABLE:
+        logger.warning("Skipping RAG indexing: chromadb/langchain_text_splitters not installed")
+        return False
+
     client = _get_chroma_client()
     if not client:
         return False
