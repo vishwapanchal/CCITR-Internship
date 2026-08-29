@@ -36,6 +36,7 @@ app.include_router(ws.router, prefix=settings.API_V1_STR + "/ws", tags=["websock
 app.include_router(copilot.router, prefix=settings.API_V1_STR + "/copilot", tags=["copilot"])
 
 @app.get("/health")
+@app.get(f"{settings.API_V1_STR}/health")
 def health_check():
     return {"status": "ok", "message": "APEX-X backend is running."}
 

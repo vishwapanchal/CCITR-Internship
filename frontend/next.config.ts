@@ -39,6 +39,7 @@ function loadRootEnv() {
 loadRootEnv();
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["*"],
   images: {
     unoptimized: true,
   },
