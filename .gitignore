@@ -13,8 +13,8 @@ __pycache__/
 *.pyo
 *.egg-info/
 
-# Environment (keep .env out of version control)
-.env
+# Environment — root .env IS tracked (consolidated config for deployment).
+# Sub-directory env files stay ignored to prevent overrides.
 .env.local
 .env*.local
 backend/.env
