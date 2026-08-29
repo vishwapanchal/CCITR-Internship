@@ -1,7 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import BehaviorTimeline from "@/components/BehaviorTimeline";
 import { REAL_TIMELINE_EVENTS } from "@/services/realData";
-import { runDynamicAnalysis } from "@/services/api";
+import {
+  runDynamicAnalysis,
+  scanPentestDevices,
+  startPentestSession,
+  getPentestStatus,
+  stopPentestSession,
+} from "@/services/api";
 import { useAuth } from "@/hooks/useAuth";
 
 const MOCK_APIS = [
@@ -26,27 +32,84 @@ interface DynamicTabProps {
   isMockCase: boolean;
 }
 
+type DynamicMode = "select" | "emulator" | "pentest";
+
+interface PentestDevice {
+  serial: string;
+  model: string;
+  brand: string;
+  android_version: string;
+  display_name: string;
+}
+
+interface PentestLiveStatus {
+  status: string;
+  elapsed_seconds: number;
+  events_captured: number;
+  network_connections: number;
+  child_apks_detected: number;
+  child_apk_details: any[];
+  pcapdroid_active: boolean;
+  device_serial: string;
+}
+
 export default function DynamicTab({ caseData, analysisResults, isMockCase }: DynamicTabProps) {
   const { token } = useAuth();
+
+  // Emulator state
   const [isStarting, setIsStarting] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
-  
-  // Handle countdown timer
+
+  // Mode selection state
+  const [dynamicMode, setDynamicMode] = useState<DynamicMode>("select");
+
+  // Pentest state
+  const [pentestDevices, setPentestDevices] = useState<PentestDevice[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<string>("");
+  const [isPentestActive, setIsPentestActive] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
+  const [pentestStatus, setPentestStatus] = useState<PentestLiveStatus | null>(null);
+
+  // Handle countdown timer (emulator mode)
   useEffect(() => {
     if (countdown === null) return;
-    
+
     if (countdown <= 0) {
       setCountdown(null);
-      window.location.reload(); // Auto-refresh when done
+      window.location.reload();
       return;
     }
-    
+
     const timer = setTimeout(() => {
       setCountdown(countdown - 1);
     }, 1000);
-    
+
     return () => clearTimeout(timer);
   }, [countdown]);
+
+  // Poll pentest status every 2 seconds while active
+  useEffect(() => {
+    if (!isPentestActive) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const status = await getPentestStatus(caseData.id);
+        if (status.status === "no_active_session") {
+          setIsPentestActive(false);
+          setPentestStatus(null);
+          return;
+        }
+        setPentestStatus(status);
+      } catch (e) {
+        console.error("Failed to poll pentest status:", e);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isPentestActive, caseData.id]);
+
+  // ── Emulator Handlers ──
 
   const handleRunEmulator = async () => {
     const confirmed = window.confirm(
@@ -58,11 +121,10 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       "Data collection runs for 90 seconds. You can watch the emulator to see what it's doing!"
     );
     if (!confirmed) return;
-    
+
     try {
       setIsStarting(true);
       await runDynamicAnalysis(caseData.id);
-      // Backend takes 90 seconds to collect data, start a 90s countdown in UI
       setCountdown(90);
     } catch (e) {
       alert("Failed to start dynamic analysis: " + e);
@@ -71,7 +133,67 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     }
   };
 
-  // Find dynamic phase result
+  // ── Pentest Handlers ──
+
+  const handleScanDevices = async () => {
+    try {
+      setIsScanning(true);
+      const result = await scanPentestDevices(caseData.id);
+      setPentestDevices(result.devices || []);
+      if (result.devices?.length === 0) {
+        alert("No physical Android devices detected.\n\nMake sure:\n1. Phone is connected via USB\n2. USB Debugging is enabled in Developer Options\n3. You've authorized this computer on the phone");
+      }
+    } catch (e) {
+      alert("Failed to scan devices: " + e);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleStartPentest = async () => {
+    if (!selectedDevice) {
+      alert("Please select a device first");
+      return;
+    }
+
+    try {
+      setIsStarting(true);
+      await startPentestSession(caseData.id, selectedDevice);
+      setIsPentestActive(true);
+    } catch (e) {
+      alert("Failed to start monitoring session: " + e);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  const handleStopPentest = async () => {
+    const confirmed = window.confirm(
+      "⏹ Stop monitoring and generate the analysis report?\n\n" +
+      "This will:\n" +
+      "• Stop PCAPdroid network capture\n" +
+      "• Detect all child/dropper APKs installed\n" +
+      "• Run static analysis on any child APKs found\n" +
+      "• Enrich with VirusTotal intelligence\n" +
+      "• Generate the full dynamic analysis report"
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsStopping(true);
+      await stopPentestSession(caseData.id);
+      // Wait for backend to finalize
+      setCountdown(30);
+      setIsPentestActive(false);
+    } catch (e) {
+      alert("Failed to stop session: " + e);
+    } finally {
+      setIsStopping(false);
+    }
+  };
+
+  // ── Parse existing results ──
+
   let dynamicResult = null;
   if (analysisResults && Array.isArray(analysisResults)) {
     const dynPhase = analysisResults.find((r: any) => r.phase === "dynamic");
@@ -82,7 +204,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
 
   // Map to BehaviorTimeline events
   const rawEvents = dynamicResult?.events || [];
-  
+
   const dynamicEvents = rawEvents.map((evt: any) => {
     let type = "api_call";
     if (evt.category === "network") type = "network";
@@ -91,6 +213,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     if (evt.category === "sms") type = "sms";
     if (evt.category === "data_exfil") type = "permission";
     if (evt.category === "surveillance") type = "permission";
+    if (evt.category === "dropper") type = "file_io";
 
     let severity = "info";
     if (evt.risk_level === "CRITICAL") severity = "critical";
@@ -101,46 +224,63 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       timestamp: evt.timestamp,
       type: type,
       title: evt.api_call,
-      description: evt.description + (evt.source === "heuristic_code_scan" ? " (Heuristic Scan)" : " (Logcat)"),
+      description: evt.description + (
+        evt.source === "heuristic_code_scan" ? " (Heuristic Scan)" :
+        evt.source === "manual_pentest" ? " (Manual Pentest)" :
+        " (Logcat)"
+      ),
       severity: severity,
     };
   });
-  
-  const timelineEventsToUse = (dynamicEvents && dynamicEvents.length > 0) 
-    ? dynamicEvents 
+
+  const timelineEventsToUse = (dynamicEvents && dynamicEvents.length > 0)
+    ? dynamicEvents
     : (isMockCase ? REAL_TIMELINE_EVENTS : []);
 
-  // Process Suspicious APIs (extract unique from events)
+  // Process Suspicious APIs
   const dynamicApis = rawEvents.reduce((acc: any[], evt: any) => {
-      const apiName = evt.api_call || "Unknown";
-      if (!acc.some((t: any) => t.api === apiName)) {
-        acc.push({
-            api: apiName,
-            cls: evt.class_name || evt.category,
-            risk: evt.risk_level || "LOW",
-            source: evt.source
-        });
-      }
-      return acc;
+    const apiName = evt.api_call || "Unknown";
+    if (!acc.some((t: any) => t.api === apiName)) {
+      acc.push({
+        api: apiName,
+        cls: evt.class_name || evt.category,
+        risk: evt.risk_level || "LOW",
+        source: evt.source,
+      });
+    }
+    return acc;
   }, []);
-  
+
   const apisToUse = (dynamicApis && dynamicApis.length > 0) ? dynamicApis : (isMockCase ? MOCK_APIS : []);
 
   // Process Network Connections
   const dynamicConnections = dynamicResult?.network_activity?.map((conn: any) => ({
-      dest: conn.destination,
-      proto: conn.protocol || "TCP",
-      port: String(conn.port || 443),
-      size: "-",
-      dir: conn.direction || "OUTBOUND",
-      source: conn.source
+    dest: conn.destination,
+    proto: conn.protocol || "TCP",
+    port: String(conn.port || 443),
+    size: "-",
+    dir: conn.direction || "OUTBOUND",
+    source: conn.source,
   })) || [];
-  
+
   const networkToUse = (dynamicConnections && dynamicConnections.length > 0) ? dynamicConnections : (isMockCase ? MOCK_NETWORK : []);
+
+  // Extract pentest-specific data
+  const pentestData = dynamicResult?.pentest_data || null;
+  const childApks = pentestData?.child_apks || [];
+
+  // Determine analysis mode label
+  const modeLabel = dynamicResult?.mode === "emulator"
+    ? "Real Emulator"
+    : dynamicResult?.mode === "manual_pentest"
+    ? "Manual Pentest"
+    : dynamicResult?.mode === "heuristic"
+    ? "Heuristic (No VM)"
+    : "Mock Data";
 
   return (
     <div className="space-y-4">
-      {/* Dynamic Summary Cards */}
+      {/* Dynamic Header */}
       <div className="flex justify-between items-center mb-6 border-b border-gray-700/50 pb-4">
         <div>
           <h2 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">
@@ -148,46 +288,233 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
           </h2>
           <p className="text-sm text-gray-400 mt-1">Runtime behavior and network activity monitoring</p>
         </div>
-        
-        {!isMockCase && (
-          <button
-            onClick={handleRunEmulator}
-            disabled={isStarting || countdown !== null}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-lg shadow-lg shadow-indigo-500/25 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {countdown !== null ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Collecting Data ({countdown}s)</span>
-              </>
-            ) : isStarting ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Initializing...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Run Emulator Analysis (Visual VM)</span>
-              </>
-            )}
-          </button>
-        )}
       </div>
 
+      {/* ── Mode Selector (only when no results yet and not in active session) ── */}
+      {!isMockCase && !dynamicResult && !isPentestActive && dynamicMode === "select" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Emulator Option */}
+          <button
+            onClick={() => { setDynamicMode("emulator"); handleRunEmulator(); }}
+            disabled={isStarting || countdown !== null}
+            className="bg-panel border-2 border-border-subtle hover:border-blue-500/50 p-6 text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center space-x-3 mb-3">
+              <span className="text-3xl">🖥️</span>
+              <div>
+                <h3 className="font-display font-bold text-lg text-primary group-hover:text-blue-400 transition-colors">
+                  Emulator Analysis
+                </h3>
+                <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded">AUTOMATED</span>
+              </div>
+            </div>
+            <p className="text-sm text-primary/60 leading-relaxed">
+              Launch Android Virtual Machine and run automated UI exploration (Monkey Runner).
+              The system automatically installs the APK, grants permissions, and collects runtime data for 90 seconds.
+            </p>
+            <div className="mt-4 flex items-center space-x-2 text-xs font-mono text-primary/40">
+              <span>⏱ ~90s</span>
+              <span>•</span>
+              <span>🤖 Fully Automated</span>
+              <span>•</span>
+              <span>📊 Logcat + Network</span>
+            </div>
+          </button>
+
+          {/* Manual Pentest Option */}
+          <button
+            onClick={() => setDynamicMode("pentest")}
+            className="bg-panel border-2 border-border-subtle hover:border-red-500/50 p-6 text-left transition-all group cursor-pointer"
+          >
+            <div className="flex items-center space-x-3 mb-3">
+              <span className="text-3xl">📱</span>
+              <div>
+                <h3 className="font-display font-bold text-lg text-primary group-hover:text-red-400 transition-colors">
+                  Manual Penetration Testing
+                </h3>
+                <span className="text-xs font-mono text-red-400 bg-red-500/10 px-2 py-0.5 rounded">ADVANCED</span>
+              </div>
+            </div>
+            <p className="text-sm text-primary/60 leading-relaxed">
+              Connect a physical phone via USB. You manually install and interact with the APK while the system monitors
+              all activities. <strong className="text-red-400">Detects hidden child/dropper APKs</strong> that install in the background.
+            </p>
+            <div className="mt-4 flex items-center space-x-2 text-xs font-mono text-primary/40">
+              <span>📡 PCAPdroid</span>
+              <span>•</span>
+              <span>👤 Manual Control</span>
+              <span>•</span>
+              <span>🕵️ Child APK Detection</span>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* ── Emulator Countdown (when emulator is running) ── */}
+      {!isMockCase && !dynamicResult && dynamicMode === "emulator" && countdown !== null && (
+        <div className="bg-panel border border-blue-500/30 p-6 text-center">
+          <svg className="animate-spin mx-auto h-8 w-8 text-blue-400 mb-3" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p className="text-lg font-semibold text-blue-400">Emulator Analysis Running</p>
+          <p className="text-sm text-primary/60 mt-1">Collecting runtime data... Refreshing in <strong>{countdown}s</strong></p>
+        </div>
+      )}
+
+      {/* ── Manual Pentest Panel ── */}
+      {!isMockCase && dynamicMode === "pentest" && !dynamicResult && (
+        <div className="bg-panel border border-red-500/20 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-2xl">📱</span>
+              <div>
+                <h3 className="font-display font-bold text-lg text-primary">Manual Penetration Testing</h3>
+                <p className="text-xs text-primary/50">Connect your physical device via USB</p>
+              </div>
+            </div>
+            {!isPentestActive && (
+              <button
+                onClick={() => setDynamicMode("select")}
+                className="text-xs text-primary/40 hover:text-primary/60 transition-colors"
+              >
+                ← Back to mode selection
+              </button>
+            )}
+          </div>
+
+          {/* Device Scanner */}
+          {!isPentestActive && (
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={handleScanDevices}
+                  disabled={isScanning}
+                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white rounded-lg shadow-lg shadow-red-500/25 transition-all font-medium text-sm disabled:opacity-50"
+                >
+                  {isScanning ? "Scanning..." : "🔍 Scan USB Devices"}
+                </button>
+                {pentestDevices.length > 0 && (
+                  <select
+                    value={selectedDevice}
+                    onChange={(e) => setSelectedDevice(e.target.value)}
+                    className="bg-canvas border border-border-subtle px-3 py-2 text-sm font-mono text-primary rounded-lg flex-1"
+                  >
+                    <option value="">Select a device...</option>
+                    {pentestDevices.map((d) => (
+                      <option key={d.serial} value={d.serial}>
+                        {d.display_name} [{d.serial}]
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {selectedDevice && (
+                <button
+                  onClick={handleStartPentest}
+                  disabled={isStarting}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg shadow-lg shadow-green-500/25 transition-all font-semibold disabled:opacity-50"
+                >
+                  {isStarting ? "Initializing..." : "▶ Start Monitoring Session"}
+                </button>
+              )}
+
+              <div className="bg-canvas/50 border border-border-subtle p-3 rounded-lg">
+                <p className="text-xs text-primary/50 leading-relaxed">
+                  <strong className="text-primary/70">How it works:</strong> Click "Start Monitoring" to begin capturing all device activity.
+                  Then manually install and interact with the suspicious APK on the phone.
+                  The system will detect any hidden child APKs, capture network traffic via PCAPdroid,
+                  and monitor all runtime behavior. Click "Stop" when you're done to generate the full report.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Live Monitoring Dashboard */}
+          {isPentestActive && pentestStatus && (
+            <div className="space-y-4">
+              {/* Live status indicator */}
+              <div className="flex items-center space-x-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <span className="text-sm font-semibold text-red-400">LIVE MONITORING</span>
+                <span className="text-xs text-primary/40 font-mono">
+                  {Math.floor(pentestStatus.elapsed_seconds / 60)}m {pentestStatus.elapsed_seconds % 60}s elapsed
+                </span>
+              </div>
+
+              {/* Live stats grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+                  <div className="text-xs text-primary/50 font-mono uppercase">Events</div>
+                  <div className="text-2xl font-bold text-blue-400">{pentestStatus.events_captured}</div>
+                </div>
+                <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+                  <div className="text-xs text-primary/50 font-mono uppercase">Network</div>
+                  <div className="text-2xl font-bold text-orange-400">{pentestStatus.network_connections}</div>
+                </div>
+                <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+                  <div className="text-xs text-primary/50 font-mono uppercase">Child APKs</div>
+                  <div className={`text-2xl font-bold ${pentestStatus.child_apks_detected > 0 ? 'text-red-500' : 'text-green-400'}`}>
+                    {pentestStatus.child_apks_detected}
+                  </div>
+                </div>
+                <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+                  <div className="text-xs text-primary/50 font-mono uppercase">PCAPdroid</div>
+                  <div className={`text-sm font-bold mt-1 ${pentestStatus.pcapdroid_active ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {pentestStatus.pcapdroid_active ? "✅ Capturing" : "⚠ ADB Only"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Child APK alerts */}
+              {pentestStatus.child_apk_details?.length > 0 && (
+                <div className="bg-red-500/5 border border-red-500/30 p-4 rounded-lg">
+                  <h4 className="text-sm font-bold text-red-400 mb-2">⚠ Child/Dropper APKs Detected!</h4>
+                  {pentestStatus.child_apk_details.map((child: any, i: number) => (
+                    <div key={i} className="flex items-center space-x-2 text-xs font-mono text-red-300 mt-1">
+                      <span className="text-red-500">●</span>
+                      <span>{child.package_name}</span>
+                      <span className="text-primary/30">at {child.detected_at}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Stop button */}
+              <button
+                onClick={handleStopPentest}
+                disabled={isStopping}
+                className="w-full px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg shadow-lg shadow-red-500/30 transition-all font-bold text-lg disabled:opacity-50"
+              >
+                {isStopping ? "Finalizing..." : "⏹ Stop Monitoring & Generate Report"}
+              </button>
+            </div>
+          )}
+
+          {/* Countdown after stopping */}
+          {countdown !== null && dynamicMode === "pentest" && (
+            <div className="text-center py-4">
+              <svg className="animate-spin mx-auto h-8 w-8 text-red-400 mb-3" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-sm text-primary/60">Generating report... Refreshing in <strong>{countdown}s</strong></p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Results Section (shown once analysis is complete) ── */}
+
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
           <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Analysis Mode</span>
-          <span className="text-xl font-display font-bold text-primary">{dynamicResult?.mode === "emulator" ? "Real Emulator" : dynamicResult?.mode === "heuristic" ? "Heuristic (No VM)" : "Mock Data"}</span>
+          <span className="text-xl font-display font-bold text-primary">{modeLabel}</span>
         </div>
         <div className="bg-panel border border-border-subtle p-4 flex flex-col justify-between">
           <span className="text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">Total Events</span>
@@ -203,6 +530,72 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
         </div>
       </div>
 
+      {/* Child APK Detection Report (pentest-specific) */}
+      {pentestData && childApks.length > 0 && (
+        <div className="bg-panel border-2 border-red-500/30 p-4">
+          <h3 className="font-display font-semibold text-sm mb-3 border-b border-red-500/20 pb-2 text-red-400">
+            🕵️ Child / Dropper APK Detection Report
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+              <div className="text-xs text-primary/50 font-mono uppercase">Total Child APKs</div>
+              <div className="text-2xl font-bold text-red-500">{pentestData.child_apk_count}</div>
+            </div>
+            <div className="bg-canvas border border-border-subtle p-3 rounded-lg">
+              <div className="text-xs text-primary/50 font-mono uppercase">Hidden (No Launcher Icon)</div>
+              <div className="text-2xl font-bold text-red-600">{pentestData.hidden_child_apks?.length || 0}</div>
+            </div>
+          </div>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-subtle text-left">
+                  <th className="pb-2 font-mono text-xs text-primary/60">Package Name</th>
+                  <th className="pb-2 font-mono text-xs text-primary/60">Hidden</th>
+                  <th className="pb-2 font-mono text-xs text-primary/60">Running</th>
+                  <th className="pb-2 font-mono text-xs text-primary/60">Services</th>
+                  <th className="pb-2 font-mono text-xs text-primary/60">Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {childApks.map((child: any, i: number) => (
+                  <tr key={i} className="border-b border-border-subtle/50 hover:bg-canvas/50">
+                    <td className="py-2 font-mono text-xs">{child.package_name}</td>
+                    <td className="py-2 text-xs">
+                      {child.is_hidden ? (
+                        <span className="text-red-400 font-bold">⚠ HIDDEN</span>
+                      ) : (
+                        <span className="text-green-400">Visible</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-xs">
+                      {child.is_running ? (
+                        <span className="text-red-400 font-bold">🔴 Active</span>
+                      ) : (
+                        <span className="text-primary/40">Inactive</span>
+                      )}
+                    </td>
+                    <td className="py-2 text-xs font-mono text-primary/60">
+                      {child.services?.length || 0} services
+                    </td>
+                    <td className="py-2">
+                      <span className={`text-xs font-mono font-semibold px-2 py-0.5 rounded-sm ${
+                        child.risk_level === "CRITICAL" ? "bg-red-100 text-red-700" :
+                        child.risk_level === "HIGH" ? "bg-orange-100 text-orange-700" :
+                        "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {child.risk_level}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Behavioral Event Timeline */}
       <div className="bg-panel border border-border-subtle p-4">
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
           Behavioral Event Timeline
@@ -216,6 +609,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
         )}
       </div>
 
+      {/* Suspicious API Calls */}
       <div className="bg-panel border border-border-subtle p-4 overflow-hidden">
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
           Suspicious API Calls
@@ -237,7 +631,9 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
                   <td className="py-2 font-mono text-xs">
                     <span className="font-semibold">{row.api}</span>
                     <span className="block text-[10px] text-primary/40 mt-0.5">
-                      {row.source === "heuristic_code_scan" ? "Inferred (Heuristic Scan)" : "Observed (Runtime)"}
+                      {row.source === "heuristic_code_scan" ? "Inferred (Heuristic Scan)" :
+                       row.source === "manual_pentest" ? "Observed (Manual Pentest)" :
+                       "Observed (Runtime)"}
                     </span>
                   </td>
                   <td className="py-2 text-xs text-primary/60 font-mono break-all">{row.cls}</td>
@@ -263,6 +659,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
         </div>
       </div>
 
+      {/* Network Activity */}
       <div className="bg-panel border border-border-subtle p-4 overflow-hidden">
         <h3 className="font-display font-semibold text-sm mb-3 border-b border-border-subtle pb-2">
           Network Activity
@@ -286,7 +683,10 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
                     {row.dest}
                     {row.source && (
                       <span className="block text-[10px] text-primary/40 mt-0.5">
-                        {row.source === "Static IOC cross-reference" ? "Inferred (Static IOC)" : "Observed (Runtime)"}
+                        {row.source === "Static IOC cross-reference" ? "Inferred (Static IOC)" :
+                         row.source === "manual_pentest_runtime" ? "Captured (Manual Pentest)" :
+                         row.source === "child_apk_network" ? "⚠ Child APK Traffic" :
+                         "Observed (Runtime)"}
                       </span>
                     )}
                   </td>
