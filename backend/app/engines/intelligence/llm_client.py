@@ -98,17 +98,19 @@ def _call_ollama(
             resp = client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
-
-        elapsed = time.time() - start
-        response_text = data.get("response", "")
-        logger.info(
-            f"LLM response: model={model}, "
-            f"tokens={data.get('eval_count', '?')}, "
-            f"elapsed={elapsed:.1f}s"
-        )
-        return response_text
-
-    except httpx.ConnectError:
+            
+            elapsed = time.time() - start
+            logger.info(f"LLM response received in {elapsed:.2f}s")
+            
+            return data.get("response", "")
+            
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            logger.error(f"Ollama returned 404. Model '{model}' might not be pulled or Ollama is outdated.")
+            return f"[ERROR: Model '{model}' not found in Ollama. Please run `ollama pull {model}`]"
+        logger.error(f"LLM inference error: {e}")
+        return f"[ERROR: Client error '{e}' for url {url}]\n\nMake sure Ollama is running with: ollama serve"
+    except httpx.RequestError as e:
         logger.error(
             f"Cannot connect to Ollama at {settings.OLLAMA_HOST}. "
             "Is the Ollama service running?"
@@ -166,6 +168,11 @@ def _call_ollama_stream(
                         except json.JSONDecodeError:
                             continue
 
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            yield f"[ERROR: Model '{model}' not found in Ollama. Please run `ollama pull {model}`]"
+        else:
+            yield f"[ERROR: HTTP {e.response.status_code} from Ollama]"
     except httpx.ConnectError:
         yield "[ERROR: Ollama service not available]"
     except httpx.TimeoutException:
