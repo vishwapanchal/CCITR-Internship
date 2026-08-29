@@ -113,8 +113,6 @@ export async function uploadAPK(
   file: File,
   onProgress?: (percent: number) => void
 ): Promise<{ data: CaseResponse | null; error: string | null }> {
-  const token = getToken();
-  
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
@@ -143,9 +141,6 @@ export async function uploadAPK(
     });
 
     xhr.open("POST", `${API_BASE_URL}/cases/upload/`);
-    if (token) {
-      xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-    }
     xhr.send(formData);
   });
 }
@@ -164,14 +159,9 @@ export async function getCaseResults(caseId: string, phase?: string) {
 // ---- Reports ----
 
 export async function downloadReport(caseId: string, language: string): Promise<void> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   try {
     const response = await fetch(
-      `${API_BASE_URL}/reports/${caseId}/download?language=${language}`,
-      { headers }
+      `${API_BASE_URL}/reports/${caseId}/download?language=${language}`
     );
 
     if (!response.ok) throw new Error("Download failed");
@@ -192,14 +182,9 @@ export async function downloadReport(caseId: string, language: string): Promise<
 }
 
 export async function downloadEvidencePackage(caseId: string): Promise<void> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   try {
     const response = await fetch(
-      `${API_BASE_URL}/reports/${caseId}/evidence-package`,
-      { headers }
+      `${API_BASE_URL}/reports/${caseId}/evidence-package`
     );
 
     if (!response.ok) throw new Error("Download failed");
@@ -251,13 +236,8 @@ export function exportIOCsAsJSON(iocs: { type: string; value: string; context: s
 }
 
 export async function runDynamicAnalysis(caseId: string): Promise<any> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-  
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}/dynamic/run`, {
-    method: "POST",
-    headers,
+    method: "POST"
   });
   if (!response.ok) throw new Error("Failed to start dynamic analysis");
   return response.json();
@@ -308,22 +288,15 @@ function getSTIXPattern(type: string, value: string): string {
 // ── Manual Penetration Testing APIs ────────────────────────────────
 
 export async function scanPentestDevices(caseId: string): Promise<any> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/devices`, {
-    method: "GET",
-    headers,
+    method: "GET"
   });
   if (!response.ok) throw new Error("Failed to scan devices");
   return response.json();
 }
 
 export async function startPentestSession(caseId: string, deviceSerial: string): Promise<any> {
-  const token = getToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/start`, {
     method: "POST",
@@ -335,26 +308,16 @@ export async function startPentestSession(caseId: string, deviceSerial: string):
 }
 
 export async function getPentestStatus(caseId: string): Promise<any> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/status`, {
-    method: "GET",
-    headers,
+    method: "GET"
   });
   if (!response.ok) throw new Error("Failed to get pentest status");
   return response.json();
 }
 
 export async function stopPentestSession(caseId: string): Promise<any> {
-  const token = getToken();
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/stop`, {
-    method: "POST",
-    headers,
+    method: "POST"
   });
   if (!response.ok) throw new Error("Failed to stop pentest session");
   return response.json();
