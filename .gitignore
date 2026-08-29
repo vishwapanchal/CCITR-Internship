@@ -46,6 +46,7 @@ test_cases/
 
 # Data and Tools
 backend/app/data/
+backend/data/
 backend/tools/
 backend/check_results.py
 backend/test_results/

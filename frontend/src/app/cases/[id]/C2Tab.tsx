@@ -17,11 +17,33 @@ export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabPr
   const c2NodesToUse = isMockCase ? REAL_GRAPH_NODES : (c2Data?.nodes || []);
   const c2EdgesToUse = isMockCase ? REAL_GRAPH_EDGES : (c2Data?.edges || []);
   const attribution = c2Data?.attribution || {};
+  
+  // Try to use our internal ML classification if VT/external attribution fails
+  const malwareClassResult = Array.isArray(analysisResults)
+    ? analysisResults.find((r: any) => r.phase === "malware_classification")?.result
+    : (analysisResults?.malware_classification || {});
+  
+  // Use ML prediction if VT fails or returns Unknown
+  let finalFamily = attribution?.malware_family;
+  if (!finalFamily || finalFamily === "Unknown") {
+    if (malwareClassResult?.predicted_family) {
+      finalFamily = malwareClassResult.predicted_family;
+    } else {
+      finalFamily = "Unknown";
+    }
+  }
+
+  // Use ML confidence for threat category if VT failed
+  let finalCategory = attribution?.threat_category || "Under Investigation";
+  if (finalCategory === "Under Investigation" && malwareClassResult?.predicted_family && malwareClassResult.predicted_family !== "benign") {
+    finalCategory = malwareClassResult.confidence > 0.6 ? "Confirmed Malicious" : "Suspicious";
+  }
+
   const infra = c2Data?.contacted_infrastructure || {};
   const detections = attribution?.top_detections || [];
   const verdicts = attribution?.sandbox_verdicts || [];
 
-  const hasRealData = !isMockCase && (c2NodesToUse.length > 0 || attribution?.malware_family);
+  const hasRealData = !isMockCase && (c2NodesToUse.length > 0 || finalFamily !== "Unknown" || Object.keys(c2Data).length > 0);
 
   return (
     <div className="space-y-4">
@@ -98,7 +120,7 @@ export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabPr
               <div className="space-y-2">
                 <div>
                   <span className="text-xs font-mono text-primary/60 block">Family</span>
-                  <span className="text-sm font-semibold">{attribution.malware_family || "Unknown"}</span>
+                  <span className="text-sm font-semibold capitalize">{finalFamily}</span>
                 </div>
                 {attribution.all_families?.length > 1 && (
                   <div>
@@ -114,8 +136,8 @@ export default function C2Tab({ caseData, analysisResults, isMockCase }: C2TabPr
                 )}
                 <div>
                   <span className="text-xs font-mono text-primary/60 block">Threat Category</span>
-                  <span className="text-sm font-semibold" style={{ color: attribution.threat_category === 'Confirmed Malicious' ? '#ef4444' : '#f59e0b' }}>
-                    {attribution.threat_category || "Under Investigation"}
+                  <span className="text-sm font-semibold" style={{ color: finalCategory === 'Confirmed Malicious' ? '#ef4444' : finalCategory === 'Suspicious' ? '#f59e0b' : '#3b82f6' }}>
+                    {finalCategory}
                   </span>
                 </div>
                 <div>

@@ -317,3 +317,59 @@ function getSTIXPattern(type: string, value: string): string {
     default: return `[artifact:payload_bin = '${value}']`;
   }
 }
+
+// ── Manual Penetration Testing APIs ────────────────────────────────
+
+export async function scanPentestDevices(caseId: string): Promise<any> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/devices`, {
+    method: "GET",
+    headers,
+  });
+  if (!response.ok) throw new Error("Failed to scan devices");
+  return response.json();
+}
+
+export async function startPentestSession(caseId: string, deviceSerial: string): Promise<any> {
+  const token = getToken();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/start`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ device_serial: deviceSerial }),
+  });
+  if (!response.ok) throw new Error("Failed to start pentest session");
+  return response.json();
+}
+
+export async function getPentestStatus(caseId: string): Promise<any> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/status`, {
+    method: "GET",
+    headers,
+  });
+  if (!response.ok) throw new Error("Failed to get pentest status");
+  return response.json();
+}
+
+export async function stopPentestSession(caseId: string): Promise<any> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE_URL}/cases/${caseId}/pentest/stop`, {
+    method: "POST",
+    headers,
+  });
+  if (!response.ok) throw new Error("Failed to stop pentest session");
+  return response.json();
+}
+
