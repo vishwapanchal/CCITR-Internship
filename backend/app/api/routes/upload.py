@@ -176,8 +176,7 @@ async def upload_apk(
         case_number=case_number,
         apk_hash=apk_hash,
         apk_name=file.filename,
-        status="analyzing",
-        created_by=current_user.id
+        status="analyzing"
     )
     
     db.add(new_case)
@@ -198,7 +197,6 @@ async def upload_apk(
         db=db,
         action="APK_UPLOADED",
         case_id=new_case.id,
-        user_id=current_user.id,
         details={"filename": file.filename, "hash": apk_hash}
     )
     
