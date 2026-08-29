@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ArrowRight, Shield, Search, FileText, Sparkles, UploadCloud, CheckCircle2 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { m, Variants } from "framer-motion";
 import Footer from "@/components/Footer";
 
@@ -12,8 +11,6 @@ const bentoVariants: Variants = {
 };
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuth();
-
   return (
     <main className="flex-1 flex flex-col min-h-[calc(100vh-80px)] bg-[#f4f7f9] relative overflow-hidden p-4 md:p-8">
       
@@ -49,14 +46,14 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 z-10">
             <Link
-              href={isAuthenticated ? "/upload" : "/login"}
+              href="/upload"
               className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-8 py-3.5 font-semibold text-sm hover:bg-indigo-700 transition-all shadow-md hover:shadow-indigo-500/20 rounded-xl"
             >
               Start Scan
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href={isAuthenticated ? "/dashboard" : "/login"}
+              href="/dashboard"
               className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-8 py-3.5 font-semibold text-sm hover:bg-slate-50 transition-all rounded-xl shadow-sm"
             >
               Sample Report

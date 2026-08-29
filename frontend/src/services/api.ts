@@ -6,25 +6,13 @@ export function getApiBaseUrl(): string {
   return API_BASE_URL;
 }
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const cookies = document.cookie.split("; ");
-  const tokenCookie = cookies.find(row => row.startsWith("apex_token="));
-  return tokenCookie ? tokenCookie.split("=")[1] : null;
-}
-
 async function apiFetch<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<{ data: T | null; error: string | null; status: number }> {
-  const token = getToken();
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   // Don't set Content-Type for FormData (browser sets it with boundary)
   if (!(options.body instanceof FormData)) {

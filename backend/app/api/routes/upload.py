@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api import dependencies
-from app.api.middleware.rbac import get_current_user
 from app.services.hash_service import calculate_sha256, append_to_manifest
 from app.utils.file_utils import is_valid_apk, save_upload_file
 from app.services.audit_service import log_action
@@ -134,8 +133,7 @@ def _run_analysis_sync(case_id: str, apk_name: str, apk_hash: str):
 @router.post("/upload/", response_model=CaseSchema, status_code=status.HTTP_201_CREATED)
 async def upload_apk(
     file: UploadFile = File(...),
-    db: Session = Depends(dependencies.get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(dependencies.get_db)
 ):
     safe_filename = os.path.basename(file.filename or "")
     if not safe_filename or safe_filename in (".", "..") or not safe_filename.endswith(".apk"):

@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, User, Menu, X } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Menu, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { m, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import AnimatedLogo from "./AnimatedLogo";
@@ -12,7 +11,6 @@ const TYPEWRITER_PHRASES = ["Analyze APKs securely...", "Discover hidden vulnera
 
 export default function Header() {
   const pathname = usePathname();
-  const { isAuthenticated, username, logout } = useAuth();
   const isLoginPage = pathname === "/login";
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
@@ -72,15 +70,11 @@ export default function Header() {
 
   const navLinks = [
     ...(isLandingPage ? [] : [{ href: "/", label: "Home" }]),
-    ...(isAuthenticated
-      ? [
-          { href: "/upload", label: "Upload APK" },
-          { href: "/dashboard", label: "Results" },
-          { href: "/graph", label: "Threat Map" },
-          { href: "/copilot", label: "AI Assistant" },
-          { href: "/documents", label: "Reports" },
-        ]
-      : []),
+    { href: "/upload", label: "Upload APK" },
+    { href: "/dashboard", label: "Results" },
+    { href: "/graph", label: "Threat Map" },
+    { href: "/copilot", label: "AI Assistant" },
+    { href: "/documents", label: "Reports" },
   ];
 
   return (
@@ -135,33 +129,8 @@ export default function Header() {
           )}
         </div>
 
-        {/* Desktop Auth */}
-        <div className="hidden md:flex items-center gap-3">
-          {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-full">
-                <User className="w-3.5 h-3.5" />
-                {username}
-              </div>
-              <button
-                type="button"
-                onClick={() => logout()}
-                className="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors p-2 rounded-full"
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <Link
-              prefetch={false}
-              href="/login"
-              className="text-sm font-semibold bg-gradient-to-r from-indigo-500 to-sky-500 text-white px-5 py-2 rounded-full hover:shadow-lg hover:shadow-indigo-500/30 transition-all hover:scale-105"
-            >
-              Sign In
-            </Link>
-          )}
-        </div>
+        {/* Spacer for alignment */}
+        <div className="hidden md:block w-4" />
 
         {/* Mobile Menu Toggle */}
         <button
@@ -211,47 +180,6 @@ export default function Header() {
                 ))}
               </div>
 
-              <div className="border-t border-slate-100 pt-6">
-                {isAuthenticated ? (
-                  <m.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="space-y-4"
-                  >
-                    <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-500 bg-slate-50 p-4 rounded-2xl">
-                      <User className="w-4 h-4" />
-                      Signed in as {username}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        logout();
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex items-center justify-center gap-2 text-base font-semibold text-white bg-red-500 p-4 rounded-2xl hover:bg-red-600 transition-colors w-full shadow-sm hover:shadow-md"
-                    >
-                      <LogOut className="w-5 h-5" />
-                      Sign Out
-                    </button>
-                  </m.div>
-                ) : (
-                  <m.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <Link
-                      prefetch={false}
-                      href="/login"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center justify-center text-base font-semibold bg-indigo-600 text-white p-4 rounded-2xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg w-full"
-                    >
-                      Sign In
-                    </Link>
-                  </m.div>
-                )}
-              </div>
             </m.div>
           )}
         </AnimatePresence>

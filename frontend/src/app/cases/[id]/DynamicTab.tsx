@@ -7,7 +7,6 @@ import {
   getPentestStatus,
   stopPentestSession,
 } from "@/services/api";
-import { useAuth } from "@/hooks/useAuth";
 
 interface DynamicTabProps {
   caseData: any;
@@ -36,7 +35,6 @@ interface PentestLiveStatus {
 }
 
 export default function DynamicTab({ caseData, analysisResults }: DynamicTabProps) {
-  const { token } = useAuth();
 
   // Emulator state
   const [isStarting, setIsStarting] = useState(false);

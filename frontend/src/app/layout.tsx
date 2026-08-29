@@ -1,7 +1,6 @@
 "use client";
 
 import "./globals.css";
-import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
 import Header from "@/components/Header";
@@ -12,24 +11,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { loadFromStorage } = useAuth();
-
-  useEffect(() => {
-    loadFromStorage();
-  }, [loadFromStorage]);
-
   useEffect(() => {
     // Ping the backend every 60 seconds to prevent it from going to sleep
     pingAPI();
     const interval = setInterval(pingAPI, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
-
-
-
-
-
 
   return (
     <html
