@@ -139,9 +139,13 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
     try {
       setIsScanning(true);
       const result = await scanPentestDevices(caseData.id);
-      setPentestDevices(result.devices || []);
-      if (result.devices?.length === 0) {
+      const devicesList = result.devices || [];
+      setPentestDevices(devicesList);
+      if (devicesList.length === 0) {
         alert("No physical Android devices detected.\n\nMake sure:\n1. Phone is connected via USB\n2. USB Debugging is enabled in Developer Options\n3. You've authorized this computer on the phone");
+      } else {
+        // Auto-select first device
+        setSelectedDevice(devicesList[0].serial);
       }
     } catch (e) {
       alert("Failed to scan devices: " + e);
@@ -153,6 +157,12 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
   const handleStartPentest = async () => {
     if (!selectedDevice) {
       alert("Please select a device first");
+      return;
+    }
+
+    const deviceObj = pentestDevices.find(d => d.serial === selectedDevice);
+    if (deviceObj && (deviceObj as any).status === "unauthorized") {
+      alert("⚠️ This device is Unauthorized!\n\nPlease unlock your phone screen and tap 'Allow USB Debugging / Always allow from this computer', then click Scan USB Devices again.");
       return;
     }
 

@@ -36,13 +36,21 @@ def _find_adb() -> Optional[str]:
         ADB_PATH = result
         return result
 
+    localappdata = os.environ.get("LOCALAPPDATA", "")
+    android_home = os.environ.get("ANDROID_HOME", "")
+    android_sdk = os.environ.get("ANDROID_SDK_ROOT", "")
+
     sdk_paths = [
+        os.path.join(localappdata, "Android", "Sdk", "platform-tools", "adb.exe") if localappdata else "",
+        os.path.join(android_home, "platform-tools", "adb.exe") if android_home else "",
+        os.path.join(android_sdk, "platform-tools", "adb.exe") if android_sdk else "",
         os.path.expanduser("~/AppData/Local/Android/Sdk/platform-tools/adb.exe"),
+        r"C:\Users\ASUS\AppData\Local\Android\Sdk\platform-tools\adb.exe",
         os.path.expanduser("~/Android/Sdk/platform-tools/adb"),
         os.path.expanduser("~/Library/Android/sdk/platform-tools/adb"),
     ]
     for path in sdk_paths:
-        if os.path.isfile(path):
+        if path and os.path.isfile(path):
             ADB_PATH = path
             return path
     return None

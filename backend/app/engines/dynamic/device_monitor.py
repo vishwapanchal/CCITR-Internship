@@ -38,6 +38,7 @@ def scan_usb_devices() -> List[Dict[str, Any]]:
     """
     Scan for physical Android devices connected via USB.
     Filters out emulators (emulator-XXXX, 127.0.0.1:XXXX).
+    Handles 'device', 'unauthorized', and 'offline' states.
     """
     result = vm_orchestrator._run_adb(["devices", "-l"])
     if not result["success"]:
@@ -48,30 +49,69 @@ def scan_usb_devices() -> List[Dict[str, Any]]:
         line = line.strip()
         if not line or line.startswith("List of"):
             continue
-        
+
         parts = line.split()
-        if len(parts) < 2 or parts[1] != "device":
+        if len(parts) < 2:
             continue
 
         serial = parts[0]
+        status = parts[1].lower()
+
         # Skip emulators
-        if serial.startswith("emulator-") or serial.startswith("127.0.0.1"):
+        if serial.startswith("emulator-") or serial.startswith("127.0.0.1") or serial.startswith("localhost:"):
             continue
 
-        # Get device info
-        model = _get_device_prop(serial, "ro.product.model") or "Unknown"
-        brand = _get_device_prop(serial, "ro.product.brand") or "Unknown"
-        android_version = _get_device_prop(serial, "ro.build.version.release") or "?"
-        sdk_version = _get_device_prop(serial, "ro.build.version.sdk") or "?"
+        # Extract extra info from key:value tokens in 'adb devices -l' output (e.g. model:M2006C3LI)
+        props_from_line = {}
+        for token in parts[2:]:
+            if ":" in token:
+                k, v = token.split(":", 1)
+                props_from_line[k] = v
 
-        devices.append({
-            "serial": serial,
-            "model": model,
-            "brand": brand,
-            "android_version": android_version,
-            "sdk_version": sdk_version,
-            "display_name": f"{brand} {model} (Android {android_version})",
-        })
+        model_inline = props_from_line.get("model", "")
+        product_inline = props_from_line.get("product", "")
+        device_inline = props_from_line.get("device", "")
+
+        if status == "unauthorized":
+            devices.append({
+                "serial": serial,
+                "model": model_inline or "Android Device",
+                "brand": "Unauthorized",
+                "android_version": "?",
+                "sdk_version": "?",
+                "status": "unauthorized",
+                "display_name": f"⚠️ {model_inline or serial} (Unauthorized - Allow USB Debugging on phone screen)",
+            })
+            continue
+
+        if status == "offline":
+            devices.append({
+                "serial": serial,
+                "model": model_inline or "Android Device",
+                "brand": "Offline",
+                "android_version": "?",
+                "sdk_version": "?",
+                "status": "offline",
+                "display_name": f"⚠️ {model_inline or serial} (Offline - Reconnect USB cable)",
+            })
+            continue
+
+        if status == "device":
+            # Query properties from device, fallback to inline properties
+            model = _get_device_prop(serial, "ro.product.model") or model_inline or "Android Device"
+            brand = _get_device_prop(serial, "ro.product.brand") or product_inline or "Generic"
+            android_version = _get_device_prop(serial, "ro.build.version.release") or "?"
+            sdk_version = _get_device_prop(serial, "ro.build.version.sdk") or "?"
+
+            devices.append({
+                "serial": serial,
+                "model": model,
+                "brand": brand,
+                "android_version": android_version,
+                "sdk_version": sdk_version,
+                "status": "ready",
+                "display_name": f"📱 {brand.capitalize()} {model} (Android {android_version})",
+            })
 
     return devices
 
