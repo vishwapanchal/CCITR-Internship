@@ -46,14 +46,23 @@ source "$BACKEND_DIR/venv/bin/activate"
 # Install pip deps if marker missing or requirements.txt changed
 MARKER="$BACKEND_DIR/venv/.deps_installed"
 if [ ! -f "$MARKER" ] || [ "$BACKEND_DIR/requirements.txt" -nt "$MARKER" ]; then
-    warn "Installing backend Python dependencies..."
-    pip install --upgrade pip -q
-    pip install -r "$BACKEND_DIR/requirements.txt" -q
+    warn "Installing backend Python dependencies (Live Logs)..."
+    pip install --upgrade pip
+    pip install -r "$BACKEND_DIR/requirements.txt"
     touch "$MARKER"
     info "Backend dependencies installed"
 else
     info "Backend dependencies up to date"
 fi
+echo ""
+
+# ── 2.5 Check static analysis tools ──────────────────────────
+warn "Verifying external analysis tools..."
+command -v apktool >/dev/null 2>&1 || { echo "❌ apktool missing! Run: sudo apt-get install apktool"; exit 1; }
+command -v jadx >/dev/null 2>&1 || { echo "❌ jadx missing! Please run ./install_tools.sh"; exit 1; }
+command -v java >/dev/null 2>&1 || { echo "❌ java missing! Run: sudo apt-get install default-jre"; exit 1; }
+info "All system tools verified."
+echo ""
 echo ""
 
 # ── 3. Frontend — npm dependencies ──────────────────────────
