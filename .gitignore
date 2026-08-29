@@ -13,8 +13,9 @@ __pycache__/
 *.pyo
 *.egg-info/
 
-# Environment — root .env IS tracked (consolidated config for deployment).
-# Sub-directory env files stay ignored to prevent overrides.
+# Environment — .env has real secrets, NEVER push it.
+# .env.example (with placeholders) IS tracked for reference.
+.env
 .env.local
 .env*.local
 backend/.env
