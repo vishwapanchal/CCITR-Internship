@@ -32,6 +32,28 @@ info "node    $(node --version)"
 info "npm     $(npm --version)"
 echo ""
 
+# ── 1.5. Fix WSL Environment & System Dependencies ──────────
+echo "==================================================="
+echo "  Checking & Fixing System Dependencies (WSL/Ubuntu)"
+echo "==================================================="
+warn "Installing required system packages (requires sudo)..."
+sudo apt-get update -y
+sudo apt-get install -y build-essential python3-dev default-jre apktool unzip wget
+
+if ! command -v jadx >/dev/null 2>&1; then
+    warn "Jadx not found. Installing Jadx locally..."
+    JADX_VERSION="1.4.7"
+    wget -qO jadx.zip "https://github.com/skylot/jadx/releases/download/v${JADX_VERSION}/jadx-${JADX_VERSION}.zip"
+    sudo unzip -q -o jadx.zip -d /opt/jadx
+    sudo ln -sf /opt/jadx/bin/jadx /usr/local/bin/jadx
+    sudo ln -sf /opt/jadx/bin/jadx-gui /usr/local/bin/jadx-gui
+    rm jadx.zip
+    info "Jadx installed successfully."
+else
+    info "Jadx is already installed."
+fi
+echo ""
+
 # ── 2. Backend — Python venv + pip dependencies ─────────────
 if [ ! -d "$BACKEND_DIR/venv" ]; then
     warn "Creating Python virtual environment..."
