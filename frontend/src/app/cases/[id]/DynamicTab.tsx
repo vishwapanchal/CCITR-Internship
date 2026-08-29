@@ -195,12 +195,17 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
   // ── Parse existing results ──
 
   let dynamicResult = null;
+  let hasRealDynamic = false;
   if (analysisResults && Array.isArray(analysisResults)) {
     const dynPhase = analysisResults.find((r: any) => r.phase === "dynamic");
     if (dynPhase?.result) {
       dynamicResult = dynPhase.result;
+      // Only treat as "real dynamic" if mode is emulator or manual_pentest
+      const mode = dynPhase.result.mode;
+      hasRealDynamic = mode === "emulator" || mode === "manual_pentest";
     }
   }
+
 
   // Map to BehaviorTimeline events
   const rawEvents = dynamicResult?.events || [];
@@ -291,7 +296,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       </div>
 
       {/* ── Mode Selector (only when no results yet and not in active session) ── */}
-      {!isMockCase && !dynamicResult && !isPentestActive && dynamicMode === "select" && (
+      {!isMockCase && !hasRealDynamic && !isPentestActive && dynamicMode === "select" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Emulator Option */}
           <button
@@ -351,7 +356,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       )}
 
       {/* ── Emulator Countdown (when emulator is running) ── */}
-      {!isMockCase && !dynamicResult && dynamicMode === "emulator" && countdown !== null && (
+      {!isMockCase && !hasRealDynamic && dynamicMode === "emulator" && countdown !== null && (
         <div className="bg-panel border border-blue-500/30 p-6 text-center">
           <svg className="animate-spin mx-auto h-8 w-8 text-blue-400 mb-3" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -363,7 +368,7 @@ export default function DynamicTab({ caseData, analysisResults, isMockCase }: Dy
       )}
 
       {/* ── Manual Pentest Panel ── */}
-      {!isMockCase && dynamicMode === "pentest" && !dynamicResult && (
+      {!isMockCase && dynamicMode === "pentest" && !hasRealDynamic && (
         <div className="bg-panel border border-red-500/20 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">

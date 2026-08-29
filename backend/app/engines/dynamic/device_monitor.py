@@ -48,10 +48,12 @@ def scan_usb_devices() -> List[Dict[str, Any]]:
         line = line.strip()
         if not line or line.startswith("List of"):
             continue
-        if "\tdevice" not in line:
+        
+        parts = line.split()
+        if len(parts) < 2 or parts[1] != "device":
             continue
 
-        serial = line.split("\t")[0].strip()
+        serial = parts[0]
         # Skip emulators
         if serial.startswith("emulator-") or serial.startswith("127.0.0.1"):
             continue
