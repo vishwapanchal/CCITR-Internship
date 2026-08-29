@@ -11,7 +11,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3000') do taskkill /f /pid %
 timeout /t 2 /nobreak >nul
 
 :: Start Backend in a new command prompt window
-start "APEX-X Backend" cmd /k "cd backend && set PYTHONPATH=C:\Users\ASUS\OneDrive\Desktop\Apex-X && .\venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8080 --reload"
+start "APEX-X Backend" cmd /k "set PYTHONPATH=%~dp0&& cd backend && .\venv\Scripts\uvicorn.exe app.main:app --host 0.0.0.0 --port 8080 --reload"
 
 :: Start Frontend in a new command prompt window
 start "APEX-X Frontend" cmd /k "cd frontend && npm run dev"
